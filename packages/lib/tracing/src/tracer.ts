@@ -1,5 +1,10 @@
 import { createContext, type TracerConfig } from './config';
-import { createSpan, type SpanHandle } from './span';
+import {
+  createSpan,
+  type SpanContext,
+  type SpanHandle,
+  type SpanOptions,
+} from './span';
 
 /**
  * The top-level tracing context. Not a span itself: it has no lifecycle,
@@ -7,7 +12,7 @@ import { createSpan, type SpanHandle } from './span';
  */
 export interface Tracer {
   /** Create a span. */
-  span: (name: string) => SpanHandle;
+  span: (name: string, options?: SpanOptions) => SpanHandle;
 }
 
 /** Create the top-level {@link Tracer}. Usually called once per realm. */
@@ -15,14 +20,16 @@ export const configure = (config: TracerConfig): Tracer => {
   const context = createContext(config);
 
   return {
-    span: (name) => {
-      return createSpan(name, {
+    span: (name, options) => {
+      const spanContext: SpanContext = {
         ...context,
         parent: null,
         trace: {
           id: context.getRandomBytes(16),
         },
-      });
+      };
+
+      return createSpan(name, spanContext, options);
     },
   };
 };

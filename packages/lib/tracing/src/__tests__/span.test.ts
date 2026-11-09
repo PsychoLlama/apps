@@ -135,6 +135,20 @@ describe('span', () => {
       );
     });
 
+    it('takes its own attributes instead of inheriting them', () => {
+      const { context, spans } = setup();
+
+      createSpan('parent', context, { attrs: { parent: true } })
+        .child('with-attrs', { attrs: { child: true } })
+        .child('without-attrs');
+
+      expect(spans.map((span) => span.attrs)).toEqual([
+        { parent: true },
+        { child: true },
+        {},
+      ]);
+    });
+
     it('announces each descendant to the processor', () => {
       const { context, spans } = setup();
 
