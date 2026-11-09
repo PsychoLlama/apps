@@ -15,7 +15,7 @@ export const open = (
   request.onupgradeneeded = (event) => {
     migrations
       .slice(event.oldVersion)
-      .forEach((runMigration) => runMigration(request.result));
+      .forEach((migration) => migration.run(request.result));
   };
 
   return promisifyRequest(request);
