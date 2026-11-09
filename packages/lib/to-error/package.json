@@ -1,0 +1,19 @@
+{
+  "name": "@lib/to-error",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Normalizes thrown values to real errors.",
+  "license": "MIT",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/to-error.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc",
+    "test:unit": "vitest run --config vitest.unit.config.ts"
+  },
+  "devDependencies": {
+    "@dev/vitest-config": "workspace:*"
+  }
+}

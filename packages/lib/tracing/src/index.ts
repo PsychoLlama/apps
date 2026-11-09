@@ -13,5 +13,4 @@ export type {
   SpanStatus,
 } from './processor/span-data';
 export type { SpanHandle, SpanOptions } from './span';
-export { CoercedError } from './to-failure';
 export { configure, type Tracer } from './tracer';
