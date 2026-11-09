@@ -8,7 +8,7 @@
   "sideEffects": false,
   "exports": {
     ".": "./src/index.ts",
-    "./processors": "./src/builtin/index.ts"
+    "./builtin": "./src/builtin/index.ts"
   },
   "scripts": {
     "typecheck": "tsc",
