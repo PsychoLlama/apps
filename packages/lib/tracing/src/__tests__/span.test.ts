@@ -119,6 +119,100 @@ describe('span', () => {
     });
   });
 
+  describe('updateAttrs', () => {
+    it('edits the attributes the next action carries', () => {
+      const { context, actions } = setup();
+      const span = createSpan('load-page', context, { attrs: { keep: 1 } });
+
+      span.updateAttrs((attrs) => {
+        attrs.added = 2;
+      });
+      span.enter();
+
+      expect(actions.at(-1)?.span.attrs).toEqual({ keep: 1, added: 2 });
+    });
+
+    it('leaves earlier snapshots unchanged when editing nested values', () => {
+      const { context, spans } = setup();
+
+      createSpan('load-page', context, {
+        attrs: { http: { status: 200 } },
+      }).updateAttrs((attrs) => {
+        const { http } = attrs;
+        assert(typeof http === 'object' && http !== null);
+        assert(!Array.isArray(http));
+
+        http.status = 500;
+      });
+
+      expect(spans[0]?.attrs).toEqual({ http: { status: 200 } });
+    });
+
+    it('builds on the previous update', () => {
+      const { context, actions } = setup();
+      const span = createSpan('load-page', context);
+
+      span.updateAttrs((attrs) => {
+        attrs.first = true;
+      });
+      span.updateAttrs((attrs) => {
+        attrs.second = true;
+      });
+      span.enter();
+
+      expect(actions.at(-1)?.span.attrs).toEqual({
+        first: true,
+        second: true,
+      });
+    });
+
+    it('carries attributes through enter and exit', () => {
+      const { context, actions } = setup();
+      const span = createSpan('load-page', context);
+
+      span.updateAttrs((attrs) => {
+        attrs.before = true;
+      });
+      const exit = span.enter();
+      span.updateAttrs((attrs) => {
+        attrs.during = true;
+      });
+      exit();
+
+      const [entered, exited] = actions;
+
+      expect(entered?.span.attrs).toEqual({ before: true });
+      expect(exited?.span.attrs).toEqual({ before: true, during: true });
+    });
+
+    it('discards the edit if it throws', () => {
+      const { context, actions } = setup();
+      const span = createSpan('load-page', context, { attrs: { keep: 1 } });
+      const failure = new Error('Edit failed.');
+
+      expect(() => {
+        span.updateAttrs((attrs) => {
+          attrs.keep = 2;
+          throw failure;
+        });
+      }).toThrow(failure);
+
+      span.enter();
+
+      expect(actions.at(-1)?.span.attrs).toEqual({ keep: 1 });
+    });
+
+    it('throws once the span has exited', () => {
+      const { context, actions } = setup();
+      const span = createSpan('load-page', context);
+
+      span.enter()();
+
+      expect(() => span.updateAttrs(vi.fn())).toThrow(SpanAlreadyExitedError);
+      expect(actions).toHaveLength(2);
+    });
+  });
+
   describe('child', () => {
     it('sends actions to its own handler, not its parent', () => {
       const handlers = [vi.fn(), vi.fn()];

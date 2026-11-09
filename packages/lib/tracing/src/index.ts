@@ -6,6 +6,7 @@ export type {
   SpanProcessor,
 } from './processor/processor';
 export type {
+  AttributeDraft,
   EnteredSpan,
   ExitedSpan,
   Span,
