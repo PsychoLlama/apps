@@ -91,6 +91,7 @@ export const createSpan = (
       edit(attrs);
 
       latest = { ...latest, attrs };
+      onAction({ type: 'attributes-updated', span: latest });
     },
 
     enter: () => {

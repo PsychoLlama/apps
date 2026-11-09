@@ -120,6 +120,37 @@ describe('span', () => {
   });
 
   describe('updateAttrs', () => {
+    it('sends the span with its edited attributes', () => {
+      const { context, spans, actions } = setup();
+      const span = createSpan('load-page', context, { attrs: { keep: 1 } });
+
+      span.updateAttrs((attrs) => {
+        attrs.added = 2;
+      });
+
+      expect(actions).toEqual([
+        {
+          type: 'attributes-updated',
+          span: { ...spans[0], attrs: { keep: 1, added: 2 } },
+        },
+      ]);
+    });
+
+    it('includes the start time once entered', () => {
+      const { context, spans, actions } = setup();
+      const span = createSpan('load-page', context);
+
+      span.enter();
+      span.updateAttrs((attrs) => {
+        attrs.added = 2;
+      });
+
+      expect(actions.at(-1)).toEqual({
+        type: 'attributes-updated',
+        span: { ...spans[0], attrs: { added: 2 }, time: { started: 1_000 } },
+      });
+    });
+
     it('edits the attributes the next action carries', () => {
       const { context, actions } = setup();
       const span = createSpan('load-page', context, { attrs: { keep: 1 } });
@@ -179,7 +210,7 @@ describe('span', () => {
       });
       exit();
 
-      const [entered, exited] = actions;
+      const [, entered, , exited] = actions;
 
       expect(entered?.span.attrs).toEqual({ before: true });
       expect(exited?.span.attrs).toEqual({ before: true, during: true });
@@ -199,6 +230,7 @@ describe('span', () => {
 
       span.enter();
 
+      expect(actions).toHaveLength(1);
       expect(actions.at(-1)?.span.attrs).toEqual({ keep: 1 });
     });
 
