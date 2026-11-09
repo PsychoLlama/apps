@@ -14,7 +14,7 @@ export const browserLogs = () =>
   holz(async ({ root }) => {
     const terminal = createAnsiTerminalBackend();
     const { HOLZ_LOG_FILE } = process.env;
-    if (!HOLZ_LOG_FILE) return { processor: terminal };
+    if (!HOLZ_LOG_FILE) return terminal;
 
     // Opening the file up front means a failure stops the dev server
     // instead of surfacing later as an unhandled stream error.
@@ -22,10 +22,8 @@ export const browserLogs = () =>
     await mkdir(dirname(path), { recursive: true });
     const file = await open(path, 'w');
 
-    return {
-      processor: createGroup([
-        terminal,
-        createJsonBackend({ stream: file.createWriteStream() }),
-      ]),
-    };
+    return createGroup([
+      terminal,
+      createJsonBackend({ stream: file.createWriteStream() }),
+    ]);
   });

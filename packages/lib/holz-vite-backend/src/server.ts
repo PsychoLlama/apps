@@ -9,30 +9,22 @@ const PLUGIN_NAME = '@holz/vite-backend';
 // Vite's logger adds no plugin-name prefix, so we bring our own.
 const LOG_TAG = `[${PLUGIN_NAME}]`;
 
-/** Options for {@link holz}. */
-export interface HolzConfig {
-  /**
-   * Receives every log forwarded from the browser, hydrated back into a
-   * holz `Log` (errors included). The plugin does nothing else with them.
-   */
-  processor: LogProcessor;
-}
-
 /**
  * Vite plugin that receives logs from `createViteBackend()` over the dev
- * server's socket and hands them to the configured processor. Dev server
- * only; builds ignore it.
+ * server's socket and hands them, hydrated back into holz `Log`s (errors
+ * included), to a processor. Dev server only; builds ignore it.
  *
- * Pass the config directly, or an async function that resolves it from
- * Vite's resolved config (e.g. to place files under `root`). The function
- * runs once, before the server starts, so it can lazily import server-only
- * backends without burdening builds. If it rejects, the dev server fails to
- * start.
+ * The processor comes from a function, sync or async, given Vite's resolved
+ * config (e.g. to place files under `root`). It runs once, before the server
+ * starts, so it can lazily import server-only backends without burdening
+ * builds. If it fails, the dev server fails to start.
  *
  * Disables Vite's `server.forwardConsole` unless the app sets it explicitly.
  */
 export const holz = (
-  options: HolzConfig | ((config: ResolvedConfig) => Promise<HolzConfig>),
+  createProcessor: (
+    config: ResolvedConfig,
+  ) => LogProcessor | Promise<LogProcessor>,
 ): Plugin => {
   // Assigned in `configResolved`, which Vite awaits before `configureServer`.
   let processor: LogProcessor;
@@ -52,8 +44,7 @@ export const holz = (
     },
 
     async configResolved(config) {
-      ({ processor } =
-        typeof options === 'function' ? await options(config) : options);
+      processor = await createProcessor(config);
     },
 
     configureServer(server) {
