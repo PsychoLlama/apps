@@ -1,5 +1,5 @@
 import type { Migration } from '../migrations';
-import { openOrUpgrade } from '../open';
+import { openExisting, openOrUpgrade } from '../open';
 import { createSchemaContext } from '../testing';
 
 const createMigration = (name: string) => ({
@@ -128,5 +128,31 @@ describe('openOrUpgrade', () => {
     expect(database.version).toBe(1);
     expect([...database.objectStoreNames]).toEqual([]);
     expect(first.run).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('openExisting', () => {
+  it('opens at the current version', async () => {
+    await using context = createSchemaContext();
+    const { name } = context.schema;
+    const migrations = [createMigration('first'), createMigration('second')];
+
+    (await openOrUpgrade(name, migrations)).close();
+    const database = await openExisting(name);
+    database.close();
+
+    expect(database.version).toBe(2);
+  });
+
+  it('rejects and creates nothing when the database is missing', async () => {
+    await using context = createSchemaContext();
+    const { name } = context.schema;
+
+    await expect(openExisting(name)).rejects.toMatchObject({
+      name: 'AbortError',
+    });
+
+    const databases = await indexedDB.databases();
+    expect(databases.map((database) => database.name)).not.toContain(name);
   });
 });

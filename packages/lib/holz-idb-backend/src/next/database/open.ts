@@ -34,3 +34,42 @@ export const openOrUpgrade = async (
     throw migrationError ?? error;
   }
 };
+
+/**
+ * Open a database at its current version, without migrating it. Rejects with an
+ * `AbortError` and creates nothing if the database doesn't exist.
+ */
+export const openExisting = (name: string): Promise<IDBDatabase> => {
+  const request = indexedDB.open(name);
+
+  // Only fires when there's no database, and this would leave an empty one.
+  request.onupgradeneeded = () => request.transaction?.abort();
+
+  return promisifyRequest(request);
+};
+
+/** Open at the version `migrations` implies, or any newer one a peer left. */
+export const openCurrent = async (
+  name: string,
+  migrations: Migration[],
+): Promise<IDBDatabase> => {
+  try {
+    // Init, migrate, or open existing at current version.
+    return await openOrUpgrade(name, migrations);
+  } catch (error) {
+    if (!hasErrorName(error, 'VersionError')) throw error;
+  }
+
+  try {
+    // Open at a version beyond what our code knows about.
+    return await openExisting(name);
+  } catch (error) {
+    if (!hasErrorName(error, 'AbortError')) throw error;
+  }
+
+  // Extreme edge case: future version deleted before we could open it.
+  return openCurrent(name, migrations);
+};
+
+const hasErrorName = (error: unknown, name: string): boolean =>
+  error instanceof DOMException && error.name === name;

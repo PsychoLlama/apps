@@ -1,5 +1,5 @@
 import type { Migration } from './migrations';
-import { openOrUpgrade } from './open';
+import { openCurrent } from './open';
 
 /** Options for {@link connect}. */
 export interface ConnectConfig {
@@ -24,6 +24,9 @@ export interface ConnectConfig {
  * when another context needs to upgrade or delete the database, or when the
  * browser closes it. A new connection follows unless reopening fails.
  *
+ * A database already past `migrations` is used as it stands, on the assumption
+ * that newer versions stay compatible.
+ *
  * Returns a function that closes the connection for good. An open already
  * underway still applies its migrations, but its outcome is ignored.
  */
@@ -34,10 +37,7 @@ export const connect = (config: ConnectConfig): (() => void) => {
   const attach = () => {
     if (terminated) return;
 
-    // TODO: On `VersionError`, retry without a version to attach to whatever a
-    // newer peer left. Until then, a peer's upgrade ends the connection for
-    // good.
-    openOrUpgrade(config.name, config.migrations)
+    openCurrent(config.name, config.migrations)
       .then((db) => {
         // Request canceled while opening.
         if (terminated) return db.close();

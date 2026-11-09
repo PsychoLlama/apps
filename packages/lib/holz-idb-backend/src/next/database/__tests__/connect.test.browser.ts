@@ -112,7 +112,7 @@ describe('connect', () => {
     expect(connection.onError).not.toHaveBeenCalled();
   });
 
-  it('steps aside for a peer upgrade', async () => {
+  it('reconnects at the new version after a peer upgrade', async () => {
     await using context = createSchemaContext();
     const { name } = context.schema;
     const first = createMigration('first');
@@ -122,14 +122,47 @@ describe('connect', () => {
     await connection.waitForChanges(1);
     const peer = await openOrUpgrade(name, [first, second]);
     peer.close();
+    const reconnected = await connection.waitForChanges(3);
 
-    await vi.waitFor(() => expect(connection.onError).toHaveBeenCalled());
-
-    expect(second.run).toHaveBeenCalledTimes(1);
     expect(connection.onChange.mock.calls[1]).toEqual([null]);
-    expect(connection.onError).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'VersionError' }),
-    );
+    expect(reconnected?.version).toBe(2);
+    expect(first.run).toHaveBeenCalledTimes(1);
+    expect(second.run).toHaveBeenCalledTimes(1);
+    expect(connection.onError).not.toHaveBeenCalled();
+  });
+
+  it('uses a database already past its migrations', async () => {
+    await using context = createSchemaContext();
+    const { name } = context.schema;
+    const first = createMigration('first');
+    const newer = [createMigration('older'), createMigration('newer')];
+
+    (await openOrUpgrade(name, newer)).close();
+    using connection = startConnection(name, [first]);
+    const database = await connection.waitForChanges(1);
+
+    expect(database?.version).toBe(2);
+    expect(first.run).not.toHaveBeenCalled();
+    expect(connection.onError).not.toHaveBeenCalled();
+  });
+
+  it('starts over when the newer database gets deleted', async () => {
+    await using context = createSchemaContext();
+    const { name } = context.schema;
+    const first = createMigration('first');
+    const newer = [createMigration('older'), createMigration('newer')];
+
+    (await openOrUpgrade(name, newer)).close();
+    using connection = startConnection(name, [first]);
+
+    // Lands between the failed migrating open and the versionless one, since
+    // requests run in order and the versionless open isn't queued yet.
+    await remove(name);
+    const database = await connection.waitForChanges(1);
+
+    expect(database?.version).toBe(1);
+    expect(first.run).toHaveBeenCalledTimes(1);
+    expect(connection.onError).not.toHaveBeenCalled();
   });
 
   it('reconnects when the browser closes the connection', async () => {
