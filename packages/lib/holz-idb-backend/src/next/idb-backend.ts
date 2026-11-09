@@ -1,7 +1,9 @@
 import type { LogProcessor } from '@holz/core';
 import {
+  createBatcher,
   createBuffer,
   createRouter,
+  type LogBatcherOptions,
   type LogBufferOptions,
 } from '@holz/core/functions';
 
@@ -13,6 +15,10 @@ const DEFAULT_DB: Schema = {
   index: 'by-timestamp',
 };
 
+const DEFAULT_BATCH: NonNullable<IdbBackendConfig['batch']> = {
+  size: 1,
+};
+
 /** Options for {@link createIdbBackend}. */
 export interface IdbBackendConfig {
   /** Where logs are persisted. Defaults to {@link DEFAULT_DB}. */
@@ -20,6 +26,9 @@ export interface IdbBackendConfig {
 
   /** Holds logs while the database opens. Unlimited by default. */
   buffer?: LogBufferOptions;
+
+  /** Groups logs into batches for writing. Defaults to {@link DEFAULT_BATCH}. */
+  batch?: Pick<LogBatcherOptions, 'size'>;
 
   /**
    * Receives errors from the backend, such as a database that fails to open.
@@ -34,16 +43,18 @@ export interface IdbBackendConfig {
  */
 export const createIdbBackend = ({
   db = DEFAULT_DB,
+  batch = DEFAULT_BATCH,
   buffer: bufferOptions,
   onError,
 }: IdbBackendConfig): LogProcessor => {
   const { drain, processor: buffer } = createBuffer(bufferOptions);
+  const { processor: batcher } = createBatcher({ ...batch, sink: () => {} });
   const { select, processor: router } = createRouter('buffer', {
     // Queue while IDB is opening.
     buffer,
 
     // Persist to IDB.
-    idb: () => {},
+    idb: batcher,
 
     // Drop logs if we're unable to open IDB.
     drop: () => {},
