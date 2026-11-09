@@ -7,6 +7,13 @@ const createMigration = (name: string) => ({
   run: vi.fn<Migration['run']>(),
 });
 
+const createThrowingMigration = (error: Error): Migration => ({
+  name: 'broken',
+  run: () => {
+    throw error;
+  },
+});
+
 describe('open', () => {
   it('opens at the version implied by the migrations', async () => {
     await using context = createSchemaContext();
@@ -79,5 +86,45 @@ describe('open', () => {
     await expect(open(name, [first])).rejects.toMatchObject({
       name: 'VersionError',
     });
+  });
+
+  it('rejects with the error a migration throws', async () => {
+    await using context = createSchemaContext();
+    const error = new Error('Migration failed.');
+    const migration = createThrowingMigration(error);
+
+    await expect(open(context.schema.name, [migration])).rejects.toBe(error);
+  });
+
+  it('creates nothing when a migration on a new database throws', async () => {
+    await using context = createSchemaContext();
+    const { name } = context.schema;
+    const migration = createThrowingMigration(new Error('Migration failed.'));
+
+    await expect(open(name, [migration])).rejects.toThrow();
+
+    const databases = await indexedDB.databases();
+    expect(databases.map((database) => database.name)).not.toContain(name);
+  });
+
+  it('rolls back the whole upgrade when a migration throws', async () => {
+    await using context = createSchemaContext();
+    const { name } = context.schema;
+    const first = createMigration('first');
+    const added = {
+      name: 'added',
+      run: (database: IDBDatabase) => void database.createObjectStore('added'),
+    };
+    const broken = createThrowingMigration(new Error('Migration failed.'));
+
+    (await open(name, [first])).close();
+    await expect(open(name, [first, added, broken])).rejects.toThrow();
+
+    const database = await open(name, [first]);
+    database.close();
+
+    expect(database.version).toBe(1);
+    expect([...database.objectStoreNames]).toEqual([]);
+    expect(first.run).toHaveBeenCalledTimes(1);
   });
 });

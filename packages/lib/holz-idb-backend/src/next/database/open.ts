@@ -3,20 +3,34 @@ import { promisifyRequest } from './promise';
 
 /**
  * Open a database at the version implied by `migrations`, applying any it
- * hasn't seen. Rejects if the open fails, a migration throws, or the database
- * is already past that version.
+ * hasn't seen. Rejects if the open fails or the database is already past that
+ * version. If a migration throws, rejects with its error and rolls back every
+ * migration in the upgrade.
  */
-export const open = (
+export const open = async (
   name: string,
   migrations: Migration[],
 ): Promise<IDBDatabase> => {
   const request = indexedDB.open(name, migrations.length);
+  let migrationError: unknown;
 
   request.onupgradeneeded = (event) => {
-    migrations
-      .slice(event.oldVersion)
-      .forEach((migration) => migration.run(request.result));
+    try {
+      migrations
+        .slice(event.oldVersion)
+        .forEach((migration) => migration.run(request.result));
+    } catch (error) {
+      // Left uncaught, the browser still aborts the upgrade, but the error
+      // escapes to the global scope and the request fails with `AbortError`.
+      migrationError = error;
+      request.transaction?.abort();
+    }
   };
 
-  return promisifyRequest(request);
+  try {
+    return await promisifyRequest(request);
+  } catch (error) {
+    // Wait for the request to fail so the rollback is done before rejecting.
+    throw migrationError ?? error;
+  }
 };
