@@ -1253,6 +1253,9 @@ importers:
       '@lib/to-error':
         specifier: workspace:*
         version: link:../to-error
+      '@lib/tracing':
+        specifier: workspace:*
+        version: link:../tracing
     devDependencies:
       '@dev/vitest-config':
         specifier: workspace:*
