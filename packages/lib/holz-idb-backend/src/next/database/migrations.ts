@@ -1,3 +1,15 @@
+/** Where logs are persisted. */
+export interface Schema {
+  /** Database name. */
+  name: string;
+
+  /** Object store logs land in. */
+  table: string;
+
+  /** Index over each log's timestamp. */
+  index: string;
+}
+
 /** One step in the schema's history. */
 export interface Migration {
   /** Stable identifier consumers can use to position their own migrations. */
@@ -11,13 +23,13 @@ export interface Migration {
  * Every schema migration, oldest first. A migration's position determines its
  * version: index 0 upgrades to v1. Append only.
  */
-export const getMigrations = (): Migration[] => [
+export const getMigrations = ({ table, index }: Schema): Migration[] => [
   {
     name: 'init',
     run: (database) => {
-      const logs = database.createObjectStore('logs', { autoIncrement: true });
+      const logs = database.createObjectStore(table, { autoIncrement: true });
 
-      logs.createIndex('by-timestamp', 'timestamp');
+      logs.createIndex(index, 'timestamp');
     },
   },
 ];
