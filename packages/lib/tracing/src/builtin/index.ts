@@ -1,1 +1,1 @@
-export {};
+export { createDevtoolsBackend } from './devtools';
