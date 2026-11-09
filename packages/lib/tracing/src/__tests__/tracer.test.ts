@@ -58,6 +58,16 @@ describe('tracer', () => {
       expect(traceIds[1]).not.toEqual(traceIds[0]);
     });
 
+    it('gives the processor the span attributes', () => {
+      const processor = vi.fn();
+
+      setup({ processor }).span('load-page', { attrs: { cached: true } });
+
+      expect(processor).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({ attrs: { cached: true } }),
+      );
+    });
+
     it('sends span logs to the configured log processor', () => {
       const logProcessor = vi.fn();
       const tracer = setup({ holz: { processor: logProcessor } });

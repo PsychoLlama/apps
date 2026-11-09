@@ -6,13 +6,17 @@
   "description": "Structured spans with pluggable behavior.",
   "license": "MIT",
   "sideEffects": false,
-  "exports": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./builtin": "./src/builtin/index.ts"
+  },
   "scripts": {
     "typecheck": "tsc",
     "test:unit": "vitest run --config vitest.unit.config.ts"
   },
   "dependencies": {
-    "@holz/core": "catalog:"
+    "@holz/core": "catalog:",
+    "@lib/to-error": "workspace:*"
   },
   "devDependencies": {
     "@dev/vitest-config": "workspace:*"

@@ -3,16 +3,18 @@ import type { Logger } from '@holz/core';
 import type { Context } from './config';
 import { SpanAlreadyEnteredError, SpanAlreadyExitedError } from './errors';
 import type {
+  AttributeDraft,
   EnteredSpan,
   ExitedSpan,
   Span,
   SpanStatus,
 } from './processor/span-data';
+import { toFailure, type SpanFailure } from './to-failure';
 
-/** Marks a span's work as failed. */
-interface SpanFailure {
-  /** Why the work failed. */
-  error: Error;
+/** Optional details for a new span. */
+export interface SpanOptions {
+  /** Key-value details about the span. Not inherited by its children. */
+  attrs?: Span['attrs'];
 }
 
 /** The API for instrumenting a unit of work. */
@@ -21,7 +23,13 @@ export interface SpanHandle {
   readonly log: Logger;
 
   /** Create a span nested under this one. */
-  child: (name: string) => SpanHandle;
+  child: (name: string, options?: SpanOptions) => SpanHandle;
+
+  /**
+   * Change this span's attributes. `edit` receives a copy of the current
+   * ones, which becomes the new attributes. Throws once the span has exited.
+   */
+  updateAttrs: (edit: (attrs: AttributeDraft) => void) => void;
 
   /**
    * Mark the start of the work this span measures. Returns the function that
@@ -29,66 +37,137 @@ export interface SpanHandle {
    * anything was thrown. Log errors the work recovered from instead.
    */
   enter: () => (failure?: SpanFailure) => void;
+
+  /**
+   * Enter the span, call `work` with it, and exit when `work` finishes,
+   * waiting if it returns a promise. Returns what `work` returns. A throw or
+   * rejection fails the span and still reaches the caller.
+   */
+  run: <Result>(work: (span: SpanHandle) => Result) => Result;
 }
 
 /** What a span inherits. Passed from a span to its children. */
-interface SpanContext extends Context, Pick<Span, 'parent' | 'trace'> {}
+export interface SpanContext extends Context, Pick<Span, 'parent' | 'trace'> {}
 
 const getStatus = (failure?: SpanFailure): SpanStatus =>
   failure ? { code: 'error', error: failure.error } : { code: 'ok' };
 
+const isPromiseLike = (value: unknown): value is PromiseLike<unknown> =>
+  (typeof value === 'object' || typeof value === 'function') &&
+  value !== null &&
+  'then' in value &&
+  typeof value.then === 'function';
+
 /** Create a span and announce its data to the processor. */
-export const createSpan = (name: string, context: SpanContext): SpanHandle => {
+export const createSpan = (
+  name: string,
+  context: SpanContext,
+  options?: SpanOptions,
+): SpanHandle => {
   const span: Span = {
     name,
     id: context.getRandomBytes(8),
     parent: context.parent,
     trace: context.trace,
+    attrs: options?.attrs ?? {},
   };
 
   let state: 'pending' | 'entered' | 'exited' = 'pending';
+  let latest: Span | EnteredSpan = span;
   const onAction = context.processor(span);
 
-  return {
-    log: context.log,
+  const child: SpanHandle['child'] = (childName, childOptions) => {
+    const spanContext: SpanContext = {
+      ...context,
+      parent: {
+        id: span.id,
+      },
+    };
 
-    child: (childName) => {
-      return createSpan(childName, {
-        ...context,
-        parent: {
-          id: span.id,
-        },
-      });
-    },
-
-    enter: () => {
-      if (state !== 'pending') throw new SpanAlreadyEnteredError(name);
-      state = 'entered';
-
-      const entered: EnteredSpan = {
-        ...span,
-        time: {
-          started: context.getCurrentTime(),
-        },
-      };
-
-      onAction({ type: 'enter', span: entered });
-
-      return (failure) => {
-        if (state === 'exited') throw new SpanAlreadyExitedError(name);
-        state = 'exited';
-
-        const exited: ExitedSpan = {
-          ...entered,
-          status: getStatus(failure),
-          time: {
-            started: entered.time.started,
-            ended: context.getCurrentTime(),
-          },
-        };
-
-        onAction({ type: 'exit', span: exited });
-      };
-    },
+    return createSpan(childName, spanContext, childOptions);
   };
+
+  const updateAttrs: SpanHandle['updateAttrs'] = (edit) => {
+    if (state === 'exited') throw new SpanAlreadyExitedError(name);
+
+    // The clone is what keeps earlier snapshots from changing. The types
+    // are only readonly for consumers.
+    const attrs = structuredClone(latest.attrs) as AttributeDraft;
+    edit(attrs);
+
+    latest = { ...latest, attrs };
+    onAction({ type: 'attributes-updated', span: latest });
+  };
+
+  const enter: SpanHandle['enter'] = () => {
+    if (state !== 'pending') throw new SpanAlreadyEnteredError(name);
+    state = 'entered';
+
+    const started = context.getCurrentTime();
+    const entered: EnteredSpan = {
+      ...latest,
+      time: {
+        started,
+      },
+    };
+
+    latest = entered;
+    onAction({ type: 'enter', span: entered });
+
+    return (failure) => {
+      if (state === 'exited') throw new SpanAlreadyExitedError(name);
+      state = 'exited';
+
+      const exited: ExitedSpan = {
+        ...latest,
+        status: getStatus(failure),
+        time: {
+          started,
+          ended: context.getCurrentTime(),
+        },
+      };
+
+      onAction({ type: 'exit', span: exited });
+    };
+  };
+
+  const run = <Result>(work: (span: SpanHandle) => Result): Result => {
+    const exit = enter();
+
+    let result: Result;
+    try {
+      result = work(handle);
+    } catch (error) {
+      exit(toFailure(error));
+      throw error;
+    }
+
+    if (!isPromiseLike(result)) {
+      exit();
+      return result;
+    }
+
+    // Returns the derived promise because attaching a handler marks the
+    // original as handled, which would hide an unhandled rejection.
+    return result.then(
+      (value) => {
+        exit();
+        return value;
+      },
+      (error: unknown) => {
+        exit(toFailure(error));
+        throw error;
+      },
+    ) as Result;
+  };
+
+  const handle: SpanHandle = {
+    log: context.log,
+    child,
+    updateAttrs,
+    enter,
+    run,
+  };
+
+  return handle;
 };

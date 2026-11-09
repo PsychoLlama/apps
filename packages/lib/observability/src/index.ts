@@ -7,4 +7,4 @@ export {
   type LogLevel,
   type LogProcessor,
 } from './logging/index';
-export { CoercedError, toError } from './to-error';
+export { CoercedError, toError } from '@lib/to-error';

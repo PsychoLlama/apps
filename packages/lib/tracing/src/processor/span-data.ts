@@ -1,3 +1,19 @@
+type AttributeScalar = string | number | boolean | null | undefined;
+
+/** A span attribute value. Anything JSON-serializable, nesting included. */
+type AttributeValue =
+  | AttributeScalar
+  | ReadonlyArray<AttributeValue>
+  | { readonly [key: string]: AttributeValue };
+
+type DraftAttributeValue =
+  | AttributeScalar
+  | DraftAttributeValue[]
+  | { [key: string]: DraftAttributeValue };
+
+/** A private copy of a span's attributes, safe to edit in place. */
+export type AttributeDraft = Record<string, DraftAttributeValue>;
+
 /** Plain data describing a span. This is what processors receive. */
 export type Span = Readonly<{
   /**
@@ -20,6 +36,9 @@ export type Span = Readonly<{
     /** Identifies the trace. 16 bytes. */
     id: Uint8Array;
   }>;
+
+  /** Key-value details about this span. */
+  attrs: Readonly<Record<string, AttributeValue>>;
 }>;
 
 /** A span whose work has started. */

@@ -6,10 +6,11 @@ export type {
   SpanProcessor,
 } from './processor/processor';
 export type {
+  AttributeDraft,
   EnteredSpan,
   ExitedSpan,
   Span,
   SpanStatus,
 } from './processor/span-data';
-export type { SpanHandle } from './span';
+export type { SpanHandle, SpanOptions } from './span';
 export { configure, type Tracer } from './tracer';
