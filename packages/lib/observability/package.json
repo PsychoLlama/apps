@@ -31,7 +31,8 @@
     "@lib/holz-idb-backend": "workspace:*",
     "@lib/holz-vite-backend": "workspace:*",
     "@lib/runtime-config": "workspace:*",
-    "@lib/to-error": "workspace:*"
+    "@lib/to-error": "workspace:*",
+    "@lib/tracing": "workspace:*"
   },
   "devDependencies": {
     "@dev/vitest-config": "workspace:*"
