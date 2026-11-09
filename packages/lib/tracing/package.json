@@ -6,7 +6,10 @@
   "description": "Structured spans with pluggable behavior.",
   "license": "MIT",
   "sideEffects": false,
-  "exports": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./processors": "./src/builtin/index.ts"
+  },
   "scripts": {
     "typecheck": "tsc",
     "test:unit": "vitest run --config vitest.unit.config.ts"
