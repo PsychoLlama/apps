@@ -1,8 +1,7 @@
-import { configure, type SpanProcessor, type Tracer } from '@lib/tracing';
+import { configure, type Tracer } from '@lib/tracing';
 import { createDevtoolsBackend } from '@lib/tracing/builtin';
+import { createFilter } from '@lib/tracing/functions';
 import { processor } from '#processor';
-
-const ignoreSpans: SpanProcessor = () => () => undefined;
 
 /**
  * The tracer for this realm. Start a trace with `tracer.span(name)`. In dev
@@ -10,9 +9,7 @@ const ignoreSpans: SpanProcessor = () => () => undefined;
  * writes to the same destinations as `createLogger`.
  */
 export const tracer: Tracer = configure({
-  // Timeline entries are kept until cleared, so they'd pile up in long
-  // production sessions.
-  processor: import.meta.env.DEV ? createDevtoolsBackend() : ignoreSpans,
+  processor: createFilter(() => import.meta.env.DEV, createDevtoolsBackend()),
   holz: { processor },
 });
 
