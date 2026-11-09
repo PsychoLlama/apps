@@ -1,3 +1,13 @@
+/** A span attribute value. Anything JSON-serializable, nesting included. */
+type AttributeValue =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | ReadonlyArray<AttributeValue>
+  | { readonly [key: string]: AttributeValue };
+
 /** Plain data describing a span. This is what processors receive. */
 export type Span = Readonly<{
   /**
@@ -20,6 +30,9 @@ export type Span = Readonly<{
     /** Identifies the trace. 16 bytes. */
     id: Uint8Array;
   }>;
+
+  /** Key-value details about this span. */
+  attrs: Readonly<Record<string, AttributeValue>>;
 }>;
 
 /** A span whose work has started. */
