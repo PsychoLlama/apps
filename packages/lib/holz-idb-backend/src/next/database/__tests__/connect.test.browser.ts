@@ -1,6 +1,6 @@
 import { connect } from '../connect';
 import type { Migration } from '../migrations';
-import { open } from '../open';
+import { openOrUpgrade } from '../open';
 import { remove } from '../remove';
 import { createSchemaContext } from '../testing';
 
@@ -103,7 +103,7 @@ describe('connect', () => {
     using connection = startConnection(name, [first]);
 
     const original = await connection.waitForChanges(1);
-    await expect(open(name, [first, broken])).rejects.toThrow();
+    await expect(openOrUpgrade(name, [first, broken])).rejects.toThrow();
     const reconnected = await connection.waitForChanges(3);
 
     expect(connection.onChange.mock.calls[1]).toEqual([null]);
@@ -120,7 +120,7 @@ describe('connect', () => {
     using connection = startConnection(name, [first]);
 
     await connection.waitForChanges(1);
-    const peer = await open(name, [first, second]);
+    const peer = await openOrUpgrade(name, [first, second]);
     peer.close();
 
     await vi.waitFor(() => expect(connection.onError).toHaveBeenCalled());
@@ -249,7 +249,7 @@ describe('connect', () => {
 
       // Opens run in order, so a reconnect would have recreated the database
       // before this one, and the probe wouldn't run.
-      (await open(name, [probe])).close();
+      (await openOrUpgrade(name, [probe])).close();
 
       expect(probe.run).toHaveBeenCalledTimes(1);
       expect(first.run).toHaveBeenCalledTimes(1);

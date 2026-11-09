@@ -1,5 +1,5 @@
 import { getMigrations, type Schema } from './migrations';
-import { open } from './open';
+import { openOrUpgrade } from './open';
 import { remove } from './remove';
 
 /** A unique schema whose database is removed on disposal, if it exists. */
@@ -29,7 +29,7 @@ export const createSchemaContext = (): SchemaContext => {
 /** Create a {@link SchemaContext} and open its fully migrated database. */
 export const openDatabaseContext = async (): Promise<DatabaseContext> => {
   const context = createSchemaContext();
-  const database = await open(
+  const database = await openOrUpgrade(
     context.schema.name,
     getMigrations(context.schema),
   );

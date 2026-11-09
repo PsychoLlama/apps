@@ -1,5 +1,5 @@
 import type { Migration } from '../migrations';
-import { open } from '../open';
+import { openOrUpgrade } from '../open';
 import { createSchemaContext } from '../testing';
 
 const createMigration = (name: string) => ({
@@ -14,11 +14,11 @@ const createThrowingMigration = (error: Error): Migration => ({
   },
 });
 
-describe('open', () => {
+describe('openOrUpgrade', () => {
   it('opens at the version implied by the migrations', async () => {
     await using context = createSchemaContext();
 
-    const database = await open(context.schema.name, [
+    const database = await openOrUpgrade(context.schema.name, [
       createMigration('first'),
       createMigration('second'),
     ]);
@@ -36,7 +36,7 @@ describe('open', () => {
       run: () => void calls.push(name),
     }));
 
-    (await open(context.schema.name, migrations)).close();
+    (await openOrUpgrade(context.schema.name, migrations)).close();
 
     expect(calls).toEqual(['first', 'second']);
   });
@@ -45,7 +45,7 @@ describe('open', () => {
     await using context = createSchemaContext();
     const migration = createMigration('first');
 
-    const database = await open(context.schema.name, [migration]);
+    const database = await openOrUpgrade(context.schema.name, [migration]);
     database.close();
 
     expect(migration.run).toHaveBeenCalledWith(database);
@@ -57,8 +57,8 @@ describe('open', () => {
     const first = createMigration('first');
     const second = createMigration('second');
 
-    (await open(name, [first])).close();
-    (await open(name, [first, second])).close();
+    (await openOrUpgrade(name, [first])).close();
+    (await openOrUpgrade(name, [first, second])).close();
 
     expect(first.run).toHaveBeenCalledTimes(1);
     expect(second.run).toHaveBeenCalledTimes(1);
@@ -69,8 +69,8 @@ describe('open', () => {
     const { name } = context.schema;
     const migration = createMigration('first');
 
-    (await open(name, [migration])).close();
-    (await open(name, [migration])).close();
+    (await openOrUpgrade(name, [migration])).close();
+    (await openOrUpgrade(name, [migration])).close();
 
     expect(migration.run).toHaveBeenCalledTimes(1);
   });
@@ -81,9 +81,9 @@ describe('open', () => {
     const first = createMigration('first');
     const second = createMigration('second');
 
-    (await open(name, [first, second])).close();
+    (await openOrUpgrade(name, [first, second])).close();
 
-    await expect(open(name, [first])).rejects.toMatchObject({
+    await expect(openOrUpgrade(name, [first])).rejects.toMatchObject({
       name: 'VersionError',
     });
   });
@@ -93,7 +93,9 @@ describe('open', () => {
     const error = new Error('Migration failed.');
     const migration = createThrowingMigration(error);
 
-    await expect(open(context.schema.name, [migration])).rejects.toBe(error);
+    await expect(openOrUpgrade(context.schema.name, [migration])).rejects.toBe(
+      error,
+    );
   });
 
   it('creates nothing when a migration on a new database throws', async () => {
@@ -101,7 +103,7 @@ describe('open', () => {
     const { name } = context.schema;
     const migration = createThrowingMigration(new Error('Migration failed.'));
 
-    await expect(open(name, [migration])).rejects.toThrow();
+    await expect(openOrUpgrade(name, [migration])).rejects.toThrow();
 
     const databases = await indexedDB.databases();
     expect(databases.map((database) => database.name)).not.toContain(name);
@@ -117,10 +119,10 @@ describe('open', () => {
     };
     const broken = createThrowingMigration(new Error('Migration failed.'));
 
-    (await open(name, [first])).close();
-    await expect(open(name, [first, added, broken])).rejects.toThrow();
+    (await openOrUpgrade(name, [first])).close();
+    await expect(openOrUpgrade(name, [first, added, broken])).rejects.toThrow();
 
-    const database = await open(name, [first]);
+    const database = await openOrUpgrade(name, [first]);
     database.close();
 
     expect(database.version).toBe(1);

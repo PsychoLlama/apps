@@ -1,5 +1,5 @@
 import type { Migration } from './migrations';
-import { open } from './open';
+import { openOrUpgrade } from './open';
 
 /** Options for {@link connect}. */
 export interface ConnectConfig {
@@ -37,7 +37,7 @@ export const connect = (config: ConnectConfig): (() => void) => {
     // TODO: On `VersionError`, retry without a version to attach to whatever a
     // newer peer left. Until then, a peer's upgrade ends the connection for
     // good.
-    open(config.name, config.migrations)
+    openOrUpgrade(config.name, config.migrations)
       .then((db) => {
         // Request canceled while opening.
         if (terminated) return db.close();

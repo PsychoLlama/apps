@@ -7,7 +7,7 @@ import {
   type LogBufferOptions,
 } from '@holz/core/functions';
 
-import { getMigrations, open, type Schema } from './database';
+import { getMigrations, openOrUpgrade, type Schema } from './database';
 
 const DEFAULT_DB: Schema = {
   name: '@holz',
@@ -60,7 +60,7 @@ export const createIdbBackend = ({
     drop: () => {},
   });
 
-  open(db.name, getMigrations(db)).then(
+  openOrUpgrade(db.name, getMigrations(db)).then(
     () => select('idb'),
     (error: unknown) => {
       select('drop');

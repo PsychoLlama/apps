@@ -1,4 +1,4 @@
-import { open } from '../open';
+import { openOrUpgrade } from '../open';
 import { remove } from '../remove';
 
 const uniqueName = () => `test-${crypto.randomUUID()}`;
@@ -13,7 +13,7 @@ describe('remove', () => {
   it('deletes the database', async () => {
     const name = uniqueName();
 
-    (await open(name, [{ name: 'init', run: () => {} }])).close();
+    (await openOrUpgrade(name, [{ name: 'init', run: () => {} }])).close();
     await remove(name);
 
     expect(await listDatabases()).not.toContain(name);

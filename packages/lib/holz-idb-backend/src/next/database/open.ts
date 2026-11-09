@@ -7,7 +7,7 @@ import { promisifyRequest } from './promise';
  * version. If a migration throws, rejects with its error and rolls back every
  * migration in the upgrade.
  */
-export const open = async (
+export const openOrUpgrade = async (
   name: string,
   migrations: Migration[],
 ): Promise<IDBDatabase> => {
