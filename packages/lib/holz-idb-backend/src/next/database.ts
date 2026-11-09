@@ -1,19 +1,20 @@
-/** Applies schema changes when a database is created or moves to a new version. */
-export type Upgrade = (database: IDBDatabase, oldVersion: number) => void;
+import type { Migration } from './migrations';
 
 /**
- * Promise wrapper over `indexedDB.open`. Rejects if the open fails, `upgrade`
- * throws, or the database is already past `version`.
+ * Open a database at the version implied by `migrations`, applying any it
+ * hasn't seen. Rejects if the open fails, a migration throws, or the database
+ * is already past that version.
  */
 export const open = (
   name: string,
-  version: number,
-  upgrade: Upgrade,
+  migrations: Migration[],
 ): Promise<IDBDatabase> => {
-  const request = indexedDB.open(name, version);
+  const request = indexedDB.open(name, migrations.length);
 
   request.onupgradeneeded = (event) => {
-    upgrade(request.result, event.oldVersion);
+    migrations
+      .slice(event.oldVersion)
+      .forEach((runMigration) => runMigration(request.result));
   };
 
   return promisifyRequest(request);
