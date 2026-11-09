@@ -9,12 +9,7 @@ import type {
   Span,
   SpanStatus,
 } from './processor/span-data';
-
-/** Marks a span's work as failed. */
-interface SpanFailure {
-  /** Why the work failed. */
-  error: Error;
-}
+import { toFailure, type SpanFailure } from './to-failure';
 
 /** Optional details for a new span. */
 export interface SpanOptions {
@@ -42,6 +37,13 @@ export interface SpanHandle {
    * anything was thrown. Log errors the work recovered from instead.
    */
   enter: () => (failure?: SpanFailure) => void;
+
+  /**
+   * Enter the span, call `work` with it, and exit when `work` finishes,
+   * waiting if it returns a promise. Returns what `work` returns. A throw or
+   * rejection fails the span and still reaches the caller.
+   */
+  run: <Result>(work: (span: SpanHandle) => Result) => Result;
 }
 
 /** What a span inherits. Passed from a span to its children. */
@@ -49,6 +51,12 @@ export interface SpanContext extends Context, Pick<Span, 'parent' | 'trace'> {}
 
 const getStatus = (failure?: SpanFailure): SpanStatus =>
   failure ? { code: 'error', error: failure.error } : { code: 'ok' };
+
+const isPromiseLike = (value: unknown): value is PromiseLike<unknown> =>
+  (typeof value === 'object' || typeof value === 'function') &&
+  value !== null &&
+  'then' in value &&
+  typeof value.then === 'function';
 
 /** Create a span and announce its data to the processor. */
 export const createSpan = (
@@ -68,62 +76,98 @@ export const createSpan = (
   let latest: Span | EnteredSpan = span;
   const onAction = context.processor(span);
 
-  return {
-    log: context.log,
+  const child: SpanHandle['child'] = (childName, childOptions) => {
+    const spanContext: SpanContext = {
+      ...context,
+      parent: {
+        id: span.id,
+      },
+    };
 
-    child: (childName, childOptions) => {
-      const spanContext: SpanContext = {
-        ...context,
-        parent: {
-          id: span.id,
-        },
-      };
+    return createSpan(childName, spanContext, childOptions);
+  };
 
-      return createSpan(childName, spanContext, childOptions);
-    },
+  const updateAttrs: SpanHandle['updateAttrs'] = (edit) => {
+    if (state === 'exited') throw new SpanAlreadyExitedError(name);
 
-    updateAttrs: (edit) => {
+    // The clone is what keeps earlier snapshots from changing. The types
+    // are only readonly for consumers.
+    const attrs = structuredClone(latest.attrs) as AttributeDraft;
+    edit(attrs);
+
+    latest = { ...latest, attrs };
+    onAction({ type: 'attributes-updated', span: latest });
+  };
+
+  const enter: SpanHandle['enter'] = () => {
+    if (state !== 'pending') throw new SpanAlreadyEnteredError(name);
+    state = 'entered';
+
+    const started = context.getCurrentTime();
+    const entered: EnteredSpan = {
+      ...latest,
+      time: {
+        started,
+      },
+    };
+
+    latest = entered;
+    onAction({ type: 'enter', span: entered });
+
+    return (failure) => {
       if (state === 'exited') throw new SpanAlreadyExitedError(name);
+      state = 'exited';
 
-      // The clone is what keeps earlier snapshots from changing. The types
-      // are only readonly for consumers.
-      const attrs = structuredClone(latest.attrs) as AttributeDraft;
-      edit(attrs);
-
-      latest = { ...latest, attrs };
-      onAction({ type: 'attributes-updated', span: latest });
-    },
-
-    enter: () => {
-      if (state !== 'pending') throw new SpanAlreadyEnteredError(name);
-      state = 'entered';
-
-      const started = context.getCurrentTime();
-      const entered: EnteredSpan = {
+      const exited: ExitedSpan = {
         ...latest,
+        status: getStatus(failure),
         time: {
           started,
+          ended: context.getCurrentTime(),
         },
       };
 
-      latest = entered;
-      onAction({ type: 'enter', span: entered });
-
-      return (failure) => {
-        if (state === 'exited') throw new SpanAlreadyExitedError(name);
-        state = 'exited';
-
-        const exited: ExitedSpan = {
-          ...latest,
-          status: getStatus(failure),
-          time: {
-            started,
-            ended: context.getCurrentTime(),
-          },
-        };
-
-        onAction({ type: 'exit', span: exited });
-      };
-    },
+      onAction({ type: 'exit', span: exited });
+    };
   };
+
+  const run = <Result>(work: (span: SpanHandle) => Result): Result => {
+    const exit = enter();
+
+    let result: Result;
+    try {
+      result = work(handle);
+    } catch (error) {
+      exit(toFailure(error));
+      throw error;
+    }
+
+    if (!isPromiseLike(result)) {
+      exit();
+      return result;
+    }
+
+    // Returns the derived promise because attaching a handler marks the
+    // original as handled, which would hide an unhandled rejection.
+    return result.then(
+      (value) => {
+        exit();
+        return value;
+      },
+      (error: unknown) => {
+        exit(toFailure(error));
+        throw error;
+      },
+    ) as Result;
+  };
+
+  const handle: SpanHandle = {
+    log: context.log,
+    child,
+    updateAttrs,
+    enter,
+    run,
+  };
+
+  return handle;
 };

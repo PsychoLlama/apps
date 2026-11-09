@@ -245,6 +245,119 @@ describe('span', () => {
     });
   });
 
+  describe('run', () => {
+    const lastStatus = (actions: Action[]) => {
+      const action = actions.at(-1);
+      assert(action?.type === 'exit');
+
+      return action.span.status;
+    };
+
+    it('passes the span to the work', () => {
+      const { context } = setup();
+      const span = createSpan('load-page', context);
+      const work = vi.fn();
+
+      span.run(work);
+
+      expect(work).toHaveBeenCalledExactlyOnceWith(span);
+    });
+
+    it('enters before the work and exits after it', () => {
+      const { context, actions } = setup();
+      const seen: string[] = [];
+
+      createSpan('load-page', context).run(() => {
+        seen.push(...actions.map((action) => action.type));
+      });
+
+      expect(seen).toEqual(['enter']);
+      expect(actions.map((action) => action.type)).toEqual(['enter', 'exit']);
+      expect(lastStatus(actions)).toEqual({ code: 'ok' });
+    });
+
+    it('returns a synchronous result', () => {
+      const { context } = setup();
+
+      expect(createSpan('load-page', context).run(() => 'done')).toBe('done');
+    });
+
+    it('fails the span and rethrows a synchronous error', () => {
+      const { context, actions } = setup();
+      const error = new TypeError('Request failed.');
+
+      expect(() =>
+        createSpan('load-page', context).run(() => {
+          throw error;
+        }),
+      ).toThrow(error);
+
+      const status = lastStatus(actions);
+      assert(status.code === 'error');
+
+      expect(status.error).toBe(error);
+    });
+
+    it('waits for a promise before exiting', async () => {
+      const { context, actions } = setup();
+
+      const result = createSpan('load-page', context).run(async () => {
+        await Promise.resolve();
+        return 'done';
+      });
+
+      expect(actions.map((action) => action.type)).toEqual(['enter']);
+
+      await expect(result).resolves.toBe('done');
+
+      expect(lastStatus(actions)).toEqual({ code: 'ok' });
+    });
+
+    it('fails the span and passes along a rejection', async () => {
+      const { context, actions } = setup();
+      const error = new TypeError('Request failed.');
+
+      const result = createSpan('load-page', context).run(() =>
+        Promise.reject(error),
+      );
+
+      await expect(result).rejects.toBe(error);
+
+      const status = lastStatus(actions);
+      assert(status.code === 'error');
+
+      expect(status.error).toBe(error);
+    });
+
+    it('wraps thrown values that are not errors', () => {
+      const { context, actions } = setup();
+
+      expect(() =>
+        createSpan('load-page', context).run(() => {
+          // eslint-disable-next-line @typescript-eslint/only-throw-error -- The case under test.
+          throw 'Request failed.';
+        }),
+      ).toThrow('Request failed.');
+
+      const status = lastStatus(actions);
+      assert(status.code === 'error');
+
+      expect(status.error).toBeInstanceOf(Error);
+      expect(status.error.cause).toBe('Request failed.');
+    });
+
+    it('does not start the work if the span was already entered', () => {
+      const { context } = setup();
+      const span = createSpan('load-page', context);
+      const work = vi.fn<() => void>();
+
+      span.enter();
+
+      expect(() => span.run(work)).toThrow(SpanAlreadyEnteredError);
+      expect(work).not.toHaveBeenCalled();
+    });
+  });
+
   describe('child', () => {
     it('sends actions to its own handler, not its parent', () => {
       const handlers = [vi.fn(), vi.fn()];
