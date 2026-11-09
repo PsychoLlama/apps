@@ -2,7 +2,7 @@ import { type Log, type LogProcessor, createLogger } from '@holz/core';
 import type { ResolvedConfig, ViteDevServer } from 'vite';
 import { LOG_EVENT } from '../protocol/events.ts';
 import { type SerializedLog, serializeLog } from '../protocol/serialization.ts';
-import { type HolzConfig, holz } from '../server.ts';
+import { holz } from '../server.ts';
 
 type Listener = (log: SerializedLog) => void;
 
@@ -10,9 +10,7 @@ type Hook = (...args: unknown[]) => unknown;
 
 // Stands in for the dev server: runs the hooks in Vite's order against just
 // enough surface, with a hook to play messages arriving from the browser.
-const startServer = async (
-  options: HolzConfig | ((config: ResolvedConfig) => Promise<HolzConfig>),
-) => {
+const startServer = async (createProcessor: Parameters<typeof holz>[0]) => {
   const listeners = new Map<string, Listener>();
   const logger = {
     error: vi.fn<(message: string, options?: { error?: Error }) => void>(),
@@ -27,7 +25,7 @@ const startServer = async (
     },
   } as unknown as ViteDevServer;
 
-  const plugin = holz(options);
+  const plugin = holz(createProcessor);
   await (plugin.config as Hook)({}, { command: 'serve', mode: 'development' });
   await (plugin.configResolved as Hook)(config);
   (plugin.configureServer as Hook)(server);
@@ -44,16 +42,18 @@ const capture = (emit: (logger: ReturnType<typeof createLogger>) => void) => {
   return logs[0];
 };
 
-class ConfigFailure extends Error {}
+const createNoop = async (): Promise<LogProcessor> => () => {};
+
+class SetupFailure extends Error {}
 class ProcessorFailure extends Error {}
 
 describe('holz', () => {
   it('only applies to the dev server', () => {
-    expect(holz({ processor: () => {} }).apply).toBe('serve');
+    expect(holz(createNoop).apply).toBe('serve');
   });
 
   it('disables console forwarding by default', async () => {
-    const plugin = holz({ processor: () => {} });
+    const plugin = holz(createNoop);
     const result = await (plugin.config as Hook)(
       {},
       { command: 'serve', mode: 'development' },
@@ -63,7 +63,7 @@ describe('holz', () => {
   });
 
   it('respects an explicit console forwarding setting', async () => {
-    const plugin = holz({ processor: () => {} });
+    const plugin = holz(createNoop);
     const result = await (plugin.config as Hook)(
       { server: { forwardConsole: true } },
       { command: 'serve', mode: 'development' },
@@ -74,7 +74,7 @@ describe('holz', () => {
 
   it('hands hydrated logs to the processor', async () => {
     const processor = vi.fn<LogProcessor>();
-    const { receive } = await startServer({ processor });
+    const { receive } = await startServer(async () => processor);
     const error = new TypeError('boom');
 
     receive(capture((logger) => logger.error('failed', { error })));
@@ -84,30 +84,38 @@ describe('holz', () => {
     expect(processor.mock.calls[0][0].context.error).toBeInstanceOf(TypeError);
   });
 
-  it('loads the config once, before the server starts', async () => {
-    const getConfig = vi.fn(async () => ({ processor: () => {} }));
-    const { receive } = await startServer(getConfig);
+  it('creates the processor once, before the server starts', async () => {
+    const createProcessor = vi.fn(createNoop);
+    const { receive } = await startServer(createProcessor);
 
     receive(capture((logger) => logger.info('one')));
     receive(capture((logger) => logger.info('two')));
 
-    expect(getConfig).toHaveBeenCalledOnce();
+    expect(createProcessor).toHaveBeenCalledOnce();
   });
 
-  it("passes Vite's resolved config to a config function", async () => {
-    const getConfig = vi.fn<(config: ResolvedConfig) => Promise<HolzConfig>>(
-      async () => ({ processor: () => {} }),
-    );
-    await startServer(getConfig);
+  it("passes Vite's resolved config to the function", async () => {
+    const createProcessor =
+      vi.fn<(config: ResolvedConfig) => Promise<LogProcessor>>(createNoop);
+    await startServer(createProcessor);
 
-    expect(getConfig.mock.calls[0][0].root).toBe('/app');
+    expect(createProcessor.mock.calls[0][0].root).toBe('/app');
   });
 
-  it('waits for an async config', async () => {
+  it('accepts a synchronous function', async () => {
+    const processor = vi.fn<LogProcessor>();
+    const { receive } = await startServer(() => processor);
+
+    receive(capture((logger) => logger.info('hello')));
+
+    expect(processor).toHaveBeenCalledOnce();
+  });
+
+  it('waits for an asynchronous function', async () => {
     const processor = vi.fn<LogProcessor>();
     const { receive } = await startServer(async () => {
       await Promise.resolve();
-      return { processor };
+      return processor;
     });
 
     receive(capture((logger) => logger.info('hello')));
@@ -115,24 +123,25 @@ describe('holz', () => {
     expect(processor).toHaveBeenCalledOnce();
   });
 
-  it('requires a config function to be async', () => {
-    // @ts-expect-error A config function must return a promise.
-    holz(() => ({ processor: () => {} }));
+  it('fails to start when the function rejects', async () => {
+    await expect(
+      startServer(() => Promise.reject(new SetupFailure())),
+    ).rejects.toBeInstanceOf(SetupFailure);
   });
 
-  it('fails to start when the config fails to load', async () => {
+  it('fails to start when the function throws', async () => {
     await expect(
-      startServer(() => Promise.reject(new ConfigFailure())),
-    ).rejects.toBeInstanceOf(ConfigFailure);
+      startServer(() => {
+        throw new SetupFailure();
+      }),
+    ).rejects.toBeInstanceOf(SetupFailure);
   });
 
   it('reports a processor that throws and keeps going', async () => {
     const messages: string[] = [];
-    const { logger, receive } = await startServer({
-      processor: (log) => {
-        if (log.message === 'bad') throw new ProcessorFailure('cannot cope');
-        messages.push(log.message);
-      },
+    const { logger, receive } = await startServer(async () => (log) => {
+      if (log.message === 'bad') throw new ProcessorFailure('cannot cope');
+      messages.push(log.message);
     });
 
     receive(capture((logger) => logger.info('bad')));
