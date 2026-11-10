@@ -1,5 +1,6 @@
 export {
   createLogger,
+  deleteLogsDatabase,
   level,
   type Log,
   type LogContext,

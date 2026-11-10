@@ -830,9 +830,6 @@ importers:
       '@lib/effects':
         specifier: workspace:*
         version: link:../../lib/effects
-      '@lib/holz-idb-backend':
-        specifier: workspace:*
-        version: link:../../lib/holz-idb-backend
       '@lib/observability':
         specifier: workspace:*
         version: link:../../lib/observability

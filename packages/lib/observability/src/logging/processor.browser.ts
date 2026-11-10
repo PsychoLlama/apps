@@ -8,6 +8,7 @@ import { createViteBackend } from '@lib/holz-vite-backend/client';
 
 import { filter } from '../config';
 import { onExit } from './exit';
+import { LOGS_DATABASE } from './storage';
 
 // Under Vitest `import.meta.env.MODE` is `'test'`. Mirror the server
 // processor's `NODE_ENV` guard and stay silent so suites don't spew log
@@ -23,6 +24,8 @@ const isMainThread = 'document' in globalThis;
 // suites would race over the shared database.
 const createPersistence = (): LogProcessor => {
   const { processor, flush } = createIdbBackend({
+    db: LOGS_DATABASE,
+
     // Replays the old backend's schema history so existing databases line up,
     // then retires its `pruning` store: `retain` bounds the archive now. The
     // old backend added `pruning` right after `init`, so anchor there.
