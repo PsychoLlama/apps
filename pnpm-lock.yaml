@@ -177,29 +177,29 @@ catalogs:
       specifier: ^1.8.0
       version: 1.8.0
     '@holz/ansi-terminal-backend':
-      specifier: 0.11.0
-      version: 0.11.0
+      specifier: 0.11.1
+      version: 0.11.1
     '@holz/console-backend':
-      specifier: 0.11.0
-      version: 0.11.0
+      specifier: 0.11.1
+      version: 0.11.1
     '@holz/core':
-      specifier: 0.11.0
-      version: 0.11.0
+      specifier: 0.11.1
+      version: 0.11.1
     '@holz/env-filter':
-      specifier: 0.11.0
-      version: 0.11.0
+      specifier: 0.11.1
+      version: 0.11.1
     '@holz/json-backend':
-      specifier: 0.11.0
-      version: 0.11.0
+      specifier: 0.11.1
+      version: 0.11.1
     '@holz/log-collector':
-      specifier: 0.11.0
-      version: 0.11.0
+      specifier: 0.11.1
+      version: 0.11.1
     '@holz/pattern-filter':
-      specifier: 0.11.0
-      version: 0.11.0
+      specifier: 0.11.1
+      version: 0.11.1
     '@holz/stream-backend':
-      specifier: 0.11.0
-      version: 0.11.0
+      specifier: 0.11.1
+      version: 0.11.1
     '@iconify/json':
       specifier: ^2.2.470
       version: 2.2.550
@@ -1035,13 +1035,13 @@ importers:
         version: link:../vite-plugin-svg-to-png
       '@holz/ansi-terminal-backend':
         specifier: 'catalog:'
-        version: 0.11.0(@holz/core@0.11.0)
+        version: 0.11.1(@holz/core@0.11.1)
       '@holz/core':
         specifier: 'catalog:'
-        version: 0.11.0
+        version: 0.11.1
       '@holz/json-backend':
         specifier: 'catalog:'
-        version: 0.11.0(@holz/core@0.11.0)
+        version: 0.11.1(@holz/core@0.11.1)
       '@lib/holz-vite-backend':
         specifier: workspace:*
         version: link:../../lib/holz-vite-backend
@@ -1165,10 +1165,10 @@ importers:
     dependencies:
       '@holz/core':
         specifier: 'catalog:'
-        version: 0.11.0
+        version: 0.11.1
       '@holz/pattern-filter':
         specifier: 'catalog:'
-        version: 0.11.0(@holz/core@0.11.0)
+        version: 0.11.1(@holz/core@0.11.1)
       '@lib/runtime-config':
         specifier: workspace:*
         version: link:../runtime-config
@@ -1181,7 +1181,7 @@ importers:
     dependencies:
       '@holz/core':
         specifier: 'catalog:'
-        version: 0.11.0
+        version: 0.11.1
       '@lib/assert':
         specifier: workspace:*
         version: link:../assert
@@ -1200,7 +1200,7 @@ importers:
     dependencies:
       '@holz/core':
         specifier: 'catalog:'
-        version: 0.11.0
+        version: 0.11.1
       serialize-error:
         specifier: 'catalog:'
         version: 13.1.0
@@ -1222,22 +1222,22 @@ importers:
     dependencies:
       '@holz/ansi-terminal-backend':
         specifier: 'catalog:'
-        version: 0.11.0(@holz/core@0.11.0)
+        version: 0.11.1(@holz/core@0.11.1)
       '@holz/console-backend':
         specifier: 'catalog:'
-        version: 0.11.0(@holz/core@0.11.0)
+        version: 0.11.1(@holz/core@0.11.1)
       '@holz/core':
         specifier: 'catalog:'
-        version: 0.11.0
+        version: 0.11.1
       '@holz/env-filter':
         specifier: 'catalog:'
-        version: 0.11.0(@holz/core@0.11.0)
+        version: 0.11.1(@holz/core@0.11.1)
       '@holz/log-collector':
         specifier: 'catalog:'
-        version: 0.11.0(@holz/core@0.11.0)
+        version: 0.11.1(@holz/core@0.11.1)
       '@holz/stream-backend':
         specifier: 'catalog:'
-        version: 0.11.0(@holz/core@0.11.0)
+        version: 0.11.1(@holz/core@0.11.1)
       '@lib/holz-config-filter':
         specifier: workspace:*
         version: link:../holz-config-filter
@@ -1283,7 +1283,7 @@ importers:
     dependencies:
       '@holz/json-backend':
         specifier: 'catalog:'
-        version: 0.11.0(@holz/core@0.11.0)
+        version: 0.11.1(@holz/core@0.11.1)
       '@lib/assert':
         specifier: workspace:*
         version: link:../assert
@@ -1410,7 +1410,7 @@ importers:
     dependencies:
       '@holz/core':
         specifier: 'catalog:'
-        version: 0.11.0
+        version: 0.11.1
       '@lib/to-error':
         specifier: workspace:*
         version: link:../to-error
@@ -1871,41 +1871,41 @@ packages:
   '@floating-ui/utils@0.2.12':
     resolution: {integrity: sha512-HpCo8tmWzLVad5s2d19EhAz5zqrrQ6s69qd6moPMQvkOuSwDT1YgRfWSVuc4ennqrgv3OHppiOGMQ7oC13yIww==}
 
-  '@holz/ansi-terminal-backend@0.11.0':
-    resolution: {integrity: sha512-sVJIINSFQa55fxNUrGFjALA5YaWFDgxERzPTXdk7Udg4i9GXs/4jyKR5Wh0qBcd4I46WjywETrXSVZj5vzMADw==}
+  '@holz/ansi-terminal-backend@0.11.1':
+    resolution: {integrity: sha512-dLQA3VAGJCuWRcJ58LX5kL6YsyVW35YvC+KD7llTl9Vbv67aaLLFkFnszQJppYQYG0sphSB84+WAfU90aCIwpg==}
     peerDependencies:
       '@holz/core': ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0
 
-  '@holz/console-backend@0.11.0':
-    resolution: {integrity: sha512-8d93H/FTjJJ+yV1siJ54AEeJ/oGfOh8n/zwH/sLsmF4kGc8UL7jfnYYkD8047i+iEo/jKUybe3qLGzYO97jGkw==}
+  '@holz/console-backend@0.11.1':
+    resolution: {integrity: sha512-2YgfZ0rDrzXhAkls+oA9+vkGl/HUSW+DMQ9qDVxaVMdFb73PqQFwrpukqJDbg4RjS4V7j+IXagw6i8M1hHVZqA==}
     peerDependencies:
       '@holz/core': ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0
 
-  '@holz/core@0.11.0':
-    resolution: {integrity: sha512-CeRm/Nj3R2lfdeFBhpW9b2r3VZZ2aCBdKh4m2SRQpOGwqeJAKAtwuNUr1SIZQHtqBlWspV9st4kSyMQKVyVBvA==}
+  '@holz/core@0.11.1':
+    resolution: {integrity: sha512-V/7qVlM4yxpE3e8rfBDiWArOZMak8GfDmLmUVnJbjhkrE6LKtWxnzp57H1jIfuOEXqAqBlPdl9waHlXa+7b8eA==}
 
-  '@holz/env-filter@0.11.0':
-    resolution: {integrity: sha512-Wi06HThzZhtK5xy+HevF0HkJ0h/6agfE7bBRzyqwb8ETFfMswkPEYEHDi4pAacC4YCEGG8XIH9BP3aC46btt5Q==}
+  '@holz/env-filter@0.11.1':
+    resolution: {integrity: sha512-9GZdOohz4QDNcDJ9+4OYWXU7dTj/y7Z8il6HccHgz6Dk6Rx5IuAgxHz1RJmnNDJQlkk/qLif+0n+AFvd0B8TkQ==}
     peerDependencies:
       '@holz/core': ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0
 
-  '@holz/json-backend@0.11.0':
-    resolution: {integrity: sha512-aCBW2MCsQDK4IyUY5zCis4wnqv9+3mvXZtJ6x1V3aIxY+FfjD+vw8TXcLe1sYjG4snqG/fV634Dk0x+ceqHAQw==}
+  '@holz/json-backend@0.11.1':
+    resolution: {integrity: sha512-8Ug10W3ugTK+I9Z11jJp3we/XrQQ9iOabgGhtUvAqnCLx3rM0GqI4aonotJISOgaQ/pDddqq2AWiyYa8XnzJog==}
     peerDependencies:
       '@holz/core': ^0.9.0 || ^0.10.0 || ^0.11.0
 
-  '@holz/log-collector@0.11.0':
-    resolution: {integrity: sha512-vWceT/bWTYc41DykQAMwheVHhNDN5NKFmV9jgBFyOVkEyOPIgIMeYmf4fq5+/oXgEpWA0qyBkM5xVyAhotcZGw==}
+  '@holz/log-collector@0.11.1':
+    resolution: {integrity: sha512-slzsn1QLRt24ZcsEOpUf20tCK6q+gxCL7rEK5oRn0bt4VrdVxUgrzgHETNxcDZ+McoFuPN4+hvF0hTmFgmC1UQ==}
     peerDependencies:
       '@holz/core': ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0
 
-  '@holz/pattern-filter@0.11.0':
-    resolution: {integrity: sha512-tgWwODKKs168UlbDc8cnWhkya9kWM2BZ7h+RMprCLae3Cbp7xgEJBFCaV8hoayUIe7uTJrc5OO7FLMdrBFZygA==}
+  '@holz/pattern-filter@0.11.1':
+    resolution: {integrity: sha512-is942bihDhPjriEsoD88yncU9OpzPk5Jq7BaxiEwXfvuZAEtEQ0LQK9qmbXqdjKn9mUTwNlScDbmp0fhEMkIHw==}
     peerDependencies:
       '@holz/core': ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0
 
-  '@holz/stream-backend@0.11.0':
-    resolution: {integrity: sha512-BQNmCvR/ber7LafVl8cdHRWm32IdUcXZTBA8DUXAG9B1ZNUANKjIqeMeuzlS14WVCRQGAIDI1iNKq+h9EWA58Q==}
+  '@holz/stream-backend@0.11.1':
+    resolution: {integrity: sha512-A8KvJctzELVRbrCjPAGEhTLkQH2MIkYS9+5/GFgeMFhpSqYCfBH9P104YUt5GsrZFn9FWeJiDsDifVXxQ/YktQ==}
     peerDependencies:
       '@holz/core': ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0
 
@@ -5495,36 +5495,36 @@ snapshots:
 
   '@floating-ui/utils@0.2.12': {}
 
-  '@holz/ansi-terminal-backend@0.11.0(@holz/core@0.11.0)':
+  '@holz/ansi-terminal-backend@0.11.1(@holz/core@0.11.1)':
     dependencies:
-      '@holz/core': 0.11.0
+      '@holz/core': 0.11.1
 
-  '@holz/console-backend@0.11.0(@holz/core@0.11.0)':
+  '@holz/console-backend@0.11.1(@holz/core@0.11.1)':
     dependencies:
-      '@holz/core': 0.11.0
+      '@holz/core': 0.11.1
 
-  '@holz/core@0.11.0': {}
+  '@holz/core@0.11.1': {}
 
-  '@holz/env-filter@0.11.0(@holz/core@0.11.0)':
+  '@holz/env-filter@0.11.1(@holz/core@0.11.1)':
     dependencies:
-      '@holz/core': 0.11.0
-      '@holz/pattern-filter': 0.11.0(@holz/core@0.11.0)
+      '@holz/core': 0.11.1
+      '@holz/pattern-filter': 0.11.1(@holz/core@0.11.1)
 
-  '@holz/json-backend@0.11.0(@holz/core@0.11.0)':
+  '@holz/json-backend@0.11.1(@holz/core@0.11.1)':
     dependencies:
-      '@holz/core': 0.11.0
+      '@holz/core': 0.11.1
 
-  '@holz/log-collector@0.11.0(@holz/core@0.11.0)':
+  '@holz/log-collector@0.11.1(@holz/core@0.11.1)':
     dependencies:
-      '@holz/core': 0.11.0
+      '@holz/core': 0.11.1
 
-  '@holz/pattern-filter@0.11.0(@holz/core@0.11.0)':
+  '@holz/pattern-filter@0.11.1(@holz/core@0.11.1)':
     dependencies:
-      '@holz/core': 0.11.0
+      '@holz/core': 0.11.1
 
-  '@holz/stream-backend@0.11.0(@holz/core@0.11.0)':
+  '@holz/stream-backend@0.11.1(@holz/core@0.11.1)':
     dependencies:
-      '@holz/core': 0.11.0
+      '@holz/core': 0.11.1
 
   '@humanfs/core@0.19.2':
     dependencies:
