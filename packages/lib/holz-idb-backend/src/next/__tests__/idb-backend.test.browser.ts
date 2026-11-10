@@ -1,6 +1,6 @@
 import { level, type Log } from '@holz/core';
 
-import { getMigrations, type DatabaseConfig } from '../database';
+import { getMigrations, type DatabaseConfig } from '../database/internal';
 import { openCurrent } from '../database/open';
 import { promisifyRequest } from '../database/promise';
 import { remove } from '../database/remove';

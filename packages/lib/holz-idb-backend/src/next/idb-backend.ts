@@ -14,7 +14,7 @@ import {
   type DatabaseConfig,
   type MigrationNames,
   type Migration,
-} from './database';
+} from './database/internal';
 
 /** Options for {@link createIdbBackend}. */
 export interface IdbBackendConfig {
