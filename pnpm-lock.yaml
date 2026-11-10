@@ -413,9 +413,6 @@ importers:
       '@lib/effects':
         specifier: workspace:*
         version: link:../../lib/effects
-      '@lib/holz-idb-backend':
-        specifier: workspace:*
-        version: link:../../lib/holz-idb-backend
       '@lib/messaging':
         specifier: workspace:*
         version: link:../../lib/messaging
@@ -495,9 +492,6 @@ importers:
       '@lib/gallery':
         specifier: workspace:*
         version: link:../../lib/gallery
-      '@lib/holz-idb-backend':
-        specifier: workspace:*
-        version: link:../../lib/holz-idb-backend
       '@lib/observability':
         specifier: workspace:*
         version: link:../../lib/observability
@@ -565,9 +559,6 @@ importers:
       '@lib/effects':
         specifier: workspace:*
         version: link:../../lib/effects
-      '@lib/holz-idb-backend':
-        specifier: workspace:*
-        version: link:../../lib/holz-idb-backend
       '@lib/observability':
         specifier: workspace:*
         version: link:../../lib/observability
@@ -672,9 +663,6 @@ importers:
       '@lib/effects':
         specifier: workspace:*
         version: link:../../lib/effects
-      '@lib/holz-idb-backend':
-        specifier: workspace:*
-        version: link:../../lib/holz-idb-backend
       '@lib/observability':
         specifier: workspace:*
         version: link:../../lib/observability
@@ -736,9 +724,6 @@ importers:
       '@lib/effects':
         specifier: workspace:*
         version: link:../../lib/effects
-      '@lib/holz-idb-backend':
-        specifier: workspace:*
-        version: link:../../lib/holz-idb-backend
       '@lib/messaging':
         specifier: workspace:*
         version: link:../../lib/messaging
