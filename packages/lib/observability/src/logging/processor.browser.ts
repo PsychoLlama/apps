@@ -14,6 +14,10 @@ import { filter } from '../config';
 // this to `true` and drop the gate.
 const notTest = import.meta.env.MODE !== 'test';
 
+// Checked through `globalThis` because this module also compiles for the
+// service worker, where `document` isn't typed.
+const isMainThread = 'document' in globalThis;
+
 // Opens IndexedDB as soon as it's created, so don't create it under test:
 // suites would race over the shared database.
 const createPersistence = (): LogProcessor =>
@@ -41,7 +45,12 @@ const createPersistence = (): LogProcessor =>
     },
 
     buffer: { capacity: 1_000 },
-    batch: { size: 10 },
+
+    // Workers get no warning before they stop, so a pending batch would be
+    // lost. Only the page can flush (e.g. on hide); everything else writes
+    // each log as it comes.
+    batch: { size: isMainThread ? 10 : 1 },
+
     retain: 2_000,
 
     // Not through the logger: a failing backend would feed itself.
