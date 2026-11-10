@@ -179,6 +179,17 @@ describe('createIdbBackend', () => {
     expect([...database.objectStoreNames]).toContain('custom');
   });
 
+  it('rejects unknown default migration names', () => {
+    const customize: IdbBackendConfig['migrations'] = (defaults) => {
+      // @ts-expect-error Not a migration we ship.
+      defaults.findIndex((migration) => migration.name === 'intt');
+
+      return defaults;
+    };
+
+    expectTypeOf(customize).not.toBeUndefined();
+  });
+
   it('discards logs received after closing', async () => {
     await using context = createSchemaContext();
     using backend = startBackend(context.schema);

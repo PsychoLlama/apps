@@ -12,6 +12,7 @@ import {
   getMigrations,
   insert,
   type DatabaseConfig,
+  type MigrationNames,
   type Migration,
 } from './database';
 
@@ -25,7 +26,7 @@ export interface IdbBackendConfig {
    * defaults, oldest first, and returns the full list. A migration's position
    * is its version, so never reorder or remove one that has shipped.
    */
-  migrations?: (defaults: Migration[]) => Migration[];
+  migrations?: (defaults: Migration<MigrationNames>[]) => Migration[];
 
   /** Holds logs while the database opens. Unlimited by default. */
   buffer?: LogBufferOptions;
@@ -152,7 +153,8 @@ const DEFAULT_DB_CONFIG: DatabaseConfig = {
   index: 'by-timestamp',
 };
 
-const useDefaultMigrations = (defaults: Migration[]) => defaults;
+const useDefaultMigrations = (defaults: Migration<MigrationNames>[]) =>
+  defaults;
 
 /** Drop logs. Happens on fatal errors or when explicitly closed. */
 const discard: LogProcessor = () => {};
