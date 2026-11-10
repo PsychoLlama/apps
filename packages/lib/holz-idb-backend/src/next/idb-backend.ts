@@ -1,4 +1,4 @@
-import type { LogProcessor } from '@holz/core';
+import type { Log, LogProcessor } from '@holz/core';
 import {
   createBatcher,
   createBuffer,
@@ -12,19 +12,21 @@ import {
   getMigrations,
   insert,
   type DatabaseConfig,
+  type MigrationNames,
+  type Migration,
 } from './database';
-import { onPageHide } from './page-hide';
-
-const DEFAULT_DB_CONFIG: DatabaseConfig = {
-  name: '@holz',
-  table: 'logs',
-  index: 'by-timestamp',
-};
 
 /** Options for {@link createIdbBackend}. */
 export interface IdbBackendConfig {
   /** Where logs are persisted. Defaults to {@link DEFAULT_DB_CONFIG}. */
   db?: DatabaseConfig;
+
+  /**
+   * Customize the schema's migrations, e.g. to add your own. Receives the
+   * defaults, oldest first, and returns the full list. A migration's position
+   * is its version, so never reorder or remove one that has shipped.
+   */
+  migrations?: (defaults: Migration<MigrationNames>[]) => Migration[];
 
   /** Holds logs while the database opens. Unlimited by default. */
   buffer?: LogBufferOptions;
@@ -51,6 +53,13 @@ export interface IdbBackend {
   processor: LogProcessor;
 
   /**
+   * Write the pending batch now, without waiting for it to fill. Call this
+   * when the app may stop soon, such as when the page is hidden. Logs still
+   * waiting on the database to open aren't written.
+   */
+  flush: () => void;
+
+  /**
    * Write any pending batch, then disconnect from the database and discard all
    * logs from then on.
    */
@@ -63,38 +72,37 @@ export interface IdbBackend {
  */
 export const createIdbBackend = ({
   db: config = DEFAULT_DB_CONFIG,
-  batch,
+  migrations: customize = useDefaultMigrations,
+  batch: batchOptions,
   buffer: bufferOptions,
   retain,
   onError,
 }: IdbBackendConfig): IdbBackend => {
-  let connection: IDBDatabase | null = null;
-  const migrations = getMigrations(config);
+  let db: IDBDatabase | null = null;
+  const migrations = customize(getMigrations(config));
 
-  const {
-    clear,
-    drain: flush,
-    processor: addToBatch,
-  } = createBatcher({
-    ...batch,
+  // Called when:
+  // - DB (re)connects with buffered logs.
+  // - Batch size is met.
+  // - Explicitly flushed or closed.
+  //
+  // Caller responsible for ensuring a live connection before invocation.
+  const write = (logs: Log[]) => {
+    insert(db!, logs, { table: config.table, retain }).catch(onError);
+  };
 
-    // Batches only fill while connected: through the `db` route, or the flush
-    // right after connecting. `close` only flushes while connected.
-    sink: (logs) => {
-      insert(connection!, logs, { table: config.table, retain }).catch(onError);
-    },
-  });
+  const batch = createBatcher({ ...batchOptions, sink: write });
 
   const { drain, processor: buffer } = createBuffer(bufferOptions);
   const { select, processor: router } = createRouter('buffer', {
     buffer, // Queue while connecting.
-    db: addToBatch, // Persist to IndexedDB.
-    drop: () => {}, // Terminal state: sinkhole.
+    db: batch.processor, // Persist to IndexedDB.
+    noop: discard, // Terminal state.
   });
 
-  const sinkhole = () => {
-    select('drop'); // Sinkhole future logs.
-    clear(); // Clear pending batch.
+  const discardAndYield = () => {
+    select('noop'); // Ignore future logs.
+    batch.clear(); // Clear pending batch.
     drain(); // Clear queued logs.
   };
 
@@ -105,37 +113,48 @@ export const createIdbBackend = ({
     // May invoke multiple times. Handle is released and re-acquired if new
     // tabs/processes have new migrations, if the DB is deleted, or if the
     // browser closes it (e.g. storage was cleared).
-    onChange: (db) => {
-      connection = db;
+    onChange: (connection) => {
+      db = connection;
       select(db ? 'db' : 'buffer');
 
-      // Flush logs that were buffered while connecting.
-      if (db) drain().forEach(addToBatch);
+      if (db) {
+        const buffered = drain();
+        if (buffered.length) write(buffered);
+      } else {
+        // Move uncommitted logs to the buffer.
+        batch.clear().forEach(buffer);
+      }
     },
 
     // Unrecoverable error. Give up and sinkhole future logs.
     onError: (error) => {
-      sinkhole();
+      discardAndYield();
       onError(error);
     },
   });
 
-  // Page is about to suspend. Flush pending logs.
-  const unsubscribe = onPageHide(() => {
-    if (connection) flush();
-  });
-
-  return {
-    processor: router,
-    close: () => {
-      unsubscribe();
-
-      // Must come first. Transactions already started still finish after the
-      // connection closes, but no new ones can start.
-      if (connection) flush();
-
-      disconnect();
-      sinkhole();
-    },
+  // Batches only fill while connected, so there's nothing to write otherwise.
+  const flush = () => {
+    if (db) batch.drain();
   };
+
+  const close = () => {
+    flush();
+    disconnect();
+    discardAndYield();
+  };
+
+  return { processor: router, flush, close };
 };
+
+const DEFAULT_DB_CONFIG: DatabaseConfig = {
+  name: '@holz',
+  table: 'logs',
+  index: 'by-timestamp',
+};
+
+const useDefaultMigrations = (defaults: Migration<MigrationNames>[]) =>
+  defaults;
+
+/** Drop logs. Happens on fatal errors or when explicitly closed. */
+const discard: LogProcessor = () => {};
