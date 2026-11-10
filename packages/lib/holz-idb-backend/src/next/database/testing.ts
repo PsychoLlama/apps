@@ -1,6 +1,6 @@
 import { getMigrations, type DatabaseConfig } from './migrations';
 import { openOrUpgrade } from './open';
-import { remove } from './remove';
+import { deleteDatabase } from './delete-database';
 
 /** A unique schema whose database is removed on disposal, if it exists. */
 export interface SchemaContext extends AsyncDisposable {
@@ -22,7 +22,7 @@ export const createSchemaContext = (): SchemaContext => {
 
   return {
     schema,
-    [Symbol.asyncDispose]: () => remove(schema.name),
+    [Symbol.asyncDispose]: () => deleteDatabase(schema.name),
   };
 };
 

@@ -1,1 +1,1 @@
-export { remove } from './remove';
+export { deleteDatabase } from './delete-database';

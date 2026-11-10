@@ -3,7 +3,7 @@ import { level, type Log } from '@holz/core';
 import { getMigrations, type DatabaseConfig } from '../database/internal';
 import { openCurrent } from '../database/open';
 import { promisifyRequest } from '../database/promise';
-import { remove } from '../database/remove';
+import { deleteDatabase } from '../database/delete-database';
 import { createSchemaContext } from '../database/testing';
 import { createIdbBackend, type IdbBackendConfig } from '../idb-backend';
 
@@ -134,7 +134,7 @@ describe('createIdbBackend', () => {
     backend.processor(first);
     await waitForLogs(context.schema, [first]);
 
-    await remove(context.schema.name);
+    await deleteDatabase(context.schema.name);
     backend.processor(second);
 
     await waitForLogs(context.schema, [second]);
@@ -149,7 +149,7 @@ describe('createIdbBackend', () => {
     const later = [createLog('second'), createLog('third')];
 
     backend.processor(pending); // Half a batch.
-    await remove(context.schema.name);
+    await deleteDatabase(context.schema.name);
 
     // Whether these arrive before or after reconnecting, they belong after
     // the pending log.

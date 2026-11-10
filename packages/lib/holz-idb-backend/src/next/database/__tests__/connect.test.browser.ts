@@ -1,7 +1,7 @@
 import { connect } from '../connect';
 import type { Migration } from '../migrations';
 import { openOrUpgrade } from '../open';
-import { remove } from '../remove';
+import { deleteDatabase } from '../delete-database';
 import { createSchemaContext } from '../testing';
 
 const createMigration = (name: string) => ({
@@ -88,7 +88,7 @@ describe('connect', () => {
     using connection = startConnection(name, [first]);
 
     await connection.waitForChanges(1);
-    await remove(name);
+    await deleteDatabase(name);
     await connection.waitForChanges(3);
 
     expect(connection.onChange.mock.calls[1]).toEqual([null]);
@@ -157,7 +157,7 @@ describe('connect', () => {
 
     // Lands between the failed migrating open and the versionless one, since
     // requests run in order and the versionless open isn't queued yet.
-    await remove(name);
+    await deleteDatabase(name);
     const database = await connection.waitForChanges(1);
 
     expect(database?.version).toBe(1);
@@ -194,7 +194,7 @@ describe('connect', () => {
 
       const database = await connection.waitForChanges(1);
       connection.close();
-      await remove(name);
+      await deleteDatabase(name);
 
       expect(connection.onChange.mock.calls).toEqual([[database], [null]]);
       expect(first.run).toHaveBeenCalledTimes(1);
@@ -206,7 +206,7 @@ describe('connect', () => {
       using connection = startConnection(name, [createMigration('first')]);
 
       await connection.waitForChanges(1);
-      await remove(name);
+      await deleteDatabase(name);
       await connection.waitForChanges(3);
       connection.close();
 
@@ -222,7 +222,7 @@ describe('connect', () => {
       connection.close();
 
       // Deleting waits for the connection to close.
-      await remove(name);
+      await deleteDatabase(name);
 
       expect(connection.onChange).not.toHaveBeenCalled();
       expect(connection.onError).not.toHaveBeenCalled();
@@ -235,7 +235,7 @@ describe('connect', () => {
       using connection = startConnection(name, [broken]);
 
       connection.close();
-      await remove(name);
+      await deleteDatabase(name);
 
       expect(connection.onError).not.toHaveBeenCalled();
     });
@@ -278,7 +278,7 @@ describe('connect', () => {
       });
 
       await connection.waitForChanges(1);
-      await remove(name);
+      await deleteDatabase(name);
 
       // Opens run in order, so a reconnect would have recreated the database
       // before this one, and the probe wouldn't run.
