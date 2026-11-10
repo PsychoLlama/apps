@@ -15,12 +15,6 @@ import {
   type Migration,
 } from './database';
 
-const DEFAULT_DB_CONFIG: DatabaseConfig = {
-  name: '@holz',
-  table: 'logs',
-  index: 'by-timestamp',
-};
-
 /** Options for {@link createIdbBackend}. */
 export interface IdbBackendConfig {
   /** Where logs are persisted. Defaults to {@link DEFAULT_DB_CONFIG}. */
@@ -77,7 +71,7 @@ export interface IdbBackend {
  */
 export const createIdbBackend = ({
   db: config = DEFAULT_DB_CONFIG,
-  migrations: customize = (defaults) => defaults,
+  migrations: customize = useDefaultMigrations,
   batch: batchOptions,
   buffer: bufferOptions,
   retain,
@@ -100,7 +94,7 @@ export const createIdbBackend = ({
   const { select, processor: router } = createRouter('buffer', {
     buffer, // Queue while connecting.
     db: batch.processor, // Persist to IndexedDB.
-    noop: () => {}, // Terminal state: sinkhole.
+    noop: discard, // Terminal state.
   });
 
   const discardAndYield = () => {
@@ -144,3 +138,14 @@ export const createIdbBackend = ({
 
   return { processor: router, flush, close };
 };
+
+const DEFAULT_DB_CONFIG: DatabaseConfig = {
+  name: '@holz',
+  table: 'logs',
+  index: 'by-timestamp',
+};
+
+const useDefaultMigrations = (defaults: Migration[]) => defaults;
+
+/** Drop logs. Happens on fatal errors or when explicitly closed. */
+const discard: LogProcessor = () => {};
