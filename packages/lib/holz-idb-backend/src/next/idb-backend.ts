@@ -73,7 +73,7 @@ export const createIdbBackend = ({
     // Batches only fill while connected: through the `db` route, or the flush
     // right after connecting. `close` only flushes while connected.
     sink: (logs) => {
-      insert(connection!, config.table, logs, retain).catch(onError);
+      insert(connection!, logs, { table: config.table, retain }).catch(onError);
     },
   });
 

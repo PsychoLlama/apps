@@ -13,6 +13,12 @@ const createLog = (overrides: Partial<Log> = {}): Log => ({
   ...overrides,
 });
 
+const uncloneable = (message: string) =>
+  createLog({
+    message,
+    context: { uncloneable: () => {} } as unknown as Log['context'],
+  });
+
 const readLogs = ({ database, schema }: DatabaseContext): Promise<Log[]> =>
   promisifyRequest(
     database
@@ -21,12 +27,18 @@ const readLogs = ({ database, schema }: DatabaseContext): Promise<Log[]> =>
       .getAll() as IDBRequest<Log[]>,
   );
 
+const save = (
+  { database, schema }: DatabaseContext,
+  logs: Log[],
+  retain = Infinity,
+) => insert(database, logs, { table: schema.table, retain });
+
 describe('insert', () => {
   it('writes every log in order', async () => {
     await using context = await openDatabaseContext();
     const logs = [createLog({ message: 'a' }), createLog({ message: 'b' })];
 
-    await insert(context.database, context.schema.table, logs, Infinity);
+    await save(context, logs);
 
     await expect(readLogs(context)).resolves.toEqual(logs);
   });
@@ -34,7 +46,7 @@ describe('insert', () => {
   it('resolves for an empty batch', async () => {
     await using context = await openDatabaseContext();
 
-    await insert(context.database, context.schema.table, [], Infinity);
+    await save(context, []);
 
     await expect(readLogs(context)).resolves.toEqual([]);
   });
@@ -43,8 +55,8 @@ describe('insert', () => {
     await using context = await openDatabaseContext();
     const logs = ['a', 'b', 'c', 'd'].map((message) => createLog({ message }));
 
-    await insert(context.database, context.schema.table, logs.slice(0, 2), 3);
-    await insert(context.database, context.schema.table, logs.slice(2), 3);
+    await save(context, logs.slice(0, 2), 3);
+    await save(context, logs.slice(2), 3);
 
     await expect(readLogs(context)).resolves.toEqual(logs.slice(1));
   });
@@ -53,7 +65,7 @@ describe('insert', () => {
     await using context = await openDatabaseContext();
     const logs = ['a', 'b', 'c'].map((message) => createLog({ message }));
 
-    await insert(context.database, context.schema.table, logs, 2);
+    await save(context, logs, 2);
 
     await expect(readLogs(context)).resolves.toEqual(logs.slice(1));
   });
@@ -61,16 +73,44 @@ describe('insert', () => {
   it('discards every log with a retain limit of zero', async () => {
     await using context = await openDatabaseContext();
 
-    await insert(context.database, context.schema.table, [createLog()], 0);
+    await save(context, [createLog()], 0);
 
     await expect(readLogs(context)).resolves.toEqual([]);
+  });
+
+  it('saves the rest of the batch around a log it cannot save', async () => {
+    await using context = await openDatabaseContext();
+    const first = createLog({ message: 'first' });
+    const last = createLog({ message: 'last' });
+
+    await expect(
+      save(context, [first, uncloneable('bad'), last]),
+    ).rejects.toMatchObject({ name: 'DataCloneError' });
+
+    await expect(readLogs(context)).resolves.toEqual([first, last]);
+  });
+
+  it('rejects with every failure when there are several', async () => {
+    await using context = await openDatabaseContext();
+    const result = save(context, [uncloneable('a'), uncloneable('b')]);
+
+    await expect(result).rejects.toBeInstanceOf(AggregateError);
+    await expect(result).rejects.toMatchObject({
+      errors: [
+        expect.objectContaining({ name: 'DataCloneError' }),
+        expect.objectContaining({ name: 'DataCloneError' }),
+      ],
+    });
   });
 
   it('rejects when the table does not exist', async () => {
     await using context = await openDatabaseContext();
 
     await expect(
-      insert(context.database, 'missing', [createLog()], Infinity),
+      insert(context.database, [createLog()], {
+        table: 'missing',
+        retain: Infinity,
+      }),
     ).rejects.toMatchObject({ name: 'NotFoundError' });
   });
 });
