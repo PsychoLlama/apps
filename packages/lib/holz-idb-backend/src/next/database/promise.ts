@@ -13,3 +13,24 @@ export const promisifyRequest = <T>(request: IDBRequest<T>): Promise<T> => {
 
   return promise;
 };
+
+/** Resolves once the transaction commits, or rejects if it aborts. */
+export const promisifyTransaction = (
+  transaction: IDBTransaction,
+): Promise<void> => {
+  const { promise, resolve, reject } = Promise.withResolvers<void>();
+
+  transaction.oncomplete = () => resolve();
+
+  // Every failure ends here, including requests that fail and writes that
+  // exceed the storage quota at commit.
+  transaction.onabort = () => {
+    const error =
+      transaction.error ??
+      new Error('IndexedDB transaction aborted.', { cause: transaction });
+
+    reject(error);
+  };
+
+  return promise;
+};
