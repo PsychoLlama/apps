@@ -7,6 +7,7 @@ import { createIdbBackend, type Migration } from '@lib/holz-idb-backend/next';
 import { createViteBackend } from '@lib/holz-vite-backend/client';
 
 import { filter } from '../config';
+import { onExit } from './exit';
 
 // Under Vitest `import.meta.env.MODE` is `'test'`. Mirror the server
 // processor's `NODE_ENV` guard and stay silent so suites don't spew log
@@ -20,8 +21,8 @@ const isMainThread = 'document' in globalThis;
 
 // Opens IndexedDB as soon as it's created, so don't create it under test:
 // suites would race over the shared database.
-const createPersistence = (): LogProcessor =>
-  createIdbBackend({
+const createPersistence = (): LogProcessor => {
+  const { processor, flush } = createIdbBackend({
     // Replays the old backend's schema history so existing databases line up,
     // then retires its `pruning` store: `retain` bounds the archive now. The
     // old backend added `pruning` right after `init`, so anchor there.
@@ -56,7 +57,12 @@ const createPersistence = (): LogProcessor =>
     // Not through the logger: a failing backend would feed itself.
     // eslint-disable-next-line no-console
     onError: (error) => console.error('Log persistence failed.', error),
-  }).processor;
+  });
+
+  onExit(flush);
+
+  return processor;
+};
 
 // The base destination for every browser realm: a config-filtered console
 // plus origin-shared IndexedDB persistence. A global collector

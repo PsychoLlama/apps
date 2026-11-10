@@ -31,6 +31,8 @@ export const createLogger = (scope: readonly string[]): Logger =>
  */
 export { level } from '@holz/core';
 
+export { prepareForExit } from './exit';
+
 export type {
   Log,
   LogContext,

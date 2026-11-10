@@ -6,6 +6,7 @@ export {
   type Logger,
   type LogLevel,
   type LogProcessor,
+  prepareForExit,
 } from './logging/index';
 export { CoercedError, toError } from '@lib/to-error';
 export {
