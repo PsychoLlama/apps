@@ -57,6 +57,7 @@ export const createIdbBackend = ({
   db: config = DEFAULT_DB_CONFIG,
   batch,
   buffer: bufferOptions,
+  retain,
   onError,
 }: IdbBackendConfig): IdbBackend => {
   let connection: IDBDatabase | null = null;
@@ -72,7 +73,7 @@ export const createIdbBackend = ({
     // Batches only fill while connected: through the `db` route, or the flush
     // right after connecting. `close` only flushes while connected.
     sink: (logs) => {
-      insert(connection!, config.table, logs).catch(onError);
+      insert(connection!, config.table, logs, retain).catch(onError);
     },
   });
 
