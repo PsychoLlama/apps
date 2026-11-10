@@ -1,4 +1,4 @@
-import type { LogProcessor } from '@holz/core';
+import type { Log, LogProcessor } from '@holz/core';
 import {
   createBatcher,
   createBuffer,
@@ -77,18 +77,20 @@ export const createIdbBackend = ({
   retain,
   onError,
 }: IdbBackendConfig): IdbBackend => {
-  let connection: IDBDatabase | null = null;
+  let db: IDBDatabase | null = null;
   const migrations = customize(getMigrations(config));
 
-  const batch = createBatcher({
-    ...batchOptions,
+  // Called when:
+  // - DB (re)connects with buffered logs.
+  // - Batch size is met.
+  // - Explicitly flushed or closed.
+  //
+  // Caller responsible for ensuring a live connection before invocation.
+  const write = (logs: Log[]) => {
+    insert(db!, logs, { table: config.table, retain }).catch(onError);
+  };
 
-    // Batches only fill while connected: through the `db` route, or the flush
-    // right after connecting. `close` only drains while connected.
-    sink: (logs) => {
-      insert(connection!, logs, { table: config.table, retain }).catch(onError);
-    },
-  });
+  const batch = createBatcher({ ...batchOptions, sink: write });
 
   const { drain, processor: buffer } = createBuffer(bufferOptions);
   const { select, processor: router } = createRouter('buffer', {
@@ -110,12 +112,17 @@ export const createIdbBackend = ({
     // May invoke multiple times. Handle is released and re-acquired if new
     // tabs/processes have new migrations, if the DB is deleted, or if the
     // browser closes it (e.g. storage was cleared).
-    onChange: (db) => {
-      connection = db;
+    onChange: (connection) => {
+      db = connection;
       select(db ? 'db' : 'buffer');
 
-      // Flush logs that were buffered while connecting.
-      if (db) drain().forEach(batch.processor);
+      if (db) {
+        const buffered = drain();
+        if (buffered.length) write(buffered);
+      } else {
+        // Move uncommitted logs to the buffer.
+        batch.clear().forEach(buffer);
+      }
     },
 
     // Unrecoverable error. Give up and sinkhole future logs.
@@ -127,7 +134,7 @@ export const createIdbBackend = ({
 
   // Batches only fill while connected, so there's nothing to write otherwise.
   const flush = () => {
-    if (connection) batch.drain();
+    if (db) batch.drain();
   };
 
   const close = () => {

@@ -57,6 +57,22 @@ const waitForLogs = (schema: DatabaseConfig, logs: Log[]) =>
     await expect(readLogs(schema)).resolves.toEqual(logs);
   });
 
+/**
+ * Logs received before the database opens skip batching, so write one and
+ * wait for it to land. Returns it, since it's in the database now.
+ */
+const waitForConnection = async (
+  backend: ReturnType<typeof startBackend>,
+  schema: DatabaseConfig,
+): Promise<Log> => {
+  const ready = createLog('ready');
+
+  backend.processor(ready);
+  await waitForLogs(schema, [ready]);
+
+  return ready;
+};
+
 describe('createIdbBackend', () => {
   it('persists logs received before the database opens', async () => {
     await using context = createSchemaContext();
@@ -67,6 +83,22 @@ describe('createIdbBackend', () => {
 
     await waitForLogs(context.schema, logs);
     expect(backend.onError).not.toHaveBeenCalled();
+  });
+
+  it('writes logs received before the database opens in one transaction', async () => {
+    await using context = createSchemaContext();
+    using transaction = vi.spyOn(IDBDatabase.prototype, 'transaction');
+    using backend = startBackend(context.schema);
+    const logs = [createLog('first'), createLog('second'), createLog('third')];
+
+    logs.forEach((log) => backend.processor(log));
+    await waitForLogs(context.schema, logs);
+
+    const writes = transaction.mock.calls.filter(
+      ([, mode]) => mode === 'readwrite',
+    );
+
+    expect(writes).toHaveLength(1);
   });
 
   it('persists logs received after the database opens', async () => {
@@ -82,14 +114,15 @@ describe('createIdbBackend', () => {
     await waitForLogs(context.schema, [first, second]);
   });
 
-  it('writes only full batches', async () => {
+  it('writes only full batches once connected', async () => {
     await using context = createSchemaContext();
     using backend = startBackend(context.schema, 2);
+    const ready = await waitForConnection(backend, context.schema);
     const batch = [createLog('first'), createLog('second')];
 
     [...batch, createLog('partial')].forEach((log) => backend.processor(log));
 
-    await waitForLogs(context.schema, batch);
+    await waitForLogs(context.schema, [ready, ...batch]);
   });
 
   it('keeps persisting after the database is deleted', async () => {
@@ -105,6 +138,24 @@ describe('createIdbBackend', () => {
     backend.processor(second);
 
     await waitForLogs(context.schema, [second]);
+    expect(backend.onError).not.toHaveBeenCalled();
+  });
+
+  it('keeps the pending batch in order across a reconnect', async () => {
+    await using context = createSchemaContext();
+    using backend = startBackend(context.schema, 2);
+    await waitForConnection(backend, context.schema);
+    const pending = createLog('pending');
+    const later = [createLog('second'), createLog('third')];
+
+    backend.processor(pending); // Half a batch.
+    await remove(context.schema.name);
+
+    // Whether these arrive before or after reconnecting, they belong after
+    // the pending log.
+    later.forEach((log) => backend.processor(log));
+
+    await waitForLogs(context.schema, [pending, ...later]);
     expect(backend.onError).not.toHaveBeenCalled();
   });
 
@@ -145,27 +196,27 @@ describe('createIdbBackend', () => {
   it('writes the pending batch when closing', async () => {
     await using context = createSchemaContext();
     using backend = startBackend(context.schema, 2);
-    const logs = [createLog('first'), createLog('second'), createLog('third')];
+    const ready = await waitForConnection(backend, context.schema);
+    const pending = createLog('pending');
 
-    logs.forEach((log) => backend.processor(log));
-    await waitForLogs(context.schema, logs.slice(0, 2));
-
+    backend.processor(pending);
     backend.close();
 
-    await waitForLogs(context.schema, logs);
+    await waitForLogs(context.schema, [ready, pending]);
   });
 
   it('writes the pending batch when flushed', async () => {
     await using context = createSchemaContext();
     using backend = startBackend(context.schema, 2);
-    const logs = [createLog('first'), createLog('second'), createLog('third')];
+    const ready = await waitForConnection(backend, context.schema);
+    const pending = createLog('pending');
 
-    logs.forEach((log) => backend.processor(log));
-    await waitForLogs(context.schema, logs.slice(0, 2));
+    backend.processor(pending);
+    await expect(readLogs(context.schema)).resolves.toEqual([ready]);
 
     backend.flush();
 
-    await waitForLogs(context.schema, logs);
+    await waitForLogs(context.schema, [ready, pending]);
   });
 
   it('keeps persisting after a flush', async () => {
