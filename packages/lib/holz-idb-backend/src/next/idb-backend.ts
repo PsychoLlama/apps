@@ -15,10 +15,6 @@ const DEFAULT_DB: Schema = {
   index: 'by-timestamp',
 };
 
-const DEFAULT_BATCH: NonNullable<IdbBackendConfig['batch']> = {
-  size: 1,
-};
-
 /** Options for {@link createIdbBackend}. */
 export interface IdbBackendConfig {
   /** Where logs are persisted. Defaults to {@link DEFAULT_DB}. */
@@ -27,8 +23,11 @@ export interface IdbBackendConfig {
   /** Holds logs while the database opens. Unlimited by default. */
   buffer?: LogBufferOptions;
 
-  /** Groups logs into batches for writing. Defaults to {@link DEFAULT_BATCH}. */
-  batch?: Pick<LogBatcherOptions, 'size'>;
+  /** Groups logs into batches, each written in a single transaction. */
+  batch: Pick<LogBatcherOptions, 'size'>;
+
+  /** Max number of logs to retain. Discarded oldest first. */
+  retain: number;
 
   /**
    * Receives errors from the backend, such as a database that fails to open.
@@ -43,7 +42,7 @@ export interface IdbBackendConfig {
  */
 export const createIdbBackend = ({
   db = DEFAULT_DB,
-  batch = DEFAULT_BATCH,
+  batch,
   buffer: bufferOptions,
   onError,
 }: IdbBackendConfig): LogProcessor => {
