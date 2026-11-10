@@ -14,7 +14,6 @@ import {
   type DatabaseConfig,
   type Migration,
 } from './database';
-import { onPageHide } from './page-hide';
 
 const DEFAULT_DB_CONFIG: DatabaseConfig = {
   name: '@holz',
@@ -59,6 +58,13 @@ export interface IdbBackend {
   processor: LogProcessor;
 
   /**
+   * Write the pending batch now, without waiting for it to fill. Call this
+   * when the app may stop soon, such as when the page is hidden. Logs still
+   * waiting on the database to open aren't written.
+   */
+  flush: () => void;
+
+  /**
    * Write any pending batch, then disconnect from the database and discard all
    * logs from then on.
    */
@@ -72,7 +78,7 @@ export interface IdbBackend {
 export const createIdbBackend = ({
   db: config = DEFAULT_DB_CONFIG,
   migrations: customize = (defaults) => defaults,
-  batch,
+  batch: batchOptions,
   buffer: bufferOptions,
   retain,
   onError,
@@ -80,15 +86,11 @@ export const createIdbBackend = ({
   let connection: IDBDatabase | null = null;
   const migrations = customize(getMigrations(config));
 
-  const {
-    clear,
-    drain: flush,
-    processor: addToBatch,
-  } = createBatcher({
-    ...batch,
+  const batch = createBatcher({
+    ...batchOptions,
 
     // Batches only fill while connected: through the `db` route, or the flush
-    // right after connecting. `close` only flushes while connected.
+    // right after connecting. `close` only drains while connected.
     sink: (logs) => {
       insert(connection!, logs, { table: config.table, retain }).catch(onError);
     },
@@ -97,13 +99,13 @@ export const createIdbBackend = ({
   const { drain, processor: buffer } = createBuffer(bufferOptions);
   const { select, processor: router } = createRouter('buffer', {
     buffer, // Queue while connecting.
-    db: addToBatch, // Persist to IndexedDB.
-    drop: () => {}, // Terminal state: sinkhole.
+    db: batch.processor, // Persist to IndexedDB.
+    noop: () => {}, // Terminal state: sinkhole.
   });
 
-  const sinkhole = () => {
-    select('drop'); // Sinkhole future logs.
-    clear(); // Clear pending batch.
+  const discardAndYield = () => {
+    select('noop'); // Ignore future logs.
+    batch.clear(); // Clear pending batch.
     drain(); // Clear queued logs.
   };
 
@@ -119,32 +121,26 @@ export const createIdbBackend = ({
       select(db ? 'db' : 'buffer');
 
       // Flush logs that were buffered while connecting.
-      if (db) drain().forEach(addToBatch);
+      if (db) drain().forEach(batch.processor);
     },
 
     // Unrecoverable error. Give up and sinkhole future logs.
     onError: (error) => {
-      sinkhole();
+      discardAndYield();
       onError(error);
     },
   });
 
-  // Page is about to suspend. Flush pending logs.
-  const unsubscribe = onPageHide(() => {
-    if (connection) flush();
-  });
-
-  return {
-    processor: router,
-    close: () => {
-      unsubscribe();
-
-      // Must come first. Transactions already started still finish after the
-      // connection closes, but no new ones can start.
-      if (connection) flush();
-
-      disconnect();
-      sinkhole();
-    },
+  // Batches only fill while connected, so there's nothing to write otherwise.
+  const flush = () => {
+    if (connection) batch.drain();
   };
+
+  const close = () => {
+    flush();
+    disconnect();
+    discardAndYield();
+  };
+
+  return { processor: router, flush, close };
 };

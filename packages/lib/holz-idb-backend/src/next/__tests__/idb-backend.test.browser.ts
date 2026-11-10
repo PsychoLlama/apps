@@ -155,32 +155,33 @@ describe('createIdbBackend', () => {
     await waitForLogs(context.schema, logs);
   });
 
-  it('writes the pending batch when the page is hidden', async () => {
+  it('writes the pending batch when flushed', async () => {
     await using context = createSchemaContext();
     using backend = startBackend(context.schema, 2);
-    using visibility = vi.spyOn(document, 'visibilityState', 'get');
     const logs = [createLog('first'), createLog('second'), createLog('third')];
 
     logs.forEach((log) => backend.processor(log));
     await waitForLogs(context.schema, logs.slice(0, 2));
 
-    visibility.mockReturnValue('hidden');
-    document.dispatchEvent(new Event('visibilitychange'));
+    backend.flush();
 
     await waitForLogs(context.schema, logs);
   });
 
-  it('keeps the pending batch when the page is shown', async () => {
+  it('keeps persisting after a flush', async () => {
     await using context = createSchemaContext();
-    using backend = startBackend(context.schema, 2);
-    const logs = [createLog('first'), createLog('second'), createLog('third')];
+    using backend = startBackend(context.schema);
+    const first = createLog('first');
+    const second = createLog('second');
 
-    logs.forEach((log) => backend.processor(log));
-    await waitForLogs(context.schema, logs.slice(0, 2));
+    backend.flush(); // Before the database opens.
+    backend.processor(first);
+    await waitForLogs(context.schema, [first]);
 
-    document.dispatchEvent(new Event('visibilitychange'));
-
-    await expect(readLogs(context.schema)).resolves.toEqual(logs.slice(0, 2));
+    backend.flush();
+    backend.processor(second);
+    await waitForLogs(context.schema, [first, second]);
+    expect(backend.onError).not.toHaveBeenCalled();
   });
 
   it('reports a batch that fails to write', async () => {
