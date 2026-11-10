@@ -207,8 +207,8 @@ catalogs:
       specifier: ^2.6.2
       version: 2.6.2
     '@solidjs/start':
-      specifier: 2.2.1
-      version: 2.2.1
+      specifier: 2.2.2
+      version: 2.2.2
     '@solidjs/testing-library':
       specifier: ^0.8.10
       version: 0.8.10
@@ -451,7 +451,7 @@ importers:
         version: 1.0.0(solid-js@1.9.18)
       '@solidjs/start':
         specifier: 'catalog:'
-        version: 2.2.1(@solidjs/router@1.0.0(solid-js@1.9.18))(@testing-library/jest-dom@7.0.1(@testing-library/dom@10.4.1)(vitest@5.1.0))(crossws@0.4.15(srvx@1.0.5))(ocache@0.3.0)(solid-js@1.9.18)(supports-color@10.2.2)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))
+        version: 2.2.2(@solidjs/router@1.0.0(solid-js@1.9.18))(@testing-library/jest-dom@7.0.1(@testing-library/dom@10.4.1)(vitest@5.1.0))(crossws@0.4.15(srvx@1.0.5))(ocache@0.3.0)(solid-js@1.9.18)(supports-color@10.2.2)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))
       '@vanilla-extract/css':
         specifier: 'catalog:'
         version: 1.21.3
@@ -527,7 +527,7 @@ importers:
         version: 1.0.0(solid-js@1.9.18)
       '@solidjs/start':
         specifier: 'catalog:'
-        version: 2.2.1(@solidjs/router@1.0.0(solid-js@1.9.18))(@testing-library/jest-dom@7.0.1(@testing-library/dom@10.4.1)(vitest@5.1.0))(crossws@0.4.15(srvx@1.0.5))(ocache@0.3.0)(solid-js@1.9.18)(supports-color@10.2.2)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))
+        version: 2.2.2(@solidjs/router@1.0.0(solid-js@1.9.18))(@testing-library/jest-dom@7.0.1(@testing-library/dom@10.4.1)(vitest@5.1.0))(crossws@0.4.15(srvx@1.0.5))(ocache@0.3.0)(solid-js@1.9.18)(supports-color@10.2.2)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))
       '@vanilla-extract/css':
         specifier: 'catalog:'
         version: 1.21.3
@@ -594,7 +594,7 @@ importers:
         version: 1.0.0(solid-js@1.9.18)
       '@solidjs/start':
         specifier: 'catalog:'
-        version: 2.2.1(@solidjs/router@1.0.0(solid-js@1.9.18))(@testing-library/jest-dom@7.0.1(@testing-library/dom@10.4.1)(vitest@5.1.0))(crossws@0.4.15(srvx@1.0.5))(ocache@0.3.0)(solid-js@1.9.18)(supports-color@10.2.2)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))
+        version: 2.2.2(@solidjs/router@1.0.0(solid-js@1.9.18))(@testing-library/jest-dom@7.0.1(@testing-library/dom@10.4.1)(vitest@5.1.0))(crossws@0.4.15(srvx@1.0.5))(ocache@0.3.0)(solid-js@1.9.18)(supports-color@10.2.2)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))
       '@vanilla-extract/css':
         specifier: 'catalog:'
         version: 1.21.3
@@ -701,7 +701,7 @@ importers:
         version: 1.0.0(solid-js@1.9.18)
       '@solidjs/start':
         specifier: 'catalog:'
-        version: 2.2.1(@solidjs/router@1.0.0(solid-js@1.9.18))(@testing-library/jest-dom@7.0.1(@testing-library/dom@10.4.1)(vitest@5.1.0))(crossws@0.4.15(srvx@1.0.5))(ocache@0.3.0)(solid-js@1.9.18)(supports-color@10.2.2)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))
+        version: 2.2.2(@solidjs/router@1.0.0(solid-js@1.9.18))(@testing-library/jest-dom@7.0.1(@testing-library/dom@10.4.1)(vitest@5.1.0))(crossws@0.4.15(srvx@1.0.5))(ocache@0.3.0)(solid-js@1.9.18)(supports-color@10.2.2)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))
       '@vanilla-extract/css':
         specifier: 'catalog:'
         version: 1.21.3
@@ -771,7 +771,7 @@ importers:
         version: 1.0.0(solid-js@1.9.18)
       '@solidjs/start':
         specifier: 'catalog:'
-        version: 2.2.1(@solidjs/router@1.0.0(solid-js@1.9.18))(@testing-library/jest-dom@7.0.1(@testing-library/dom@10.4.1)(vitest@5.1.0))(crossws@0.4.15(srvx@1.0.5))(ocache@0.3.0)(solid-js@1.9.18)(supports-color@10.2.2)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))
+        version: 2.2.2(@solidjs/router@1.0.0(solid-js@1.9.18))(@testing-library/jest-dom@7.0.1(@testing-library/dom@10.4.1)(vitest@5.1.0))(crossws@0.4.15(srvx@1.0.5))(ocache@0.3.0)(solid-js@1.9.18)(supports-color@10.2.2)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))
       '@vanilla-extract/css':
         specifier: 'catalog:'
         version: 1.21.3
@@ -1047,7 +1047,7 @@ importers:
         version: link:../../lib/holz-vite-backend
       '@solidjs/start':
         specifier: 'catalog:'
-        version: 2.2.1(@solidjs/router@1.0.0(solid-js@1.9.18))(@testing-library/jest-dom@7.0.1(@testing-library/dom@10.4.1)(vitest@5.1.0))(crossws@0.4.15(srvx@1.0.5))(ocache@0.3.0)(solid-js@1.9.18)(supports-color@10.2.2)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))
+        version: 2.2.2(@solidjs/router@1.0.0(solid-js@1.9.18))(@testing-library/jest-dom@7.0.1(@testing-library/dom@10.4.1)(vitest@5.1.0))(crossws@0.4.15(srvx@1.0.5))(ocache@0.3.0)(solid-js@1.9.18)(supports-color@10.2.2)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))
       '@vanilla-extract/vite-plugin':
         specifier: 'catalog:'
         version: 5.2.6(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(supports-color@10.2.2)(terser@5.48.0)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))(yaml@2.9.1)
@@ -1342,7 +1342,7 @@ importers:
         version: 1.0.0(solid-js@1.9.18)
       '@solidjs/start':
         specifier: 'catalog:'
-        version: 2.2.1(@solidjs/router@1.0.0(solid-js@1.9.18))(@testing-library/jest-dom@7.0.1(@testing-library/dom@10.4.1)(vitest@5.1.0))(crossws@0.4.15(srvx@1.0.5))(ocache@0.3.0)(solid-js@1.9.18)(supports-color@10.2.2)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))
+        version: 2.2.2(@solidjs/router@1.0.0(solid-js@1.9.18))(@testing-library/jest-dom@7.0.1(@testing-library/dom@10.4.1)(vitest@5.1.0))(crossws@0.4.15(srvx@1.0.5))(ocache@0.3.0)(solid-js@1.9.18)(supports-color@10.2.2)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))
       '@solidjs/testing-library':
         specifier: 'catalog:'
         version: 0.8.10(@solidjs/router@1.0.0(solid-js@1.9.18))(solid-js@1.9.18)
@@ -2914,8 +2914,8 @@ packages:
     peerDependencies:
       solid-js: 1.9.18
 
-  '@solidjs/start@2.2.1':
-    resolution: {integrity: sha512-nf5WfguqM2T1FY1mExLdYevmpue0XOtwdbyvLtDJZCX9L9h06frm/mf0YCZ1LXf3awjPslHFKcDuhhJFbYEi0Q==}
+  '@solidjs/start@2.2.2':
+    resolution: {integrity: sha512-Mx6Nt9jfr03q8IYXSnpplgsVF7PFG+9A/k+OJqSnvjl6zpxCu0xjIqhClOq1FbgU8wEljBd49Dz60zPefsc8Cg==}
     engines: {node: '>=24'}
     peerDependencies:
       '@solidjs/router': ^1.0.0
@@ -6156,7 +6156,7 @@ snapshots:
     dependencies:
       solid-js: 1.9.18
 
-  '@solidjs/start@2.2.1(@solidjs/router@1.0.0(solid-js@1.9.18))(@testing-library/jest-dom@7.0.1(@testing-library/dom@10.4.1)(vitest@5.1.0))(crossws@0.4.15(srvx@1.0.5))(ocache@0.3.0)(solid-js@1.9.18)(supports-color@10.2.2)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))':
+  '@solidjs/start@2.2.2(@solidjs/router@1.0.0(solid-js@1.9.18))(@testing-library/jest-dom@7.0.1(@testing-library/dom@10.4.1)(vitest@5.1.0))(crossws@0.4.15(srvx@1.0.5))(ocache@0.3.0)(solid-js@1.9.18)(supports-color@10.2.2)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))':
     dependencies:
       '@babel/core': 7.29.7(supports-color@10.2.2)
       '@babel/traverse': 7.29.7(supports-color@10.2.2)
