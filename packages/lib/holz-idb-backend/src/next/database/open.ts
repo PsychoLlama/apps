@@ -18,7 +18,7 @@ export const openOrUpgrade = async (
     try {
       migrations
         .slice(event.oldVersion)
-        .forEach((migration) => migration.run(request.result));
+        .forEach((migration) => migration.run(request.transaction!));
     } catch (error) {
       // Left uncaught, the browser still aborts the upgrade, but the error
       // escapes to the global scope and the request fails with `AbortError`.

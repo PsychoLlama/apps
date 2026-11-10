@@ -30,8 +30,14 @@ export interface Migration<Name extends string = string> {
   /** Stable identifier consumers can use to position their own migrations. */
   name: Name;
 
-  /** Moves the schema forward by one version. */
-  run: (database: IDBDatabase) => void;
+  /**
+   * Moves the schema forward by one version. The transaction is shared by all
+   * migrations via the `upgradeneeded` event.
+   *
+   * Note: for safety, thrown errors abort the upgrade, including uncommitted
+   * migrations applied earlier in the transaction.
+   */
+  run: (transaction: IDBTransaction) => void;
 }
 
 /**
@@ -44,8 +50,10 @@ export const getMigrations = ({
 }: DatabaseConfig): Migration<MigrationNames>[] => [
   {
     name: 'init',
-    run: (database) => {
-      const logs = database.createObjectStore(table, { autoIncrement: true });
+    run: (transaction) => {
+      const logs = transaction.db.createObjectStore(table, {
+        autoIncrement: true,
+      });
 
       logs.createIndex(index, 'timestamp');
     },

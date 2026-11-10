@@ -41,14 +41,16 @@ describe('openOrUpgrade', () => {
     expect(calls).toEqual(['first', 'second']);
   });
 
-  it('passes the database to each migration', async () => {
+  it('passes the upgrade transaction to each migration', async () => {
     await using context = createSchemaContext();
     const migration = createMigration('first');
 
     const database = await openOrUpgrade(context.schema.name, [migration]);
     database.close();
 
-    expect(migration.run).toHaveBeenCalledWith(database);
+    expect(migration.run).toHaveBeenCalledWith(
+      expect.objectContaining({ db: database, mode: 'versionchange' }),
+    );
   });
 
   it('runs only the migrations the database has not seen', async () => {
@@ -115,7 +117,8 @@ describe('openOrUpgrade', () => {
     const first = createMigration('first');
     const added = {
       name: 'added',
-      run: (database: IDBDatabase) => void database.createObjectStore('added'),
+      run: (transaction: IDBTransaction) =>
+        void transaction.db.createObjectStore('added'),
     };
     const broken = createThrowingMigration(new Error('Migration failed.'));
 

@@ -161,10 +161,17 @@ describe('createIdbBackend', () => {
 
   it('runs custom migrations after the defaults', async () => {
     await using context = createSchemaContext();
+    const { table } = context.schema;
     using backend = startBackend(context.schema, 1, {
       migrations: (defaults) => [
         ...defaults,
-        { name: 'custom', run: (db) => db.createObjectStore('custom') },
+        {
+          name: 'by-level',
+          run: (transaction) =>
+            void transaction
+              .objectStore(table)
+              .createIndex('by-level', 'level'),
+        },
       ],
     });
     const log = createLog('first');
@@ -173,10 +180,11 @@ describe('createIdbBackend', () => {
     await waitForLogs(context.schema, [log]);
 
     const database = await openDatabase(context.schema);
+    const { indexNames } = database.transaction(table).objectStore(table);
     database.close();
 
     expect(database.version).toBe(2);
-    expect([...database.objectStoreNames]).toContain('custom');
+    expect([...indexNames]).toContain('by-level');
   });
 
   it('rejects unknown default migration names', () => {
