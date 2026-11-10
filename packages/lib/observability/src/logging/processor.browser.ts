@@ -3,7 +3,7 @@ import type { LogProcessor } from '@holz/core';
 import { createFilter, createGroup } from '@holz/core/functions';
 import { createLogCollector } from '@holz/log-collector';
 import { createConfigFilter } from '@lib/holz-config-filter';
-import { createIdbBackend } from '@lib/holz-idb-backend';
+import { createIdbBackend, type Migration } from '@lib/holz-idb-backend/next';
 import { createViteBackend } from '@lib/holz-vite-backend/client';
 
 import { filter } from '../config';
@@ -13,6 +13,41 @@ import { filter } from '../config';
 // noise. `import.meta.env` is statically replaced, so non-test bundles fold
 // this to `true` and drop the gate.
 const notTest = import.meta.env.MODE !== 'test';
+
+// Opens IndexedDB as soon as it's created, so don't create it under test:
+// suites would race over the shared database.
+const createPersistence = (): LogProcessor =>
+  createIdbBackend({
+    // Replays the old backend's schema history so existing databases line up,
+    // then retires its `pruning` store: `retain` bounds the archive now. The
+    // old backend added `pruning` right after `init`, so anchor there.
+    migrations: (defaults) => {
+      return defaults.flatMap<Migration>((migration) => {
+        if (migration.name !== 'init') return migration;
+
+        return [
+          migration,
+          {
+            name: 'add-pruning',
+            run: (transaction) =>
+              void transaction.db.createObjectStore('pruning'),
+          },
+          {
+            name: 'drop-pruning',
+            run: (transaction) => transaction.db.deleteObjectStore('pruning'),
+          },
+        ];
+      });
+    },
+
+    buffer: { capacity: 1_000 },
+    batch: { size: 10 },
+    retain: 2_000,
+
+    // Not through the logger: a failing backend would feed itself.
+    // eslint-disable-next-line no-console
+    onError: (error) => console.error('Log persistence failed.', error),
+  }).processor;
 
 // The base destination for every browser realm: a config-filtered console
 // plus origin-shared IndexedDB persistence. A global collector
@@ -29,7 +64,7 @@ export const processor: LogProcessor = createLogCollector({
         option: filter,
         processor: createConsoleBackend(),
       }),
-      createIdbBackend(),
+      notTest ? createPersistence() : () => {},
       createViteBackend(),
     ]),
   ),
