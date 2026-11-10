@@ -12,6 +12,7 @@ import {
   getMigrations,
   insert,
   type DatabaseConfig,
+  type Migration,
 } from './database';
 import { onPageHide } from './page-hide';
 
@@ -25,6 +26,13 @@ const DEFAULT_DB_CONFIG: DatabaseConfig = {
 export interface IdbBackendConfig {
   /** Where logs are persisted. Defaults to {@link DEFAULT_DB_CONFIG}. */
   db?: DatabaseConfig;
+
+  /**
+   * Customize the schema's migrations, e.g. to add your own. Receives the
+   * defaults, oldest first, and returns the full list. A migration's position
+   * is its version, so never reorder or remove one that has shipped.
+   */
+  migrations?: (defaults: Migration[]) => Migration[];
 
   /** Holds logs while the database opens. Unlimited by default. */
   buffer?: LogBufferOptions;
@@ -63,13 +71,14 @@ export interface IdbBackend {
  */
 export const createIdbBackend = ({
   db: config = DEFAULT_DB_CONFIG,
+  migrations: customize = (defaults) => defaults,
   batch,
   buffer: bufferOptions,
   retain,
   onError,
 }: IdbBackendConfig): IdbBackend => {
   let connection: IDBDatabase | null = null;
-  const migrations = getMigrations(config);
+  const migrations = customize(getMigrations(config));
 
   const {
     clear,

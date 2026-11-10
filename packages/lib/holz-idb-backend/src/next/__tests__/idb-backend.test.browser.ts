@@ -1,11 +1,11 @@
 import { level, type Log } from '@holz/core';
 
 import { getMigrations, type DatabaseConfig } from '../database';
-import { openOrUpgrade } from '../database/open';
+import { openCurrent } from '../database/open';
 import { promisifyRequest } from '../database/promise';
 import { remove } from '../database/remove';
 import { createSchemaContext } from '../database/testing';
-import { createIdbBackend } from '../idb-backend';
+import { createIdbBackend, type IdbBackendConfig } from '../idb-backend';
 
 const createLog = (message: string, overrides: Partial<Log> = {}): Log => ({
   timestamp: 0,
@@ -17,20 +17,28 @@ const createLog = (message: string, overrides: Partial<Log> = {}): Log => ({
 });
 
 /** Declare after the schema context, so it stops before the database goes. */
-const startBackend = (schema: DatabaseConfig, size = 1) => {
+const startBackend = (
+  schema: DatabaseConfig,
+  size = 1,
+  overrides: Partial<IdbBackendConfig> = {},
+) => {
   const onError = vi.fn<(error: unknown) => void>();
   const backend = createIdbBackend({
     db: schema,
     batch: { size },
     retain: Infinity,
     onError,
+    ...overrides,
   });
 
   return { ...backend, onError, [Symbol.dispose]: backend.close };
 };
 
+const openDatabase = (schema: DatabaseConfig) =>
+  openCurrent(schema.name, getMigrations(schema));
+
 const readLogs = async (schema: DatabaseConfig): Promise<Log[]> => {
-  const database = await openOrUpgrade(schema.name, getMigrations(schema));
+  const database = await openDatabase(schema);
 
   try {
     return await promisifyRequest(
@@ -98,6 +106,26 @@ describe('createIdbBackend', () => {
 
     await waitForLogs(context.schema, [second]);
     expect(backend.onError).not.toHaveBeenCalled();
+  });
+
+  it('runs custom migrations after the defaults', async () => {
+    await using context = createSchemaContext();
+    using backend = startBackend(context.schema, 1, {
+      migrations: (defaults) => [
+        ...defaults,
+        { name: 'custom', run: (db) => db.createObjectStore('custom') },
+      ],
+    });
+    const log = createLog('first');
+
+    backend.processor(log);
+    await waitForLogs(context.schema, [log]);
+
+    const database = await openDatabase(context.schema);
+    database.close();
+
+    expect(database.version).toBe(2);
+    expect([...database.objectStoreNames]).toContain('custom');
   });
 
   it('discards logs received after closing', async () => {
