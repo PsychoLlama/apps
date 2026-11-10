@@ -7,7 +7,7 @@ import {
   type LogBufferOptions,
 } from '@holz/core/functions';
 
-import { getMigrations, openOrUpgrade, type Schema } from './database';
+import { connect, getMigrations, type Schema } from './database';
 
 const DEFAULT_DB: Schema = {
   name: '@holz',
@@ -36,6 +36,15 @@ export interface IdbBackendConfig {
   onError: (error: unknown) => void;
 }
 
+/** A backend created by {@link createIdbBackend}. */
+export interface IdbBackend {
+  /** Install this in your logging pipeline. */
+  processor: LogProcessor;
+
+  /** Disconnect from the database and discard all logs from then on. */
+  close: () => void;
+}
+
 /**
  * Create the holz backend. Holds logs until the database opens, and discards
  * them if it can't. Doesn't persist logs yet.
@@ -45,29 +54,45 @@ export const createIdbBackend = ({
   batch,
   buffer: bufferOptions,
   onError,
-}: IdbBackendConfig): LogProcessor => {
+}: IdbBackendConfig): IdbBackend => {
   const { drain, processor: buffer } = createBuffer(bufferOptions);
-  const { processor: batcher } = createBatcher({ ...batch, sink: () => {} });
+  const { clear, processor: batcher } = createBatcher({
+    ...batch,
+    sink: () => {},
+  });
+
   const { select, processor: router } = createRouter('buffer', {
-    // Queue while IDB is opening.
+    // Queue while IDB is connecting.
     buffer,
 
     // Persist to IDB.
     idb: batcher,
 
-    // Drop logs if we're unable to open IDB.
+    // Drop logs once IDB is closed or unavailable.
     drop: () => {},
   });
 
-  openOrUpgrade(db.name, getMigrations(db)).then(
-    () => select('idb'),
-    (error: unknown) => {
-      select('drop');
-      drain(); // Clear queued logs.
+  const discard = () => {
+    select('drop');
+    drain(); // Clear queued logs.
+    clear(); // Clear the partial batch.
+  };
 
+  const disconnect = connect({
+    name: db.name,
+    migrations: getMigrations(db),
+    onChange: (database) => select(database ? 'idb' : 'buffer'),
+    onError: (error) => {
+      discard();
       onError(error);
     },
-  );
+  });
 
-  return router;
+  return {
+    processor: router,
+    close: () => {
+      disconnect();
+      discard();
+    },
+  };
 };
