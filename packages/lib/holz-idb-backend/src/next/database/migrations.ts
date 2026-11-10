@@ -1,5 +1,5 @@
 /** Where logs are persisted. */
-export interface Schema {
+export interface DatabaseConfig {
   /** Database name. */
   name: string;
 
@@ -23,7 +23,10 @@ export interface Migration {
  * Every schema migration, oldest first. A migration's position determines its
  * version: index 0 upgrades to v1. Append only.
  */
-export const getMigrations = ({ table, index }: Schema): Migration[] => [
+export const getMigrations = ({
+  table,
+  index,
+}: DatabaseConfig): Migration[] => [
   {
     name: 'init',
     run: (database) => {

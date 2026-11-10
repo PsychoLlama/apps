@@ -1,10 +1,10 @@
-import { getMigrations, type Schema } from './migrations';
+import { getMigrations, type DatabaseConfig } from './migrations';
 import { openOrUpgrade } from './open';
 import { remove } from './remove';
 
 /** A unique schema whose database is removed on disposal, if it exists. */
 export interface SchemaContext extends AsyncDisposable {
-  schema: Schema;
+  schema: DatabaseConfig;
 }
 
 /** A {@link SchemaContext} with an open connection, closed on disposal. */
@@ -14,7 +14,7 @@ export interface DatabaseContext extends SchemaContext {
 
 /** Isolate a test from other databases. Use with `await using`. */
 export const createSchemaContext = (): SchemaContext => {
-  const schema: Schema = {
+  const schema: DatabaseConfig = {
     name: `test-${crypto.randomUUID()}`,
     table: 'test-table',
     index: 'test-index',

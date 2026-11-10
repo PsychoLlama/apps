@@ -7,10 +7,15 @@ import {
   type LogBufferOptions,
 } from '@holz/core/functions';
 
-import { connect, getMigrations, insert, type Schema } from './database';
+import {
+  connect,
+  getMigrations,
+  insert,
+  type DatabaseConfig,
+} from './database';
 import { onPageHide } from './page-hide';
 
-const DEFAULT_DB_CONFIG: Schema = {
+const DEFAULT_DB_CONFIG: DatabaseConfig = {
   name: '@holz',
   table: 'logs',
   index: 'by-timestamp',
@@ -19,7 +24,7 @@ const DEFAULT_DB_CONFIG: Schema = {
 /** Options for {@link createIdbBackend}. */
 export interface IdbBackendConfig {
   /** Where logs are persisted. Defaults to {@link DEFAULT_DB_CONFIG}. */
-  db?: Schema;
+  db?: DatabaseConfig;
 
   /** Holds logs while the database opens. Unlimited by default. */
   buffer?: LogBufferOptions;

@@ -1,6 +1,6 @@
 import { level, type Log } from '@holz/core';
 
-import { getMigrations, type Schema } from '../database';
+import { getMigrations, type DatabaseConfig } from '../database';
 import { openOrUpgrade } from '../database/open';
 import { promisifyRequest } from '../database/promise';
 import { remove } from '../database/remove';
@@ -17,7 +17,7 @@ const createLog = (message: string, overrides: Partial<Log> = {}): Log => ({
 });
 
 /** Declare after the schema context, so it stops before the database goes. */
-const startBackend = (schema: Schema, size = 1) => {
+const startBackend = (schema: DatabaseConfig, size = 1) => {
   const onError = vi.fn<(error: unknown) => void>();
   const backend = createIdbBackend({
     db: schema,
@@ -29,7 +29,7 @@ const startBackend = (schema: Schema, size = 1) => {
   return { ...backend, onError, [Symbol.dispose]: backend.close };
 };
 
-const readLogs = async (schema: Schema): Promise<Log[]> => {
+const readLogs = async (schema: DatabaseConfig): Promise<Log[]> => {
   const database = await openOrUpgrade(schema.name, getMigrations(schema));
 
   try {
@@ -44,7 +44,7 @@ const readLogs = async (schema: Schema): Promise<Log[]> => {
   }
 };
 
-const waitForLogs = (schema: Schema, logs: Log[]) =>
+const waitForLogs = (schema: DatabaseConfig, logs: Log[]) =>
   vi.waitFor(async () => {
     await expect(readLogs(schema)).resolves.toEqual(logs);
   });
