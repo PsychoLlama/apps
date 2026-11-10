@@ -150,7 +150,6 @@ export const createIdbBackend = ({
 const DEFAULT_DB_CONFIG: DatabaseConfig = {
   name: '@holz',
   table: 'logs',
-  index: 'by-timestamp',
 };
 
 const useDefaultMigrations = (defaults: Migration<MigrationNames>[]) =>

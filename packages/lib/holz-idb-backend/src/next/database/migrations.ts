@@ -5,9 +5,6 @@ export interface DatabaseConfig {
 
   /** Object store logs land in. */
   table: string;
-
-  /** Index over each log's timestamp. */
-  index: string;
 }
 
 /**
@@ -46,16 +43,10 @@ export interface Migration<Name extends string = string> {
  */
 export const getMigrations = ({
   table,
-  index,
 }: DatabaseConfig): Migration<MigrationNames>[] => [
   {
     name: 'init',
-    run: (transaction) => {
-      const logs = transaction.db.createObjectStore(table, {
-        autoIncrement: true,
-      });
-
-      logs.createIndex(index, 'timestamp');
-    },
+    run: (transaction) =>
+      void transaction.db.createObjectStore(table, { autoIncrement: true }),
   },
 ];

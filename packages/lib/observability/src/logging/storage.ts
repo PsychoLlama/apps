@@ -6,8 +6,11 @@ import { deleteDatabase } from '@lib/holz-idb-backend/next/database';
 export const LOGS_DATABASE: DatabaseConfig = {
   name: '@holz',
   table: 'logs',
-  index: 'by-timestamp',
 };
+
+// Index over `timestamp`. Several realms write to the store, and buffered logs
+// can land after newer ones, so readers sort by this rather than insertion.
+export const TIMESTAMP_INDEX = 'by-timestamp';
 
 /**
  * Delete every log persisted on this origin. Waits for open connections to

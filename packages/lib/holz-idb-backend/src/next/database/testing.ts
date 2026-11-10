@@ -17,7 +17,6 @@ export const createSchemaContext = (): SchemaContext => {
   const schema: DatabaseConfig = {
     name: `test-${crypto.randomUUID()}`,
     table: 'test-table',
-    index: 'test-index',
   };
 
   return {

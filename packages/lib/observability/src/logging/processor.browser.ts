@@ -8,7 +8,7 @@ import { createViteBackend } from '@lib/holz-vite-backend/client';
 
 import { filter } from '../config';
 import { onExit } from './exit';
-import { LOGS_DATABASE } from './storage';
+import { LOGS_DATABASE, TIMESTAMP_INDEX } from './storage';
 
 // Under Vitest `import.meta.env.MODE` is `'test'`. Mirror the server
 // processor's `NODE_ENV` guard and stay silent so suites don't spew log
@@ -26,23 +26,35 @@ const createPersistence = (): LogProcessor => {
   const { processor, flush } = createIdbBackend({
     db: LOGS_DATABASE,
 
-    // Replays the old backend's schema history so existing databases line up,
-    // then retires its `pruning` store: `retain` bounds the archive now. The
-    // old backend added `pruning` right after `init`, so anchor there.
+    // The old backend shipped v1 (store + timestamp index) and v2 (`pruning`).
+    // Keep its version numbers, then converge every database in v3: fresh ones
+    // gain the index, old ones lose `pruning`.
     migrations: (defaults) => {
       return defaults.flatMap<Migration>((migration) => {
         if (migration.name !== 'init') return migration;
 
         return [
           migration,
+
+          // Old code maintained a `pruning` table. No longer needed.
+          // Placeholder migration for the derived IDB version.
+          { name: 'legacy-pruning', run: () => {} },
+
           {
-            name: 'add-pruning',
-            run: (transaction) =>
-              void transaction.db.createObjectStore('pruning'),
-          },
-          {
-            name: 'drop-pruning',
-            run: (transaction) => transaction.db.deleteObjectStore('pruning'),
+            name: 'reconcile',
+            run: (transaction) => {
+              // Old code created the ts index as part of the backend.
+              // Now it's owned by the application (us).
+              const logs = transaction.objectStore(LOGS_DATABASE.table);
+              if (!logs.indexNames.contains(TIMESTAMP_INDEX)) {
+                logs.createIndex(TIMESTAMP_INDEX, 'timestamp');
+              }
+
+              // Leftover from a manual log pruning behavior.
+              if (transaction.db.objectStoreNames.contains('pruning')) {
+                transaction.db.deleteObjectStore('pruning');
+              }
+            },
           },
         ];
       });
