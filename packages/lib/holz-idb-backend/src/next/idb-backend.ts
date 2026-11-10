@@ -7,9 +7,9 @@ import {
   type LogBufferOptions,
 } from '@holz/core/functions';
 
-import { connect, getMigrations, type Schema } from './database';
+import { connect, getMigrations, insert, type Schema } from './database';
 
-const DEFAULT_DB: Schema = {
+const DEFAULT_DB_CONFIG: Schema = {
   name: '@holz',
   table: 'logs',
   index: 'by-timestamp',
@@ -17,7 +17,7 @@ const DEFAULT_DB: Schema = {
 
 /** Options for {@link createIdbBackend}. */
 export interface IdbBackendConfig {
-  /** Where logs are persisted. Defaults to {@link DEFAULT_DB}. */
+  /** Where logs are persisted. Defaults to {@link DEFAULT_DB_CONFIG}. */
   db?: Schema;
 
   /** Holds logs while the database opens. Unlimited by default. */
@@ -47,43 +47,58 @@ export interface IdbBackend {
 
 /**
  * Create the holz backend. Holds logs until the database opens, and discards
- * them if it can't. Doesn't persist logs yet.
+ * them if it can't.
  */
 export const createIdbBackend = ({
-  db = DEFAULT_DB,
+  db: config = DEFAULT_DB_CONFIG,
   batch,
   buffer: bufferOptions,
   onError,
 }: IdbBackendConfig): IdbBackend => {
+  let connection: IDBDatabase | null = null;
+  const migrations = getMigrations(config);
+
   const { drain, processor: buffer } = createBuffer(bufferOptions);
-  const { clear, processor: batcher } = createBatcher({
+  const { clear, processor: addToBatch } = createBatcher({
     ...batch,
-    sink: () => {},
+
+    // Batches only fill while connected: through the `db` route, or the flush
+    // right after connecting.
+    sink: (logs) => {
+      insert(connection!, config.table, logs).catch(onError);
+    },
   });
 
   const { select, processor: router } = createRouter('buffer', {
-    // Queue while IDB is connecting.
-    buffer,
-
-    // Persist to IDB.
-    idb: batcher,
-
-    // Drop logs once IDB is closed or unavailable.
-    drop: () => {},
+    buffer, // Queue while connecting.
+    db: addToBatch, // Persist to IndexedDB.
+    drop: () => {}, // Terminal state: sinkhole.
   });
 
-  const discard = () => {
-    select('drop');
+  const quit = () => {
+    select('drop'); // Sinkhole future logs.
+    clear(); // Clear pending batch.
     drain(); // Clear queued logs.
-    clear(); // Clear the partial batch.
   };
 
   const disconnect = connect({
-    name: db.name,
-    migrations: getMigrations(db),
-    onChange: (database) => select(database ? 'idb' : 'buffer'),
+    name: config.name,
+    migrations,
+
+    // May invoke multiple times. Handle is released and re-acquired if new
+    // tabs/processes have new migrations, if the DB is deleted, or if the
+    // browser closes it (e.g. storage was cleared).
+    onChange: (db) => {
+      connection = db;
+      select(db ? 'db' : 'buffer');
+
+      // Flush logs that were buffered while connecting.
+      if (db) drain().forEach(addToBatch);
+    },
+
+    // Unrecoverable error. Give up and sinkhole future logs.
     onError: (error) => {
-      discard();
+      quit();
       onError(error);
     },
   });
@@ -92,7 +107,7 @@ export const createIdbBackend = ({
     processor: router,
     close: () => {
       disconnect();
-      discard();
+      quit();
     },
   };
 };
