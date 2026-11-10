@@ -41,7 +41,10 @@ export interface IdbBackend {
   /** Install this in your logging pipeline. */
   processor: LogProcessor;
 
-  /** Disconnect from the database and discard all logs from then on. */
+  /**
+   * Write any pending batch, then disconnect from the database and discard all
+   * logs from then on.
+   */
   close: () => void;
 }
 
@@ -58,24 +61,28 @@ export const createIdbBackend = ({
   let connection: IDBDatabase | null = null;
   const migrations = getMigrations(config);
 
-  const { drain, processor: buffer } = createBuffer(bufferOptions);
-  const { clear, processor: addToBatch } = createBatcher({
+  const {
+    clear,
+    drain: flush,
+    processor: addToBatch,
+  } = createBatcher({
     ...batch,
 
     // Batches only fill while connected: through the `db` route, or the flush
-    // right after connecting.
+    // right after connecting. `close` only flushes while connected.
     sink: (logs) => {
       insert(connection!, config.table, logs).catch(onError);
     },
   });
 
+  const { drain, processor: buffer } = createBuffer(bufferOptions);
   const { select, processor: router } = createRouter('buffer', {
     buffer, // Queue while connecting.
     db: addToBatch, // Persist to IndexedDB.
     drop: () => {}, // Terminal state: sinkhole.
   });
 
-  const quit = () => {
+  const sinkhole = () => {
     select('drop'); // Sinkhole future logs.
     clear(); // Clear pending batch.
     drain(); // Clear queued logs.
@@ -98,7 +105,7 @@ export const createIdbBackend = ({
 
     // Unrecoverable error. Give up and sinkhole future logs.
     onError: (error) => {
-      quit();
+      sinkhole();
       onError(error);
     },
   });
@@ -106,8 +113,12 @@ export const createIdbBackend = ({
   return {
     processor: router,
     close: () => {
+      // Must come first. Transactions already started still finish after the
+      // connection closes, but no new ones can start.
+      if (connection) flush();
+
       disconnect();
-      quit();
+      sinkhole();
     },
   };
 };

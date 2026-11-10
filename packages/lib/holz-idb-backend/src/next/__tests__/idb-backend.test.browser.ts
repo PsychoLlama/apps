@@ -97,6 +97,19 @@ describe('createIdbBackend', () => {
     await expect(readLogs(context.schema)).resolves.toEqual([first]);
   });
 
+  it('writes the pending batch when closing', async () => {
+    await using context = createSchemaContext();
+    using backend = startBackend(context.schema, 2);
+    const logs = [createLog('first'), createLog('second'), createLog('third')];
+
+    logs.forEach((log) => backend.processor(log));
+    await waitForLogs(context.schema, logs.slice(0, 2));
+
+    backend.close();
+
+    await waitForLogs(context.schema, logs);
+  });
+
   it('reports a batch that fails to write', async () => {
     await using context = createSchemaContext();
     using backend = startBackend(context.schema);
