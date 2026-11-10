@@ -192,6 +192,10 @@ const config: KnipConfig = {
       // Same as `@dev/gitignore`: shared fixtures beside the tests.
       project: ['src/**/*.ts!', '!src/**/__tests__/**!'],
     },
+    'packages/lib/holz-idb-backend': {
+      // Test tooling beside the database code: only tests import these.
+      project: ['src/**/*.ts!', '!src/next/database/{testing,remove}.ts!'],
+    },
     'packages/dev/vitest-config': {
       // Deps the shared preset pulls in by side effect rather than by a
       // named import, so knip can't see them: the browser-mode runtime and
