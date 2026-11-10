@@ -3,6 +3,7 @@ import { level, type Log } from '@holz/core';
 import { getMigrations, type Schema } from '../database';
 import { openOrUpgrade } from '../database/open';
 import { promisifyRequest } from '../database/promise';
+import { remove } from '../database/remove';
 import { createSchemaContext } from '../database/testing';
 import { createIdbBackend } from '../idb-backend';
 
@@ -81,6 +82,22 @@ describe('createIdbBackend', () => {
     [...batch, createLog('partial')].forEach((log) => backend.processor(log));
 
     await waitForLogs(context.schema, batch);
+  });
+
+  it('keeps persisting after the database is deleted', async () => {
+    await using context = createSchemaContext();
+    using backend = startBackend(context.schema);
+    const first = createLog('first');
+    const second = createLog('second');
+
+    backend.processor(first);
+    await waitForLogs(context.schema, [first]);
+
+    await remove(context.schema.name);
+    backend.processor(second);
+
+    await waitForLogs(context.schema, [second]);
+    expect(backend.onError).not.toHaveBeenCalled();
   });
 
   it('discards logs received after closing', async () => {

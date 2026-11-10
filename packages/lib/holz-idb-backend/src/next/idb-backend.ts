@@ -27,7 +27,10 @@ export interface IdbBackendConfig {
   /** Groups logs into batches, each written in a single transaction. */
   batch: Pick<LogBatcherOptions, 'size'>;
 
-  /** Max number of logs to retain. Discarded oldest first. */
+  /**
+   * Max number of logs to retain. Discards the earliest written first, which
+   * may not be the earliest timestamp.
+   */
   retain: number;
 
   /**

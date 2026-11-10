@@ -7,7 +7,7 @@ export interface InsertOptions {
   /** Object store to write to. */
   table: string;
 
-  /** Max number of logs to keep. Discards the oldest. */
+  /** Max number of logs to keep. Discards the earliest written first. */
   retain: number;
 }
 
