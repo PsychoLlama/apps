@@ -1,10 +1,10 @@
-import { getMigrations, type DatabaseConfig } from './migrations';
+import { defineDatabase, type DatabaseDefinition } from './define-database';
 import { openOrUpgrade } from './open';
 import { deleteDatabase } from './delete-database';
 
 /** A unique schema whose database is removed on disposal, if it exists. */
 export interface SchemaContext extends AsyncDisposable {
-  schema: DatabaseConfig;
+  schema: DatabaseDefinition;
 }
 
 /** A {@link SchemaContext} with an open connection, closed on disposal. */
@@ -14,10 +14,7 @@ export interface DatabaseContext extends SchemaContext {
 
 /** Isolate a test from other databases. Use with `await using`. */
 export const createSchemaContext = (): SchemaContext => {
-  const schema: DatabaseConfig = {
-    name: `test-${crypto.randomUUID()}`,
-    table: 'test-table',
-  };
+  const schema = defineDatabase(`test-${crypto.randomUUID()}`, 'test-table');
 
   return {
     schema,
@@ -28,10 +25,7 @@ export const createSchemaContext = (): SchemaContext => {
 /** Create a {@link SchemaContext} and open its fully migrated database. */
 export const openDatabaseContext = async (): Promise<DatabaseContext> => {
   const context = createSchemaContext();
-  const database = await openOrUpgrade(
-    context.schema.name,
-    getMigrations(context.schema),
-  );
+  const database = await openOrUpgrade(context.schema);
 
   return {
     ...context,

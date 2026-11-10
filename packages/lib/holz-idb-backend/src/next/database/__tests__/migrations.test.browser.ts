@@ -4,7 +4,7 @@ import { createSchemaContext, openDatabaseContext } from '../testing';
 describe('getMigrations', () => {
   it('gives every migration a unique name', async () => {
     await using context = createSchemaContext();
-    const names = getMigrations(context.schema).map(({ name }) => name);
+    const names = getMigrations(context.schema.table).map(({ name }) => name);
 
     expect(new Set(names).size).toBe(names.length);
   });

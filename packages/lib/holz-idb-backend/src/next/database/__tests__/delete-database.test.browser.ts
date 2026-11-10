@@ -1,3 +1,4 @@
+import { defineDatabase } from '../define-database';
 import { openOrUpgrade } from '../open';
 import { deleteDatabase } from '../delete-database';
 
@@ -13,7 +14,7 @@ describe('deleteDatabase', () => {
   it('deletes the database', async () => {
     const name = uniqueName();
 
-    (await openOrUpgrade(name, [{ name: 'init', run: () => {} }])).close();
+    (await openOrUpgrade(defineDatabase(name, 'logs'))).close();
     await deleteDatabase(name);
 
     expect(await listDatabases()).not.toContain(name);

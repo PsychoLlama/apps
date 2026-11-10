@@ -1,12 +1,3 @@
-/** Where logs are persisted. */
-export interface DatabaseConfig {
-  /** Database name. */
-  name: string;
-
-  /** Object store logs land in. */
-  table: string;
-}
-
 /**
  * The list of migrations can be extended by package consumers. They must have
  * a stable position, otherwise schemas become corrupted. The version would no
@@ -41,9 +32,7 @@ export interface Migration<Name extends string = string> {
  * Every schema migration, oldest first. A migration's position determines its
  * version: index 0 upgrades to v1. Append only.
  */
-export const getMigrations = ({
-  table,
-}: DatabaseConfig): Migration<MigrationNames>[] => [
+export const getMigrations = (table: string): Migration<MigrationNames>[] => [
   {
     name: 'init',
     run: (transaction) =>

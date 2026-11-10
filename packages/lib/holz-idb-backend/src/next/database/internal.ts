@@ -1,4 +1,8 @@
 export { connect } from './connect';
 export { insert } from './insert';
-export { getMigrations } from './migrations';
-export type { DatabaseConfig, MigrationNames, Migration } from './migrations';
+export { defineDatabase } from './define-database';
+export type {
+  CustomizeMigrations,
+  DatabaseDefinition,
+} from './define-database';
+export type { Migration } from './migrations';

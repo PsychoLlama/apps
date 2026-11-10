@@ -16,12 +16,19 @@ const createThrowingMigration = (error: Error): Migration => ({
   },
 });
 
+// Pairs a test database with arbitrary migrations.
+const define = (name: string, migrations: Migration[] = []) => ({
+  name,
+  table: 'test-table',
+  migrations,
+});
+
 /** Declare after the schema context, so it stops before the database goes. */
 const startConnection = (name: string, migrations: Migration[]) => {
   const onChange = vi.fn<(database: IDBDatabase | null) => void>();
   const onError = vi.fn<(error: unknown) => void>();
 
-  const close = connect({ name, migrations, onChange, onError });
+  const close = connect({ db: define(name, migrations), onChange, onError });
 
   /** Wait for exactly `count` changes, returning the latest. */
   const waitForChanges = (count: number) =>
@@ -103,7 +110,9 @@ describe('connect', () => {
     using connection = startConnection(name, [first]);
 
     const original = await connection.waitForChanges(1);
-    await expect(openOrUpgrade(name, [first, broken])).rejects.toThrow();
+    await expect(
+      openOrUpgrade(define(name, [first, broken])),
+    ).rejects.toThrow();
     const reconnected = await connection.waitForChanges(3);
 
     expect(connection.onChange.mock.calls[1]).toEqual([null]);
@@ -120,7 +129,7 @@ describe('connect', () => {
     using connection = startConnection(name, [first]);
 
     await connection.waitForChanges(1);
-    const peer = await openOrUpgrade(name, [first, second]);
+    const peer = await openOrUpgrade(define(name, [first, second]));
     peer.close();
     const reconnected = await connection.waitForChanges(3);
 
@@ -137,7 +146,7 @@ describe('connect', () => {
     const first = createMigration('first');
     const newer = [createMigration('older'), createMigration('newer')];
 
-    (await openOrUpgrade(name, newer)).close();
+    (await openOrUpgrade(define(name, newer))).close();
     using connection = startConnection(name, [first]);
     const database = await connection.waitForChanges(1);
 
@@ -152,7 +161,7 @@ describe('connect', () => {
     const first = createMigration('first');
     const newer = [createMigration('older'), createMigration('newer')];
 
-    (await openOrUpgrade(name, newer)).close();
+    (await openOrUpgrade(define(name, newer))).close();
     using connection = startConnection(name, [first]);
 
     // Lands between the failed migrating open and the versionless one, since
@@ -282,7 +291,7 @@ describe('connect', () => {
 
       // Opens run in order, so a reconnect would have recreated the database
       // before this one, and the probe wouldn't run.
-      (await openOrUpgrade(name, [probe])).close();
+      (await openOrUpgrade(define(name, [probe]))).close();
 
       expect(probe.run).toHaveBeenCalledTimes(1);
       expect(first.run).toHaveBeenCalledTimes(1);

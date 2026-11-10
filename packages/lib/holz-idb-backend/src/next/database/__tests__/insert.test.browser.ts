@@ -31,7 +31,7 @@ const save = (
   { database, schema }: DatabaseContext,
   logs: Log[],
   retain = Infinity,
-) => insert(database, logs, { table: schema.table, retain });
+) => insert(database, logs, { db: schema, retain });
 
 describe('insert', () => {
   it('writes every log in order', async () => {
@@ -108,7 +108,7 @@ describe('insert', () => {
 
     await expect(
       insert(context.database, [createLog()], {
-        table: 'missing',
+        db: { ...context.schema, table: 'missing' },
         retain: Infinity,
       }),
     ).rejects.toMatchObject({ name: 'NotFoundError' });

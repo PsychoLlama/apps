@@ -1,16 +1,46 @@
-import type { DatabaseConfig } from '@lib/holz-idb-backend/next';
+import { defineDatabase, type Migration } from '@lib/holz-idb-backend/next';
 import { deleteDatabase } from '@lib/holz-idb-backend/next/database';
-
-// Where browser logs are persisted. Matches the old backend's layout, so
-// existing archives carry over.
-export const LOGS_DATABASE: DatabaseConfig = {
-  name: '@holz',
-  table: 'logs',
-};
 
 // Index over `timestamp`. Several realms write to the store, and buffered logs
 // can land after newer ones, so readers sort by this rather than insertion.
 export const TIMESTAMP_INDEX = 'by-timestamp';
+
+// Where browser logs are persisted. Matches the old backend's layout, so
+// existing archives carry over.
+//
+// The old backend shipped v1 (store + timestamp index) and v2 (`pruning`).
+// Keep its version numbers, then converge every database in v3: fresh ones
+// gain the index, old ones lose `pruning`.
+export const LOGS_DATABASE = defineDatabase('@holz', 'logs', (migrations) => {
+  return migrations.flatMap<Migration>((migration) => {
+    if (migration.name !== 'init') return migration;
+
+    return [
+      migration,
+
+      // Old code maintained a `pruning` table. No longer needed.
+      // Placeholder migration for the derived IDB version.
+      { name: 'legacy-pruning', run: () => {} },
+
+      {
+        name: 'reconcile',
+        run: (transaction) => {
+          // Old code created the ts index as part of the backend.
+          // Now it's owned by the application (us).
+          const logs = transaction.objectStore(LOGS_DATABASE.table);
+          if (!logs.indexNames.contains(TIMESTAMP_INDEX)) {
+            logs.createIndex(TIMESTAMP_INDEX, 'timestamp');
+          }
+
+          // Leftover from a manual log pruning behavior.
+          if (transaction.db.objectStoreNames.contains('pruning')) {
+            transaction.db.deleteObjectStore('pruning');
+          }
+        },
+      },
+    ];
+  });
+});
 
 /**
  * Delete every log persisted on this origin. Waits for open connections to

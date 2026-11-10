@@ -1,4 +1,4 @@
-import type { Migration } from './migrations';
+import type { DatabaseDefinition } from './define-database';
 import { promisifyRequest } from './promise';
 
 /**
@@ -7,10 +7,10 @@ import { promisifyRequest } from './promise';
  * version. If a migration throws, rejects with its error and rolls back every
  * migration in the upgrade.
  */
-export const openOrUpgrade = async (
-  name: string,
-  migrations: Migration[],
-): Promise<IDBDatabase> => {
+export const openOrUpgrade = async ({
+  name,
+  migrations,
+}: DatabaseDefinition): Promise<IDBDatabase> => {
   const request = indexedDB.open(name, migrations.length);
   let migrationError: unknown;
 
@@ -39,7 +39,9 @@ export const openOrUpgrade = async (
  * Open a database at its current version, without migrating it. Rejects with an
  * `AbortError` and creates nothing if the database doesn't exist.
  */
-export const openExisting = (name: string): Promise<IDBDatabase> => {
+export const openExisting = ({
+  name,
+}: DatabaseDefinition): Promise<IDBDatabase> => {
   const request = indexedDB.open(name);
 
   // Only fires when there's no database, and this would leave an empty one.
@@ -50,25 +52,24 @@ export const openExisting = (name: string): Promise<IDBDatabase> => {
 
 /** Open at the version `migrations` implies, or any newer one a peer left. */
 export const openCurrent = async (
-  name: string,
-  migrations: Migration[],
+  db: DatabaseDefinition,
 ): Promise<IDBDatabase> => {
   try {
     // Init, migrate, or open existing at current version.
-    return await openOrUpgrade(name, migrations);
+    return await openOrUpgrade(db);
   } catch (error) {
     if (!hasErrorName(error, 'VersionError')) throw error;
   }
 
   try {
     // Open at a version beyond what our code knows about.
-    return await openExisting(name);
+    return await openExisting(db);
   } catch (error) {
     if (!hasErrorName(error, 'AbortError')) throw error;
   }
 
   // Extreme edge case: future version deleted before we could open it.
-  return openCurrent(name, migrations);
+  return openCurrent(db);
 };
 
 const hasErrorName = (error: unknown, name: string): boolean =>
