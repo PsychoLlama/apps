@@ -8,6 +8,7 @@ import {
 } from '@holz/core/functions';
 
 import { connect, getMigrations, insert, type Schema } from './database';
+import { onPageHide } from './page-hide';
 
 const DEFAULT_DB_CONFIG: Schema = {
   name: '@holz',
@@ -110,9 +111,16 @@ export const createIdbBackend = ({
     },
   });
 
+  // Page is about to suspend. Flush pending logs.
+  const unsubscribe = onPageHide(() => {
+    if (connection) flush();
+  });
+
   return {
     processor: router,
     close: () => {
+      unsubscribe();
+
       // Must come first. Transactions already started still finish after the
       // connection closes, but no new ones can start.
       if (connection) flush();

@@ -110,6 +110,34 @@ describe('createIdbBackend', () => {
     await waitForLogs(context.schema, logs);
   });
 
+  it('writes the pending batch when the page is hidden', async () => {
+    await using context = createSchemaContext();
+    using backend = startBackend(context.schema, 2);
+    using visibility = vi.spyOn(document, 'visibilityState', 'get');
+    const logs = [createLog('first'), createLog('second'), createLog('third')];
+
+    logs.forEach((log) => backend.processor(log));
+    await waitForLogs(context.schema, logs.slice(0, 2));
+
+    visibility.mockReturnValue('hidden');
+    document.dispatchEvent(new Event('visibilitychange'));
+
+    await waitForLogs(context.schema, logs);
+  });
+
+  it('keeps the pending batch when the page is shown', async () => {
+    await using context = createSchemaContext();
+    using backend = startBackend(context.schema, 2);
+    const logs = [createLog('first'), createLog('second'), createLog('third')];
+
+    logs.forEach((log) => backend.processor(log));
+    await waitForLogs(context.schema, logs.slice(0, 2));
+
+    document.dispatchEvent(new Event('visibilitychange'));
+
+    await expect(readLogs(context.schema)).resolves.toEqual(logs.slice(0, 2));
+  });
+
   it('reports a batch that fails to write', async () => {
     await using context = createSchemaContext();
     using backend = startBackend(context.schema);
