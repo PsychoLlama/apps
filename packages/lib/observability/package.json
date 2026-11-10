@@ -5,10 +5,13 @@
   "version": "0.0.0",
   "description": "Structured logging built on @holz/core.",
   "license": "MIT",
-  "sideEffects": false,
+  "sideEffects": [
+    "./src/register/**"
+  ],
   "exports": {
     ".": "./src/index.ts",
-    "./config": "./src/config.ts"
+    "./config": "./src/config.ts",
+    "./register/page": "./src/register/page.ts"
   },
   "imports": {
     "#processor": {
