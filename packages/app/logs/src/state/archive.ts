@@ -1,6 +1,5 @@
 import { defineCommand, defineStore } from '@lib/state';
 import type { Log } from '@lib/observability';
-import type { PruneRecord } from '@lib/holz-idb-backend/database';
 
 /** A persisted log, tagged with the key IndexedDB stores it under. */
 export interface ArchivedLog extends Log {
@@ -12,12 +11,6 @@ export interface ArchivedLog extends Log {
 export interface ArchiveState {
   /** Persisted logs, newest-first. Empty until a read resolves. */
   entries: ArchivedLog[];
-
-  /**
-   * The last pruning pass, or `null` when nothing has ever been pruned. Dates
-   * the gap below the oldest entry, which the entries alone can't show.
-   */
-  pruned: PruneRecord | null;
 }
 
 /**
@@ -27,14 +20,12 @@ export interface ArchiveState {
  */
 export const $archive = defineStore<ArchiveState>(() => ({
   entries: [],
-  pruned: null,
 }));
 
 /** The archive read landed. */
 export const $archiveLoaded = defineCommand(
   [$archive],
-  (archive) => (entries: ArchivedLog[], pruned: PruneRecord | null) => {
+  (archive) => (entries: ArchivedLog[]) => {
     archive.entries = entries;
-    archive.pruned = pruned;
   },
 );

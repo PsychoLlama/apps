@@ -1,12 +1,9 @@
 import { collect } from '@lib/effects';
 import {
-  PRUNE_RECORD_KEY,
-  PRUNE_STORE_NAME,
   STORE_NAME,
   TIMESTAMP_INDEX,
   openLogDatabase,
   type LogConnection,
-  type PruneRecord,
 } from '@lib/holz-idb-backend/database';
 import { $archive, $archiveLoaded, type ArchivedLog } from '../state';
 
@@ -24,15 +21,6 @@ const readNewestFirst = async (db: LogConnection): Promise<ArchivedLog[]> => {
   return entries;
 };
 
-// A viewer opens at whatever version exists, which can predate the pruning
-// store. Naming a missing store throws, so it reads as never pruned.
-const readPruneRecord = async (
-  db: LogConnection,
-): Promise<PruneRecord | null> => {
-  if (!db.objectStoreNames.contains(PRUNE_STORE_NAME)) return null;
-  return (await db.get(PRUNE_STORE_NAME, PRUNE_RECORD_KEY)) ?? null;
-};
-
 /**
  * The archive, read once from IndexedDB when first held. Client-only, since
  * IndexedDB doesn't exist during SSG. Opens at whatever version exists: the
@@ -44,12 +32,7 @@ export const $trackedArchive = collect(
     const db = await openLogDatabase();
 
     try {
-      const [entries, pruned] = await Promise.all([
-        readNewestFirst(db),
-        readPruneRecord(db),
-      ]);
-
-      archiveLoaded(entries, pruned);
+      archiveLoaded(await readNewestFirst(db));
     } finally {
       db.close();
     }

@@ -18,7 +18,7 @@ describe('$archive', () => {
     await using effects = createTestController();
     const archive = await effects.run($archive);
 
-    expect(archive).toEqual({ entries: [], pruned: null });
+    expect(archive).toEqual({ entries: [] });
   });
 });
 
@@ -28,10 +28,9 @@ describe('$archiveLoaded', () => {
     const archive = await effects.run($archive);
     const archiveLoaded = await effects.run($archiveLoaded);
     const entries = [makeLog({ message: 'read' })];
-    const pruned = { timestamp: 1_700_000_000_000, deleted: 2000 };
 
-    archiveLoaded(entries, pruned);
+    archiveLoaded(entries);
 
-    expect(archive).toEqual({ entries, pruned });
+    expect(archive).toEqual({ entries });
   });
 });

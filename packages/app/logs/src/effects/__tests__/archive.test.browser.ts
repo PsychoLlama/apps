@@ -5,12 +5,7 @@
 
 import { createTestController } from '@lib/effects/testing';
 import { level, type Log } from '@lib/observability';
-import {
-  PRUNE_RECORD_KEY,
-  PRUNE_STORE_NAME,
-  STORE_NAME,
-  openLogDatabase,
-} from '@lib/holz-idb-backend/database';
+import { STORE_NAME, openLogDatabase } from '@lib/holz-idb-backend/database';
 import { createIdbBackend } from '@lib/holz-idb-backend';
 import { $trackedArchive } from '../archive';
 
@@ -36,12 +31,12 @@ const addLogs = async (...logs: Log[]) => {
 beforeEach(async () => {
   // Instantiating the backend synchronously registers its versioned open —
   // which creates the store on a fresh origin — before this clear's
-  // no-version open runs. Wipe both stores so each test starts empty.
+  // no-version open runs. Wipe the store so each test starts empty.
   createIdbBackend();
 
   const db = await openLogDatabase();
   try {
-    await Promise.all([db.clear(STORE_NAME), db.clear(PRUNE_STORE_NAME)]);
+    await db.clear(STORE_NAME);
   } finally {
     db.close();
   }
@@ -63,28 +58,5 @@ describe('$trackedArchive', () => {
       'newer',
       'older',
     ]);
-  });
-
-  it('reads back the pruning record so the gap can be dated', async () => {
-    const pruned = { timestamp: 1_700_000_000_000, deleted: 2000 };
-    const writer = await openLogDatabase();
-    try {
-      await writer.put(PRUNE_STORE_NAME, pruned, PRUNE_RECORD_KEY);
-    } finally {
-      writer.close();
-    }
-    await using effects = createTestController();
-
-    const archive = await effects.run($trackedArchive);
-
-    expect(archive.pruned).toEqual(pruned);
-  });
-
-  it('reports nothing pruned when no pass has ever run', async () => {
-    await using effects = createTestController();
-
-    const archive = await effects.run($trackedArchive);
-
-    expect(archive.pruned).toBeNull();
   });
 });
