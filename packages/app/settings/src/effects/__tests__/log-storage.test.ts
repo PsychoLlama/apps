@@ -1,32 +1,33 @@
 import { createTestController } from '@lib/effects/testing';
-import { deleteLogsDatabase } from '@lib/observability/storage';
+import { deleteDatabase } from '@lib/holz-idb-backend/next/database';
+import { LOGS_DATABASE } from '@lib/observability/storage';
 import { $deletedNoticeOpen } from '../../state/log-storage';
 import { $deleteLogs } from '../log-storage';
 
-vi.mock('@lib/observability/storage', () => ({
-  deleteLogsDatabase: vi.fn(),
+vi.mock('@lib/holz-idb-backend/next/database', () => ({
+  deleteDatabase: vi.fn(),
 }));
 
 beforeEach(() => {
-  vi.mocked(deleteLogsDatabase).mockReset();
+  vi.mocked(deleteDatabase).mockReset();
 });
 
 describe('$deleteLogs', () => {
   it('deletes the logs, then shows the notice', async () => {
-    vi.mocked(deleteLogsDatabase).mockResolvedValue();
+    vi.mocked(deleteDatabase).mockResolvedValue();
     await using effects = createTestController();
     const deleteLogs = await effects.run($deleteLogs);
     const deletedNoticeOpen = await effects.run($deletedNoticeOpen);
 
     await deleteLogs();
 
-    expect(deleteLogsDatabase).toHaveBeenCalledTimes(1);
+    expect(deleteDatabase).toHaveBeenCalledExactlyOnceWith(LOGS_DATABASE.name);
     expect(deletedNoticeOpen()).toBe(true);
   });
 
   it('fails without showing the notice', async () => {
     const error = new Error('Testing failures');
-    vi.mocked(deleteLogsDatabase).mockRejectedValue(error);
+    vi.mocked(deleteDatabase).mockRejectedValue(error);
     await using effects = createTestController();
     const deleteLogs = await effects.run($deleteLogs);
     const deletedNoticeOpen = await effects.run($deletedNoticeOpen);

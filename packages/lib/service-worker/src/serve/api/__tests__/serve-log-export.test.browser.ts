@@ -1,7 +1,10 @@
 import { toJSON } from '@holz/json-backend/marshal';
-import { openDatabase } from '@lib/holz-idb-backend/next/database';
+import {
+  deleteDatabase,
+  openDatabase,
+} from '@lib/holz-idb-backend/next/database';
 import { level, type Log } from '@lib/observability';
-import { LOGS_DATABASE, deleteLogsDatabase } from '@lib/observability/storage';
+import { LOGS_DATABASE } from '@lib/observability/storage';
 
 import { CONTENT_TYPE, serveLogExport } from '../serve-log-export';
 
@@ -51,7 +54,7 @@ describe('serveLogExport', () => {
 
       [Symbol.asyncDispose]: async () => {
         db.close();
-        await deleteLogsDatabase();
+        await deleteDatabase(LOGS_DATABASE.name);
       },
     };
   };

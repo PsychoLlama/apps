@@ -1,5 +1,4 @@
 import { defineDatabase, type Migration } from '@lib/holz-idb-backend/next';
-import { deleteDatabase } from '@lib/holz-idb-backend/next/database';
 
 /**
  * Index over `timestamp` in the logs table. Several realms write to it, and
@@ -9,8 +8,9 @@ import { deleteDatabase } from '@lib/holz-idb-backend/next/database';
 export const TIMESTAMP_INDEX = 'by-timestamp';
 
 /**
- * Where browser logs are persisted. Pass to `openDatabase` from
- * `@lib/holz-idb-backend/next/database` to read them.
+ * Where browser logs are persisted. Pass to the utilities in
+ * `@lib/holz-idb-backend/next/database` (`openDatabase`, `deleteDatabase`)
+ * to read or clear them.
  */
 export const LOGS_DATABASE = defineDatabase('@holz', 'logs', (migrations) => {
   // Matches the old backend's layout, so existing archives carry over. It
@@ -46,10 +46,3 @@ export const LOGS_DATABASE = defineDatabase('@holz', 'logs', (migrations) => {
     ];
   });
 });
-
-/**
- * Delete every log persisted on this origin. Waits for open connections to
- * close; backends recreate the database on their next write.
- */
-export const deleteLogsDatabase = (): Promise<void> =>
-  deleteDatabase(LOGS_DATABASE.name);
