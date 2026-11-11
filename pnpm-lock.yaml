@@ -638,6 +638,9 @@ importers:
       '@vanilla-extract/css':
         specifier: 'catalog:'
         version: 1.21.3
+      idb:
+        specifier: 'catalog:'
+        version: 8.0.4
       solid-js:
         specifier: 1.9.18
         version: 1.9.18

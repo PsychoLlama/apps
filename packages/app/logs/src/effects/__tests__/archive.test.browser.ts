@@ -4,9 +4,13 @@
  */
 
 import { createTestController } from '@lib/effects/testing';
+import {
+  deleteDatabase,
+  openDatabase,
+} from '@lib/holz-idb-backend/next/database';
 import { level, type Log } from '@lib/observability';
-import { STORE_NAME, openLogDatabase } from '@lib/holz-idb-backend/database';
-import { createIdbBackend } from '@lib/holz-idb-backend';
+import { LOGS_DATABASE } from '@lib/observability/storage';
+import { wrap } from 'idb';
 import { $archivedLogs } from '../archive';
 
 /** A complete `Log`, with only the fields a test cares about overridden. */
@@ -20,26 +24,16 @@ const makeLog = (overrides: Partial<Log>): Log => ({
 });
 
 const addLogs = async (...logs: Log[]) => {
-  const db = await openLogDatabase();
+  const db = wrap(await openDatabase(LOGS_DATABASE));
   try {
-    for (const log of logs) await db.add(STORE_NAME, log);
+    for (const log of logs) await db.add(LOGS_DATABASE.table, log);
   } finally {
     db.close();
   }
 };
 
-beforeEach(async () => {
-  // Instantiating the backend synchronously registers its versioned open —
-  // which creates the store on a fresh origin — before this clear's
-  // no-version open runs. Wipe the store so each test starts empty.
-  createIdbBackend();
-
-  const db = await openLogDatabase();
-  try {
-    await db.clear(STORE_NAME);
-  } finally {
-    db.close();
-  }
+afterEach(async () => {
+  await deleteDatabase(LOGS_DATABASE.name);
 });
 
 describe('$archivedLogs', () => {
@@ -55,5 +49,13 @@ describe('$archivedLogs', () => {
     const logs = await effects.run($archivedLogs);
 
     expect(logs.map((log) => log.message)).toEqual(['newer', 'older']);
+  });
+
+  it('reads nothing from a fresh origin', async () => {
+    await using effects = createTestController();
+
+    const logs = await effects.run($archivedLogs);
+
+    expect(logs).toEqual([]);
   });
 });
