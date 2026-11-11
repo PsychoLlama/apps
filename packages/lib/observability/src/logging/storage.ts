@@ -1,17 +1,22 @@
 import { defineDatabase, type Migration } from '@lib/holz-idb-backend/next';
 import { deleteDatabase } from '@lib/holz-idb-backend/next/database';
 
-// Index over `timestamp`. Several realms write to the store, and buffered logs
-// can land after newer ones, so readers sort by this rather than insertion.
+/**
+ * Index over `timestamp` in the logs table. Several realms write to it, and
+ * buffered logs can land after newer ones, so sort by this rather than
+ * insertion order.
+ */
 export const TIMESTAMP_INDEX = 'by-timestamp';
 
-// Where browser logs are persisted. Matches the old backend's layout, so
-// existing archives carry over.
-//
-// The old backend shipped v1 (store + timestamp index) and v2 (`pruning`).
-// Keep its version numbers, then converge every database in v3: fresh ones
-// gain the index, old ones lose `pruning`.
+/**
+ * Where browser logs are persisted. Pass to `openDatabase` from
+ * `@lib/holz-idb-backend/next/database` to read them.
+ */
 export const LOGS_DATABASE = defineDatabase('@holz', 'logs', (migrations) => {
+  // Matches the old backend's layout, so existing archives carry over. It
+  // shipped v1 (store + timestamp index) and v2 (`pruning`). Keep its version
+  // numbers, then converge every database in v3: fresh ones gain the index,
+  // old ones lose `pruning`.
   return migrations.flatMap<Migration>((migration) => {
     if (migration.name !== 'init') return migration;
 
