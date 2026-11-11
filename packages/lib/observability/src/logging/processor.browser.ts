@@ -3,7 +3,7 @@ import type { LogProcessor } from '@holz/core';
 import { createFilter, createGroup } from '@holz/core/functions';
 import { createLogCollector } from '@holz/log-collector';
 import { createConfigFilter } from '@lib/holz-config-filter';
-import { createIdbBackend } from '@lib/holz-idb-backend/next';
+import { createIdbBackend } from '@lib/holz-idb-backend';
 import { createViteBackend } from '@lib/holz-vite-backend/client';
 
 import { filter } from '../config';

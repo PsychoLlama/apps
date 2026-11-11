@@ -7,8 +7,8 @@
   "license": "MIT",
   "sideEffects": false,
   "exports": {
-    "./next": "./src/next/index.ts",
-    "./next/database": "./src/next/database/external.ts"
+    ".": "./src/index.ts",
+    "./database": "./src/database/external.ts"
   },
   "scripts": {
     "typecheck": "tsc",

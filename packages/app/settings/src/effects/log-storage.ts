@@ -1,6 +1,6 @@
 import { collect } from '@lib/effects';
 import { createLogger } from '@lib/observability';
-import { deleteDatabase } from '@lib/holz-idb-backend/next/database';
+import { deleteDatabase } from '@lib/holz-idb-backend/database';
 import { LOGS_DATABASE } from '@lib/observability/storage';
 import { $logsDeleted } from '../state/log-storage';
 

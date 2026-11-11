@@ -4,10 +4,7 @@
  */
 
 import { createTestController } from '@lib/effects/testing';
-import {
-  deleteDatabase,
-  openDatabase,
-} from '@lib/holz-idb-backend/next/database';
+import { deleteDatabase, openDatabase } from '@lib/holz-idb-backend/database';
 import { level, type Log } from '@lib/observability';
 import { LOGS_DATABASE } from '@lib/observability/storage';
 import { wrap } from 'idb';

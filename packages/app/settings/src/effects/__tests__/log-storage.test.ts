@@ -1,10 +1,10 @@
 import { createTestController } from '@lib/effects/testing';
-import { deleteDatabase } from '@lib/holz-idb-backend/next/database';
+import { deleteDatabase } from '@lib/holz-idb-backend/database';
 import { LOGS_DATABASE } from '@lib/observability/storage';
 import { $deletedNoticeOpen } from '../../state/log-storage';
 import { $deleteLogs } from '../log-storage';
 
-vi.mock('@lib/holz-idb-backend/next/database', () => ({
+vi.mock('@lib/holz-idb-backend/database', () => ({
   deleteDatabase: vi.fn(),
 }));
 

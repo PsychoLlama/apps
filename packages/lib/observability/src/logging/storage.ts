@@ -1,4 +1,4 @@
-import { defineDatabase, type Migration } from '@lib/holz-idb-backend/next';
+import { defineDatabase, type Migration } from '@lib/holz-idb-backend';
 
 /**
  * Index over `timestamp` in the logs table. Several realms write to it, and
@@ -9,7 +9,7 @@ export const TIMESTAMP_INDEX = 'by-timestamp';
 
 /**
  * Where browser logs are persisted. Pass to the utilities in
- * `@lib/holz-idb-backend/next/database` (`openDatabase`, `deleteDatabase`)
+ * `@lib/holz-idb-backend/database` (`openDatabase`, `deleteDatabase`)
  * to read or clear them.
  */
 export const LOGS_DATABASE = defineDatabase('@holz', 'logs', (migrations) => {

@@ -1,5 +1,5 @@
 import { toJSON } from '@holz/json-backend/marshal';
-import { openDatabase } from '@lib/holz-idb-backend/next/database';
+import { openDatabase } from '@lib/holz-idb-backend/database';
 import { createLogger, toError, type Log } from '@lib/observability';
 import { LOGS_DATABASE, TIMESTAMP_INDEX } from '@lib/observability/storage';
 

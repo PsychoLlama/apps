@@ -194,7 +194,7 @@ const config: KnipConfig = {
     },
     'packages/lib/holz-idb-backend': {
       // Test tooling beside the database code: only tests import these.
-      project: ['src/**/*.ts!', '!src/next/database/{testing,remove}.ts!'],
+      project: ['src/**/*.ts!', '!src/database/testing.ts!'],
     },
     'packages/dev/vitest-config': {
       // Deps the shared preset pulls in by side effect rather than by a
