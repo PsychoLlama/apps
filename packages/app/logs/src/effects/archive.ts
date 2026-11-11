@@ -1,4 +1,4 @@
-import { collect, pipe, resource } from '@lib/effects';
+import { collect } from '@lib/effects';
 import {
   PRUNE_RECORD_KEY,
   PRUNE_STORE_NAME,
@@ -8,26 +8,16 @@ import {
   type LogConnection,
   type PruneRecord,
 } from '@lib/holz-idb-backend/database';
-import { createLogInsertedChannel } from '@lib/holz-idb-backend/broadcast';
-import {
-  $archive,
-  $archiveLoaded,
-  $archiveRefreshed,
-  $logsInserted,
-  type ArchivedLog,
-} from '../state';
+import { $archive, $archiveLoaded, type ArchivedLog } from '../state';
 
 // Walks the timestamp index back-to-front, so chronology falls out of the
 // iteration order. The index (not the insertion key) is what recovers true
-// event-time order across interleaved producers. A `range` reads a window.
-const readNewestFirst = async (
-  db: LogConnection,
-  range: IDBKeyRange | null = null,
-): Promise<ArchivedLog[]> => {
+// event-time order across interleaved producers.
+const readNewestFirst = async (db: LogConnection): Promise<ArchivedLog[]> => {
   const entries: ArchivedLog[] = [];
   const index = db.transaction(STORE_NAME).store.index(TIMESTAMP_INDEX);
 
-  for await (const cursor of index.iterate(range, 'prev')) {
+  for await (const cursor of index.iterate(null, 'prev')) {
     entries.push({ ...cursor.value, id: cursor.primaryKey });
   }
 
@@ -44,36 +34,14 @@ const readPruneRecord = async (
 };
 
 /**
- * The viewer's own connection to the IndexedDB archive, held open while
- * any view holds it so a refresh reads through it instead of reopening.
- * Opens at whatever version exists: the writing backend owns the schema.
- */
-export const $connection = pipe([
-  async () => {
-    const db = await openLogDatabase();
-    return resource(db, () => db.close());
-  },
-]);
-
-/**
- * The archive store, once it holds a read, kept honest for as long as it's
- * held: every later insert ping flags it stale. Client-only, since
- * IndexedDB and `BroadcastChannel` don't exist during SSG.
- *
- * Subscribes before reading, so a ping landing mid-read isn't lost. It's
- * replayed once the snapshot lands, where it flags the view stale instead
- * of hitting the `initial` state that ignores it.
+ * The archive, read once from IndexedDB when first held. Client-only, since
+ * IndexedDB doesn't exist during SSG. Opens at whatever version exists: the
+ * writing backend owns the schema.
  */
 export const $trackedArchive = collect(
-  [$connection, $archive, $archiveLoaded, $logsInserted],
-  async (db, archive, archiveLoaded, logsInserted) => {
-    let loaded = false;
-    let missed = false;
-    const channel = createLogInsertedChannel();
-    channel.onMessage(() => {
-      if (loaded) logsInserted();
-      else missed = true;
-    });
+  [$archive, $archiveLoaded],
+  async (archive, archiveLoaded) => {
+    const db = await openLogDatabase();
 
     try {
       const [entries, pruned] = await Promise.all([
@@ -82,32 +50,10 @@ export const $trackedArchive = collect(
       ]);
 
       archiveLoaded(entries, pruned);
-      loaded = true;
-      if (missed) logsInserted();
-    } catch (error) {
-      channel.close();
-      throw error;
+    } finally {
+      db.close();
     }
 
-    return resource(archive, () => channel.close());
-  },
-);
-
-/**
- * Pull the logs added since the snapshot and land them ahead of it, through
- * the connection the view already holds. Reads forward from the newest
- * entry shown, exclusively: a log back-dated below it won't surface until a
- * later refresh, an acceptable gap against duplicate boundary entries. An
- * empty snapshot has no floor, so it reads everything.
- */
-export const $refreshArchive = collect(
-  [$connection, $archive, $archiveRefreshed],
-  (db, archive, archiveRefreshed) => async () => {
-    // Newest-first, so the head carries the highest timestamp seen.
-    const newest = archive.entries[0]?.timestamp;
-    const range =
-      newest === undefined ? null : IDBKeyRange.lowerBound(newest, true);
-
-    archiveRefreshed(await readNewestFirst(db, range));
+    return archive;
   },
 );
