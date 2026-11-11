@@ -1,8 +1,5 @@
 export {
   createLogger,
-  deleteLogsDatabase,
-  LOGS_DATABASE,
-  TIMESTAMP_INDEX,
   level,
   type Log,
   type LogContext,

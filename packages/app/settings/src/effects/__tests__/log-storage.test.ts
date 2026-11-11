@@ -1,11 +1,9 @@
 import { createTestController } from '@lib/effects/testing';
-import { deleteLogsDatabase } from '@lib/observability';
-import type * as Observability from '@lib/observability';
+import { deleteLogsDatabase } from '@lib/observability/storage';
 import { $deletedNoticeOpen } from '../../state/log-storage';
 import { $deleteLogs } from '../log-storage';
 
-vi.mock('@lib/observability', async (importOriginal) => ({
-  ...(await importOriginal<typeof Observability>()),
+vi.mock('@lib/observability/storage', () => ({
   deleteLogsDatabase: vi.fn(),
 }));
 

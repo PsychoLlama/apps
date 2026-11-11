@@ -1,11 +1,7 @@
 import { toJSON } from '@holz/json-backend/marshal';
 import { openDatabase } from '@lib/holz-idb-backend/next/database';
-import {
-  LOGS_DATABASE,
-  deleteLogsDatabase,
-  level,
-  type Log,
-} from '@lib/observability';
+import { level, type Log } from '@lib/observability';
+import { LOGS_DATABASE, deleteLogsDatabase } from '@lib/observability/storage';
 
 import { CONTENT_TYPE, serveLogExport } from '../serve-log-export';
 

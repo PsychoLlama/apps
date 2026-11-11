@@ -1,5 +1,6 @@
 import { collect } from '@lib/effects';
-import { createLogger, deleteLogsDatabase } from '@lib/observability';
+import { createLogger } from '@lib/observability';
+import { deleteLogsDatabase } from '@lib/observability/storage';
 import { $logsDeleted } from '../state/log-storage';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);

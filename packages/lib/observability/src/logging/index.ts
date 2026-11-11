@@ -31,8 +31,6 @@ export const createLogger = (scope: readonly string[]): Logger =>
  */
 export { level } from '@holz/core';
 
-export { LOGS_DATABASE, TIMESTAMP_INDEX, deleteLogsDatabase } from './storage';
-
 export type {
   Log,
   LogContext,

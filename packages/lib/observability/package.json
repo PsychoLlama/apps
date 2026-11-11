@@ -11,7 +11,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./config": "./src/config.ts",
-    "./register/page": "./src/register/page.ts"
+    "./register/page": "./src/register/page.ts",
+    "./storage": "./src/logging/storage.ts"
   },
   "imports": {
     "#processor": {

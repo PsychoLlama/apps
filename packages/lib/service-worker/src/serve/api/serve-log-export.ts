@@ -1,12 +1,7 @@
 import { toJSON } from '@holz/json-backend/marshal';
 import { openDatabase } from '@lib/holz-idb-backend/next/database';
-import {
-  LOGS_DATABASE,
-  TIMESTAMP_INDEX,
-  createLogger,
-  toError,
-  type Log,
-} from '@lib/observability';
+import { createLogger, toError, type Log } from '@lib/observability';
+import { LOGS_DATABASE, TIMESTAMP_INDEX } from '@lib/observability/storage';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
