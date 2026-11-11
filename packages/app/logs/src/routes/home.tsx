@@ -1,11 +1,9 @@
 import { For, Match, Show, Switch } from 'solid-js';
 import { useClientValue } from '@lib/effects/solid';
 import { Badge, Callout, Flex, Text } from '@lib/ui';
-import type { PruneRecord } from '@lib/holz-idb-backend/database';
 import { LogsView } from '../components/logs-view';
 import { LogPanel } from '../components/log-panel';
-import { describePrune } from '../components/describe-prune';
-import { $trackedArchive } from '../effects';
+import { $archivedLogs } from '../effects';
 
 /** How many placeholder rows the loading skeleton stands up. */
 const SKELETON_ROWS = [0, 1, 2, 3, 4];
@@ -15,27 +13,22 @@ const SKELETON_ROWS = [0, 1, 2, 3, 4];
  * IndexedDB on mount (client-only — the store is empty at SSG prerender) and
  * renders the matching state: a skeleton while the read is in flight, an
  * empty-state callout when the archive is genuinely empty, otherwise the
- * {@link LogPanel} — with a {@link PruneNotice} beneath it whenever the archive
- * has been trimmed. A failed read reaches the error boundary.
+ * {@link LogPanel}. A failed read reaches the error boundary.
  */
 const LogList = () => {
-  const archive = useClientValue($trackedArchive);
+  const logs = useClientValue($archivedLogs);
 
   return (
     <LogsView trail={[{ label: 'Logs' }]}>
-      <Show when={archive.ready} fallback={<LoadingState />}>
+      <Show when={logs.ready} fallback={<LoadingState />}>
         <Switch>
-          <Match when={archive()?.entries.length === 0}>
+          <Match when={logs()?.length === 0}>
             <EmptyState />
           </Match>
-          <Match when={archive()}>
-            {(loaded) => <LogPanel logs={loaded().entries} />}
+          <Match when={logs()}>
+            {(loaded) => <LogPanel logs={loaded()} />}
           </Match>
         </Switch>
-
-        <Show when={archive()?.pruned}>
-          {(record) => <PruneNotice record={record()} />}
-        </Show>
       </Show>
     </LogsView>
   );
@@ -69,25 +62,6 @@ const EmptyState = () => (
       No logs found.
     </Text>
   </Callout>
-);
-
-/**
- * Dates the archive's newest gap. The list runs newest-first, so the logs a
- * pruning pass dropped would have sat below everything on screen — the notice
- * stands in their place, at the end of the scroll, rather than announcing
- * itself at the top.
- */
-const PruneNotice = (props: { record: PruneRecord }) => (
-  <Text
-    as="p"
-    size={1}
-    color="lowContrast"
-    align="center"
-    selectable={false}
-    my={5}
-  >
-    {describePrune(props.record)}
-  </Text>
 );
 
 export default LogList;

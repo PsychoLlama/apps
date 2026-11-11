@@ -1,5 +1,4 @@
 import { createLogger, toError } from '@lib/observability';
-import { pruneLogs } from '@lib/holz-idb-backend';
 import {
   pruneOverrides,
   type JsonValue,
@@ -20,8 +19,7 @@ const KNOWN_OPTIONS: readonly Option<JsonValue>[] = [consoleLogFilter];
 
 /**
  * Best-effort housekeeping, once per page load: drop overrides for options
- * that no longer exist and trim the log archive. Runs unawaited from the
- * app root's `onMount`.
+ * that no longer exist. Runs unawaited from the app root's `onMount`.
  */
 export const runStartupTasks = (): void => {
   pruneOverrides(KNOWN_OPTIONS).catch((error: unknown) => {
@@ -29,12 +27,4 @@ export const runStartupTasks = (): void => {
       error: toError(error),
     });
   });
-
-  pruneLogs({ maxRecords: 4_000, retainRecords: 2_000 }).catch(
-    (error: unknown) => {
-      logger.error('Failed to prune the log archive.', {
-        error: toError(error),
-      });
-    },
-  );
 };

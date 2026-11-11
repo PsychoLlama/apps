@@ -1,13 +1,13 @@
-import type { Migration } from './migrations';
+import type { DatabaseDefinition } from './define-database';
 import { openCurrent } from './open';
 
 /** Options for {@link connect}. */
 export interface ConnectConfig {
-  /** Database to stay connected to. */
-  name: string;
-
-  /** Applied whenever a connection finds the database behind. */
-  migrations: Migration[];
+  /**
+   * Database to stay connected to. Its migrations apply whenever a connection
+   * finds it behind.
+   */
+  db: DatabaseDefinition;
 
   /**
    * Receives each new connection, then `null` when it goes away. Start no
@@ -24,7 +24,7 @@ export interface ConnectConfig {
  * when another context needs to upgrade or delete the database, or when the
  * browser closes it. A new connection follows unless reopening fails.
  *
- * A database already past `migrations` is used as it stands, on the assumption
+ * A database already past its migrations is used as it stands, on the assumption
  * that newer versions stay compatible.
  *
  * Returns a function that closes the connection for good. An open already
@@ -37,7 +37,7 @@ export const connect = (config: ConnectConfig): (() => void) => {
   const attach = () => {
     if (terminated) return;
 
-    openCurrent(config.name, config.migrations)
+    openCurrent(config.db)
       .then((db) => {
         // Request canceled while opening.
         if (terminated) return db.close();

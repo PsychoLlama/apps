@@ -9,24 +9,18 @@ import {
 
 import {
   connect,
-  getMigrations,
+  defineDatabase,
   insert,
-  type DatabaseConfig,
-  type MigrationNames,
-  type Migration,
-} from './database';
+  type DatabaseDefinition,
+} from './database/internal';
 
 /** Options for {@link createIdbBackend}. */
 export interface IdbBackendConfig {
-  /** Where logs are persisted. Defaults to {@link DEFAULT_DB_CONFIG}. */
-  db?: DatabaseConfig;
-
   /**
-   * Customize the schema's migrations, e.g. to add your own. Receives the
-   * defaults, oldest first, and returns the full list. A migration's position
-   * is its version, so never reorder or remove one that has shipped.
+   * Where logs are persisted, from {@link defineDatabase}. Defaults to
+   * {@link DEFAULT_DB}.
    */
-  migrations?: (defaults: Migration<MigrationNames>[]) => Migration[];
+  db?: DatabaseDefinition;
 
   /** Holds logs while the database opens. Unlimited by default. */
   buffer?: LogBufferOptions;
@@ -71,15 +65,13 @@ export interface IdbBackend {
  * them if it can't.
  */
 export const createIdbBackend = ({
-  db: config = DEFAULT_DB_CONFIG,
-  migrations: customize = useDefaultMigrations,
+  db = DEFAULT_DB,
   batch: batchOptions,
   buffer: bufferOptions,
   retain,
   onError,
 }: IdbBackendConfig): IdbBackend => {
-  let db: IDBDatabase | null = null;
-  const migrations = customize(getMigrations(config));
+  let connection: IDBDatabase | null = null;
 
   // Called when:
   // - DB (re)connects with buffered logs.
@@ -88,7 +80,7 @@ export const createIdbBackend = ({
   //
   // Caller responsible for ensuring a live connection before invocation.
   const write = (logs: Log[]) => {
-    insert(db!, logs, { table: config.table, retain }).catch(onError);
+    insert(connection!, logs, { db, retain }).catch(onError);
   };
 
   const batch = createBatcher({ ...batchOptions, sink: write });
@@ -107,17 +99,16 @@ export const createIdbBackend = ({
   };
 
   const disconnect = connect({
-    name: config.name,
-    migrations,
+    db,
 
     // May invoke multiple times. Handle is released and re-acquired if new
     // tabs/processes have new migrations, if the DB is deleted, or if the
     // browser closes it (e.g. storage was cleared).
-    onChange: (connection) => {
-      db = connection;
-      select(db ? 'db' : 'buffer');
+    onChange: (next) => {
+      connection = next;
+      select(connection ? 'db' : 'buffer');
 
-      if (db) {
+      if (connection) {
         const buffered = drain();
         if (buffered.length) write(buffered);
       } else {
@@ -135,7 +126,7 @@ export const createIdbBackend = ({
 
   // Batches only fill while connected, so there's nothing to write otherwise.
   const flush = () => {
-    if (db) batch.drain();
+    if (connection) batch.drain();
   };
 
   const close = () => {
@@ -147,14 +138,7 @@ export const createIdbBackend = ({
   return { processor: router, flush, close };
 };
 
-const DEFAULT_DB_CONFIG: DatabaseConfig = {
-  name: '@holz',
-  table: 'logs',
-  index: 'by-timestamp',
-};
-
-const useDefaultMigrations = (defaults: Migration<MigrationNames>[]) =>
-  defaults;
+const DEFAULT_DB = defineDatabase('@holz', 'logs');
 
 /** Drop logs. Happens on fatal errors or when explicitly closed. */
 const discard: LogProcessor = () => {};

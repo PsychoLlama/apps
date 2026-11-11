@@ -1,9 +1,13 @@
 import { level, type Log } from '@holz/core';
 
-import { getMigrations, type DatabaseConfig } from '../database';
+import {
+  defineDatabase,
+  type CustomizeMigrations,
+  type DatabaseDefinition,
+} from '../database/internal';
 import { openCurrent } from '../database/open';
 import { promisifyRequest } from '../database/promise';
-import { remove } from '../database/remove';
+import { deleteDatabase } from '../database/delete-database';
 import { createSchemaContext } from '../database/testing';
 import { createIdbBackend, type IdbBackendConfig } from '../idb-backend';
 
@@ -18,7 +22,7 @@ const createLog = (message: string, overrides: Partial<Log> = {}): Log => ({
 
 /** Declare after the schema context, so it stops before the database goes. */
 const startBackend = (
-  schema: DatabaseConfig,
+  schema: DatabaseDefinition,
   size = 1,
   overrides: Partial<IdbBackendConfig> = {},
 ) => {
@@ -34,10 +38,9 @@ const startBackend = (
   return { ...backend, onError, [Symbol.dispose]: backend.close };
 };
 
-const openDatabase = (schema: DatabaseConfig) =>
-  openCurrent(schema.name, getMigrations(schema));
+const openDatabase = (schema: DatabaseDefinition) => openCurrent(schema);
 
-const readLogs = async (schema: DatabaseConfig): Promise<Log[]> => {
+const readLogs = async (schema: DatabaseDefinition): Promise<Log[]> => {
   const database = await openDatabase(schema);
 
   try {
@@ -52,7 +55,7 @@ const readLogs = async (schema: DatabaseConfig): Promise<Log[]> => {
   }
 };
 
-const waitForLogs = (schema: DatabaseConfig, logs: Log[]) =>
+const waitForLogs = (schema: DatabaseDefinition, logs: Log[]) =>
   vi.waitFor(async () => {
     await expect(readLogs(schema)).resolves.toEqual(logs);
   });
@@ -63,7 +66,7 @@ const waitForLogs = (schema: DatabaseConfig, logs: Log[]) =>
  */
 const waitForConnection = async (
   backend: ReturnType<typeof startBackend>,
-  schema: DatabaseConfig,
+  schema: DatabaseDefinition,
 ): Promise<Log> => {
   const ready = createLog('ready');
 
@@ -134,7 +137,7 @@ describe('createIdbBackend', () => {
     backend.processor(first);
     await waitForLogs(context.schema, [first]);
 
-    await remove(context.schema.name);
+    await deleteDatabase(context.schema.name);
     backend.processor(second);
 
     await waitForLogs(context.schema, [second]);
@@ -149,7 +152,7 @@ describe('createIdbBackend', () => {
     const later = [createLog('second'), createLog('third')];
 
     backend.processor(pending); // Half a batch.
-    await remove(context.schema.name);
+    await deleteDatabase(context.schema.name);
 
     // Whether these arrive before or after reconnecting, they belong after
     // the pending log.
@@ -161,25 +164,22 @@ describe('createIdbBackend', () => {
 
   it('runs custom migrations after the defaults', async () => {
     await using context = createSchemaContext();
-    const { table } = context.schema;
-    using backend = startBackend(context.schema, 1, {
-      migrations: (defaults) => [
-        ...defaults,
-        {
-          name: 'by-level',
-          run: (transaction) =>
-            void transaction
-              .objectStore(table)
-              .createIndex('by-level', 'level'),
-        },
-      ],
-    });
+    const { name, table } = context.schema;
+    const schema = defineDatabase(name, table, (defaults) => [
+      ...defaults,
+      {
+        name: 'by-level',
+        run: (transaction) =>
+          void transaction.objectStore(table).createIndex('by-level', 'level'),
+      },
+    ]);
+    using backend = startBackend(schema);
     const log = createLog('first');
 
     backend.processor(log);
-    await waitForLogs(context.schema, [log]);
+    await waitForLogs(schema, [log]);
 
-    const database = await openDatabase(context.schema);
+    const database = await openDatabase(schema);
     const { indexNames } = database.transaction(table).objectStore(table);
     database.close();
 
@@ -188,7 +188,7 @@ describe('createIdbBackend', () => {
   });
 
   it('rejects unknown default migration names', () => {
-    const customize: IdbBackendConfig['migrations'] = (defaults) => {
+    const customize: CustomizeMigrations = (defaults) => {
       // @ts-expect-error Not a migration we ship.
       defaults.findIndex((migration) => migration.name === 'intt');
 

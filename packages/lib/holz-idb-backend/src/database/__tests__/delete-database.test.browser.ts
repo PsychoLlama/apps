@@ -1,5 +1,6 @@
+import { defineDatabase } from '../define-database';
 import { openOrUpgrade } from '../open';
-import { remove } from '../remove';
+import { deleteDatabase } from '../delete-database';
 
 const uniqueName = () => `test-${crypto.randomUUID()}`;
 
@@ -9,17 +10,17 @@ const listDatabases = async () => {
   return databases.map((database) => database.name);
 };
 
-describe('remove', () => {
+describe('deleteDatabase', () => {
   it('deletes the database', async () => {
     const name = uniqueName();
 
-    (await openOrUpgrade(name, [{ name: 'init', run: () => {} }])).close();
-    await remove(name);
+    (await openOrUpgrade(defineDatabase(name, 'logs'))).close();
+    await deleteDatabase(name);
 
     expect(await listDatabases()).not.toContain(name);
   });
 
   it('resolves when the database does not exist', async () => {
-    await expect(remove(uniqueName())).resolves.toBeUndefined();
+    await expect(deleteDatabase(uniqueName())).resolves.toBeUndefined();
   });
 });

@@ -413,9 +413,6 @@ importers:
       '@lib/effects':
         specifier: workspace:*
         version: link:../../lib/effects
-      '@lib/holz-idb-backend':
-        specifier: workspace:*
-        version: link:../../lib/holz-idb-backend
       '@lib/messaging':
         specifier: workspace:*
         version: link:../../lib/messaging
@@ -495,9 +492,6 @@ importers:
       '@lib/gallery':
         specifier: workspace:*
         version: link:../../lib/gallery
-      '@lib/holz-idb-backend':
-        specifier: workspace:*
-        version: link:../../lib/holz-idb-backend
       '@lib/observability':
         specifier: workspace:*
         version: link:../../lib/observability
@@ -565,9 +559,6 @@ importers:
       '@lib/effects':
         specifier: workspace:*
         version: link:../../lib/effects
-      '@lib/holz-idb-backend':
-        specifier: workspace:*
-        version: link:../../lib/holz-idb-backend
       '@lib/observability':
         specifier: workspace:*
         version: link:../../lib/observability
@@ -647,6 +638,9 @@ importers:
       '@vanilla-extract/css':
         specifier: 'catalog:'
         version: 1.21.3
+      idb:
+        specifier: 'catalog:'
+        version: 8.0.4
       solid-js:
         specifier: 1.9.18
         version: 1.9.18
@@ -672,9 +666,6 @@ importers:
       '@lib/effects':
         specifier: workspace:*
         version: link:../../lib/effects
-      '@lib/holz-idb-backend':
-        specifier: workspace:*
-        version: link:../../lib/holz-idb-backend
       '@lib/observability':
         specifier: workspace:*
         version: link:../../lib/observability
@@ -736,9 +727,6 @@ importers:
       '@lib/effects':
         specifier: workspace:*
         version: link:../../lib/effects
-      '@lib/holz-idb-backend':
-        specifier: workspace:*
-        version: link:../../lib/holz-idb-backend
       '@lib/messaging':
         specifier: workspace:*
         version: link:../../lib/messaging
@@ -1182,15 +1170,6 @@ importers:
       '@holz/core':
         specifier: 'catalog:'
         version: 0.11.1
-      '@lib/assert':
-        specifier: workspace:*
-        version: link:../assert
-      '@lib/messaging':
-        specifier: workspace:*
-        version: link:../messaging
-      idb:
-        specifier: 'catalog:'
-        version: 8.0.4
     devDependencies:
       '@dev/vitest-config':
         specifier: workspace:*

@@ -1,1 +1,1 @@
-export { $refreshArchive, $trackedArchive } from './archive';
+export { $archivedLogs, type ArchivedLog } from './archive';

@@ -7,12 +7,42 @@ import { createIdbBackend } from '@lib/holz-idb-backend';
 import { createViteBackend } from '@lib/holz-vite-backend/client';
 
 import { filter } from '../config';
+import { onExit } from './exit';
+import { LOGS_DATABASE } from './storage';
 
 // Under Vitest `import.meta.env.MODE` is `'test'`. Mirror the server
 // processor's `NODE_ENV` guard and stay silent so suites don't spew log
 // noise. `import.meta.env` is statically replaced, so non-test bundles fold
 // this to `true` and drop the gate.
 const notTest = import.meta.env.MODE !== 'test';
+
+// Checked through `globalThis` because this module also compiles for the
+// service worker, where `document` isn't typed.
+const isMainThread = 'document' in globalThis;
+
+// Opens IndexedDB as soon as it's created, so don't create it under test:
+// suites would race over the shared database.
+const createPersistence = (): LogProcessor => {
+  const { processor, flush } = createIdbBackend({
+    db: LOGS_DATABASE,
+    buffer: { capacity: 1_000 },
+
+    // Workers get no warning before they stop, so a pending batch would be
+    // lost. Only the page can flush (e.g. on hide); everything else writes
+    // each log as it comes.
+    batch: { size: isMainThread ? 10 : 1 },
+
+    retain: 2_000,
+
+    // Not through the logger: a failing backend would feed itself.
+    // eslint-disable-next-line no-console
+    onError: (error) => console.error('Log persistence failed.', error),
+  });
+
+  onExit(flush);
+
+  return processor;
+};
 
 // The base destination for every browser realm: a config-filtered console
 // plus origin-shared IndexedDB persistence. A global collector
@@ -29,7 +59,7 @@ export const processor: LogProcessor = createLogCollector({
         option: filter,
         processor: createConsoleBackend(),
       }),
-      createIdbBackend(),
+      notTest ? createPersistence() : () => {},
       createViteBackend(),
     ]),
   ),

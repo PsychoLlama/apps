@@ -1,8 +1,8 @@
-// The package's public surface — IndexedDB persistence for holz logs, shared
-// across the main thread, workers, and service workers.
-export { createIdbBackend } from './holz-idb-backend';
-export type { CreateIdbBackendOptions } from './holz-idb-backend';
-export { clearLogs } from './clear';
-export { pruneLogs } from './prune';
-export type { PruneLogsOptions } from './prune';
-export type { PruneRecord } from './database';
+export { createIdbBackend } from './idb-backend';
+export type { IdbBackend, IdbBackendConfig } from './idb-backend';
+export { defineDatabase } from './database/internal';
+export type {
+  CustomizeMigrations,
+  DatabaseDefinition,
+  Migration,
+} from './database/internal';

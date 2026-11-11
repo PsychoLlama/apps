@@ -1,10 +1,7 @@
 import { toJSON } from '@holz/json-backend/marshal';
-import {
-  STORE_NAME,
-  deleteLogDatabase,
-  migrateLogDatabase,
-} from '@lib/holz-idb-backend/database';
+import { deleteDatabase, openDatabase } from '@lib/holz-idb-backend/database';
 import { level, type Log } from '@lib/observability';
+import { LOGS_DATABASE } from '@lib/observability/storage';
 
 import { CONTENT_TYPE, serveLogExport } from '../serve-log-export';
 
@@ -33,22 +30,28 @@ describe('serveLogExport', () => {
   });
 
   const setup = async () => {
-    const db = await migrateLogDatabase();
+    const db = await openDatabase(LOGS_DATABASE);
 
     return {
       db,
 
       seed: async (overrides: Partial<Log>[]): Promise<Log[]> => {
         const logs = overrides.map(createLog);
-        const tx = db.transaction(STORE_NAME, 'readwrite');
-        await Promise.all([...logs.map((log) => tx.store.add(log)), tx.done]);
+        const tx = db.transaction(LOGS_DATABASE.table, 'readwrite');
+        const store = tx.objectStore(LOGS_DATABASE.table);
+        logs.forEach((log) => store.add(log));
+
+        await new Promise((resolve, reject) => {
+          tx.oncomplete = resolve;
+          tx.onerror = () => reject(tx.error ?? new Error('Seeding failed.'));
+        });
 
         return logs;
       },
 
       [Symbol.asyncDispose]: async () => {
         db.close();
-        await deleteLogDatabase();
+        await deleteDatabase(LOGS_DATABASE.name);
       },
     };
   };
@@ -83,6 +86,6 @@ describe('serveLogExport', () => {
 
     // The export must not leave behind a schema that migrations skip.
     await using handle = await setup();
-    expect(handle.db.objectStoreNames.contains(STORE_NAME)).toBe(true);
+    expect(handle.db.objectStoreNames.contains(LOGS_DATABASE.table)).toBe(true);
   });
 });

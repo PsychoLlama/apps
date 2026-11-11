@@ -1,6 +1,6 @@
 import { For } from 'solid-js';
 import { Flex, Heading } from '@lib/ui';
-import type { ArchivedLog } from '../state';
+import type { ArchivedLog } from '../effects';
 import { LogEntry } from './log-entry';
 import { groupLogsByDay } from './group-logs-by-day';
 import * as css from './log-panel.css';

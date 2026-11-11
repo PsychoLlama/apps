@@ -1,113 +1,42 @@
-import { collect, pipe, resource } from '@lib/effects';
-import {
-  PRUNE_RECORD_KEY,
-  PRUNE_STORE_NAME,
-  STORE_NAME,
-  TIMESTAMP_INDEX,
-  openLogDatabase,
-  type LogConnection,
-  type PruneRecord,
-} from '@lib/holz-idb-backend/database';
-import { createLogInsertedChannel } from '@lib/holz-idb-backend/broadcast';
-import {
-  $archive,
-  $archiveLoaded,
-  $archiveRefreshed,
-  $logsInserted,
-  type ArchivedLog,
-} from '../state';
+import { pipe } from '@lib/effects';
+import { openDatabase } from '@lib/holz-idb-backend/database';
+import type { Log } from '@lib/observability';
+import { LOGS_DATABASE, TIMESTAMP_INDEX } from '@lib/observability/storage';
+import { wrap } from 'idb';
 
-// Walks the timestamp index back-to-front, so chronology falls out of the
-// iteration order. The index (not the insertion key) is what recovers true
-// event-time order across interleaved producers. A `range` reads a window.
-const readNewestFirst = async (
-  db: LogConnection,
-  range: IDBKeyRange | null = null,
-): Promise<ArchivedLog[]> => {
-  const entries: ArchivedLog[] = [];
-  const index = db.transaction(STORE_NAME).store.index(TIMESTAMP_INDEX);
-
-  for await (const cursor of index.iterate(range, 'prev')) {
-    entries.push({ ...cursor.value, id: cursor.primaryKey });
-  }
-
-  return entries;
-};
-
-// A viewer opens at whatever version exists, which can predate the pruning
-// store. Naming a missing store throws, so it reads as never pruned.
-const readPruneRecord = async (
-  db: LogConnection,
-): Promise<PruneRecord | null> => {
-  if (!db.objectStoreNames.contains(PRUNE_STORE_NAME)) return null;
-  return (await db.get(PRUNE_STORE_NAME, PRUNE_RECORD_KEY)) ?? null;
-};
+/** A persisted log, tagged with the key IndexedDB stores it under. */
+export interface ArchivedLog extends Log {
+  /** The log's IndexedDB key. Unique, so it names the entry across reads. */
+  id: number;
+}
 
 /**
- * The viewer's own connection to the IndexedDB archive, held open while
- * any view holds it so a refresh reads through it instead of reopening.
- * Opens at whatever version exists: the writing backend owns the schema.
+ * Every persisted log, newest-first, read once from IndexedDB when first held.
+ * Client-only, since IndexedDB doesn't exist during SSG.
  */
-export const $connection = pipe([
-  async () => {
-    const db = await openLogDatabase();
-    return resource(db, () => db.close());
-  },
-]);
-
-/**
- * The archive store, once it holds a read, kept honest for as long as it's
- * held: every later insert ping flags it stale. Client-only, since
- * IndexedDB and `BroadcastChannel` don't exist during SSG.
- *
- * Subscribes before reading, so a ping landing mid-read isn't lost. It's
- * replayed once the snapshot lands, where it flags the view stale instead
- * of hitting the `initial` state that ignores it.
- */
-export const $trackedArchive = collect(
-  [$connection, $archive, $archiveLoaded, $logsInserted],
-  async (db, archive, archiveLoaded, logsInserted) => {
-    let loaded = false;
-    let missed = false;
-    const channel = createLogInsertedChannel();
-    channel.onMessage(() => {
-      if (loaded) logsInserted();
-      else missed = true;
-    });
+export const $archivedLogs = pipe([
+  async (): Promise<ArchivedLog[]> => {
+    const db = wrap(await openDatabase(LOGS_DATABASE));
 
     try {
-      const [entries, pruned] = await Promise.all([
-        readNewestFirst(db),
-        readPruneRecord(db),
-      ]);
+      const entries: ArchivedLog[] = [];
+      const index = db
+        .transaction(LOGS_DATABASE.table)
+        .store.index(TIMESTAMP_INDEX);
 
-      archiveLoaded(entries, pruned);
-      loaded = true;
-      if (missed) logsInserted();
-    } catch (error) {
-      channel.close();
-      throw error;
+      // Back-to-front, so chronology falls out of the iteration order. The
+      // index (not the insertion key) is what recovers true event-time order
+      // across interleaved producers.
+      for await (const cursor of index.iterate(null, 'prev')) {
+        entries.push({
+          ...(cursor.value as Log),
+          id: cursor.primaryKey as number,
+        });
+      }
+
+      return entries;
+    } finally {
+      db.close();
     }
-
-    return resource(archive, () => channel.close());
   },
-);
-
-/**
- * Pull the logs added since the snapshot and land them ahead of it, through
- * the connection the view already holds. Reads forward from the newest
- * entry shown, exclusively: a log back-dated below it won't surface until a
- * later refresh, an acceptable gap against duplicate boundary entries. An
- * empty snapshot has no floor, so it reads everything.
- */
-export const $refreshArchive = collect(
-  [$connection, $archive, $archiveRefreshed],
-  (db, archive, archiveRefreshed) => async () => {
-    // Newest-first, so the head carries the highest timestamp seen.
-    const newest = archive.entries[0]?.timestamp;
-    const range =
-      newest === undefined ? null : IDBKeyRange.lowerBound(newest, true);
-
-    archiveRefreshed(await readNewestFirst(db, range));
-  },
-);
+]);

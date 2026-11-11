@@ -1,11 +1,12 @@
 import type { Log } from '@holz/core';
 
+import type { DatabaseDefinition } from './define-database';
 import { promisifyTransaction } from './promise';
 
 /** Options for {@link insert}. */
 export interface InsertOptions {
-  /** Object store to write to. */
-  table: string;
+  /** Database whose object store to write to. */
+  db: DatabaseDefinition;
 
   /** Max number of logs to keep. Discards the earliest written first. */
   retain: number;
@@ -20,7 +21,7 @@ export interface InsertOptions {
 export const insert = async (
   database: IDBDatabase,
   logs: Log[],
-  { table, retain }: InsertOptions,
+  { db: { table }, retain }: InsertOptions,
 ): Promise<void> => {
   const transaction = database.transaction(table, 'readwrite', {
     // Minor perf: flush on the OS's schedule. Don't force fsync.

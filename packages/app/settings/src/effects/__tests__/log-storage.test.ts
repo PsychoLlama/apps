@@ -1,34 +1,33 @@
 import { createTestController } from '@lib/effects/testing';
-import { clearLogs } from '@lib/holz-idb-backend';
-import type * as IdbBackend from '@lib/holz-idb-backend';
+import { deleteDatabase } from '@lib/holz-idb-backend/database';
+import { LOGS_DATABASE } from '@lib/observability/storage';
 import { $deletedNoticeOpen } from '../../state/log-storage';
 import { $deleteLogs } from '../log-storage';
 
-vi.mock('@lib/holz-idb-backend', async (importOriginal) => ({
-  ...(await importOriginal<typeof IdbBackend>()),
-  clearLogs: vi.fn(),
+vi.mock('@lib/holz-idb-backend/database', () => ({
+  deleteDatabase: vi.fn(),
 }));
 
 beforeEach(() => {
-  vi.mocked(clearLogs).mockReset();
+  vi.mocked(deleteDatabase).mockReset();
 });
 
 describe('$deleteLogs', () => {
   it('deletes the logs, then shows the notice', async () => {
-    vi.mocked(clearLogs).mockResolvedValue();
+    vi.mocked(deleteDatabase).mockResolvedValue();
     await using effects = createTestController();
     const deleteLogs = await effects.run($deleteLogs);
     const deletedNoticeOpen = await effects.run($deletedNoticeOpen);
 
     await deleteLogs();
 
-    expect(clearLogs).toHaveBeenCalledTimes(1);
+    expect(deleteDatabase).toHaveBeenCalledExactlyOnceWith(LOGS_DATABASE.name);
     expect(deletedNoticeOpen()).toBe(true);
   });
 
   it('fails without showing the notice', async () => {
     const error = new Error('Testing failures');
-    vi.mocked(clearLogs).mockRejectedValue(error);
+    vi.mocked(deleteDatabase).mockRejectedValue(error);
     await using effects = createTestController();
     const deleteLogs = await effects.run($deleteLogs);
     const deletedNoticeOpen = await effects.run($deletedNoticeOpen);
