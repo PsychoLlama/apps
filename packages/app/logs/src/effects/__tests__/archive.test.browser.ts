@@ -7,7 +7,7 @@ import { createTestController } from '@lib/effects/testing';
 import { level, type Log } from '@lib/observability';
 import { STORE_NAME, openLogDatabase } from '@lib/holz-idb-backend/database';
 import { createIdbBackend } from '@lib/holz-idb-backend';
-import { $trackedArchive } from '../archive';
+import { $archivedLogs } from '../archive';
 
 /** A complete `Log`, with only the fields a test cares about overridden. */
 const makeLog = (overrides: Partial<Log>): Log => ({
@@ -42,7 +42,7 @@ beforeEach(async () => {
   }
 });
 
-describe('$trackedArchive', () => {
+describe('$archivedLogs', () => {
   it('reads the archive newest-first by event time', async () => {
     // Insertion order and event-time order diverge: the timestamp index is
     // what recovers chronology.
@@ -52,11 +52,8 @@ describe('$trackedArchive', () => {
     );
     await using effects = createTestController();
 
-    const archive = await effects.run($trackedArchive);
+    const logs = await effects.run($archivedLogs);
 
-    expect(archive.entries.map((log) => log.message)).toEqual([
-      'newer',
-      'older',
-    ]);
+    expect(logs.map((log) => log.message)).toEqual(['newer', 'older']);
   });
 });

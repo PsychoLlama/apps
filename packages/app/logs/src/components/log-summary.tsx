@@ -1,7 +1,7 @@
 import { For, Show } from 'solid-js';
 import { Badge, Code, Flex, Text } from '@lib/ui';
 import IconChevronRight from 'virtual:icons/mdi/chevron-right';
-import type { ArchivedLog } from '../state';
+import type { ArchivedLog } from '../effects';
 import { ErrorDetails } from './error-details';
 import { contextErrors } from './log-context';
 import { levelDisplay } from './level-display';

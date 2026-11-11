@@ -3,7 +3,7 @@ import { useClientValue } from '@lib/effects/solid';
 import { Badge, Callout, Flex, Text } from '@lib/ui';
 import { LogsView } from '../components/logs-view';
 import { LogPanel } from '../components/log-panel';
-import { $trackedArchive } from '../effects';
+import { $archivedLogs } from '../effects';
 
 /** How many placeholder rows the loading skeleton stands up. */
 const SKELETON_ROWS = [0, 1, 2, 3, 4];
@@ -16,17 +16,17 @@ const SKELETON_ROWS = [0, 1, 2, 3, 4];
  * {@link LogPanel}. A failed read reaches the error boundary.
  */
 const LogList = () => {
-  const archive = useClientValue($trackedArchive);
+  const logs = useClientValue($archivedLogs);
 
   return (
     <LogsView trail={[{ label: 'Logs' }]}>
-      <Show when={archive.ready} fallback={<LoadingState />}>
+      <Show when={logs.ready} fallback={<LoadingState />}>
         <Switch>
-          <Match when={archive()?.entries.length === 0}>
+          <Match when={logs()?.length === 0}>
             <EmptyState />
           </Match>
-          <Match when={archive()}>
-            {(loaded) => <LogPanel logs={loaded().entries} />}
+          <Match when={logs()}>
+            {(loaded) => <LogPanel logs={loaded()} />}
           </Match>
         </Switch>
       </Show>

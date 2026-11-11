@@ -1,7 +1,8 @@
 import { Show } from 'solid-js';
 import { useValue } from '@lib/effects/solid';
 import { Flex } from '@lib/ui';
-import { $entryToggled, $expansion, type ArchivedLog } from '../state';
+import type { ArchivedLog } from '../effects';
+import { $entryToggled, $expansion } from '../state';
 import { AttributeTable } from './attribute-table';
 import { hasAttributes } from './log-context';
 import { LogSummary } from './log-summary';

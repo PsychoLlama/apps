@@ -1,11 +1,17 @@
-import { collect } from '@lib/effects';
+import { pipe } from '@lib/effects';
 import {
   STORE_NAME,
   TIMESTAMP_INDEX,
   openLogDatabase,
   type LogConnection,
 } from '@lib/holz-idb-backend/database';
-import { $archive, $archiveLoaded, type ArchivedLog } from '../state';
+import type { Log } from '@lib/observability';
+
+/** A persisted log, tagged with the key IndexedDB stores it under. */
+export interface ArchivedLog extends Log {
+  /** The log's IndexedDB key. Unique, so it names the entry across reads. */
+  id: number;
+}
 
 // Walks the timestamp index back-to-front, so chronology falls out of the
 // iteration order. The index (not the insertion key) is what recovers true
@@ -22,21 +28,18 @@ const readNewestFirst = async (db: LogConnection): Promise<ArchivedLog[]> => {
 };
 
 /**
- * The archive, read once from IndexedDB when first held. Client-only, since
- * IndexedDB doesn't exist during SSG. Opens at whatever version exists: the
- * writing backend owns the schema.
+ * Every persisted log, newest-first, read once from IndexedDB when first held.
+ * Client-only, since IndexedDB doesn't exist during SSG. Opens at whatever
+ * version exists: the writing backend owns the schema.
  */
-export const $trackedArchive = collect(
-  [$archive, $archiveLoaded],
-  async (archive, archiveLoaded) => {
+export const $archivedLogs = pipe([
+  async () => {
     const db = await openLogDatabase();
 
     try {
-      archiveLoaded(await readNewestFirst(db));
+      return await readNewestFirst(db);
     } finally {
       db.close();
     }
-
-    return archive;
   },
-);
+]);
