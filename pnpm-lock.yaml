@@ -307,7 +307,7 @@ catalogs:
       version: 24.0.0
     vite-plugin-solid:
       specifier: ^2.11.11
-      version: 2.11.15
+      version: 2.11.16
     vitest:
       specifier: ^5.0.0
       version: 5.1.0
@@ -1050,7 +1050,7 @@ importers:
         version: 8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1)
       vite-plugin-solid:
         specifier: 'catalog:'
-        version: 2.11.15(@testing-library/jest-dom@7.0.1(@testing-library/dom@10.4.1)(vitest@5.1.0))(solid-js@1.9.18)(supports-color@10.2.2)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))
+        version: 2.11.16(@testing-library/jest-dom@7.0.1(@testing-library/dom@10.4.1)(vitest@5.1.0))(solid-js@1.9.18)(supports-color@10.2.2)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))
 
   packages/dev/vite-plugin-svg-to-png:
     dependencies:
@@ -4909,8 +4909,8 @@ packages:
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
 
-  vite-plugin-solid@2.11.15:
-    resolution: {integrity: sha512-twDNPdUDbhem+UOXVu5PyRJvwHFmxSJ3+NxbCgT9iFL42EmWS7lBfFskVM/HXLwd86fh1BgHKJBfGCWkTu2zEg==}
+  vite-plugin-solid@2.11.16:
+    resolution: {integrity: sha512-qguFUmqY2ICuoGHrZjm+cWpvKkqVyWDMptipC/BIEGr9q6wEzwTWYOjM9pEWJ+yoTuF6T5OpysI2Okdy7rsVlQ==}
     peerDependencies:
       '@testing-library/jest-dom': ^5.16.6 || ^5.17.0 || ^6.0.0 || ^7.0.0
       solid-js: 1.9.18
@@ -6164,7 +6164,7 @@ snapshots:
       srvx: 0.12.4
       terracotta: 1.2.4(solid-js@1.9.18)
       vite: 8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1)
-      vite-plugin-solid: 2.11.15(@testing-library/jest-dom@7.0.1(@testing-library/dom@10.4.1)(vitest@5.1.0))(solid-js@1.9.18)(supports-color@10.2.2)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))
+      vite-plugin-solid: 2.11.16(@testing-library/jest-dom@7.0.1(@testing-library/dom@10.4.1)(vitest@5.1.0))(solid-js@1.9.18)(supports-color@10.2.2)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))
     optionalDependencies:
       '@solidjs/router': 1.0.0(solid-js@1.9.18)
     transitivePeerDependencies:
@@ -8613,7 +8613,7 @@ snapshots:
       - tsx
       - yaml
 
-  vite-plugin-solid@2.11.15(@testing-library/jest-dom@7.0.1(@testing-library/dom@10.4.1)(vitest@5.1.0))(solid-js@1.9.18)(supports-color@10.2.2)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1)):
+  vite-plugin-solid@2.11.16(@testing-library/jest-dom@7.0.1(@testing-library/dom@10.4.1)(vitest@5.1.0))(solid-js@1.9.18)(supports-color@10.2.2)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1)):
     dependencies:
       '@babel/core': 7.29.7(supports-color@10.2.2)
       '@types/babel__core': 7.20.5
