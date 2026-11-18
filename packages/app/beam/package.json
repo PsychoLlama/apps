@@ -3,16 +3,14 @@
   "private": true,
   "type": "module",
   "version": "0.0.0",
-  "description": "Encrypted, peer-to-peer sharing of links and files over iroh.",
+  "description": "Encrypted, peer-to-peer sharing between groups of devices.",
   "license": "MIT",
   "sideEffects": [
     "**/*.css.ts",
     "src/service-worker/index.ts"
   ],
   "exports": {
-    "./constants": "./src/constants.ts",
-    "./effects": "./src/effects/index.ts",
-    "./state": "./src/state/index.ts"
+    "./constants": "./src/constants.ts"
   },
   "config": {
     "localhost": "beam.localhost"
@@ -29,7 +27,6 @@
     "deploy:preview": "rm -f .wrangler/deploy/preview.ndjson && WRANGLER_OUTPUT_FILE_PATH=.wrangler/deploy/preview.ndjson wrangler versions upload --preview-alias \"pr-${PR_NUMBER:?}\""
   },
   "dependencies": {
-    "@crate/p2p": "workspace:*",
     "@crate/qr-code": "workspace:*",
     "@lib/assert": "workspace:*",
     "@lib/design": "workspace:*",
@@ -42,12 +39,10 @@
     "@lib/state": "workspace:*",
     "@lib/theme": "workspace:*",
     "@lib/ui": "workspace:*",
-    "@lib/vault": "workspace:*",
     "@solidjs/meta": "catalog:",
     "@solidjs/router": "catalog:",
     "@solidjs/start": "catalog:",
     "@vanilla-extract/css": "catalog:",
-    "idb": "catalog:",
     "solid-js": "catalog:",
     "vite": "catalog:"
   },
