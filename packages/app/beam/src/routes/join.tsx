@@ -41,6 +41,15 @@ const BeamJoin = () => {
     }
   });
 
+  // The device had to leave the group this one replaced, and only a
+  // device opened afresh can go on from there. The invitation is unspent,
+  // so loading the link again is the whole of it. Once: the second time
+  // round there's nothing left to leave.
+  createEffect(() => {
+    const result = joinGroup.latest;
+    if (result && 'restart' in result) window.location.reload();
+  });
+
   const failure = () => {
     const result = joinGroup.latest;
     return result && 'reason' in result ? result.reason : null;

@@ -34,9 +34,28 @@ export const GroupList = () => {
               <Flex as="li" direction="column">
                 <Card as="a" href={`/group/${group.id}`} size={2}>
                   <Flex as="div" align="center" justify="between" gap={3}>
-                    <Text as="span" weight="medium" truncate selectable={false}>
-                      {groupLabel(group)}
-                    </Text>
+                    <Flex as="div" direction="column" gap={1}>
+                      <Text
+                        as="span"
+                        weight="medium"
+                        truncate
+                        selectable={false}
+                      >
+                        {groupLabel(group)}
+                      </Text>
+
+                      {/* Held, and not one this device is in. */}
+                      <Show when={!group.member}>
+                        <Text
+                          as="span"
+                          size={1}
+                          color="lowContrast"
+                          selectable={false}
+                        >
+                          {group.removed ? 'Removed' : 'Joining…'}
+                        </Text>
+                      </Show>
+                    </Flex>
                     <IconChevronRight
                       width="20"
                       height="20"

@@ -1,7 +1,7 @@
 import { For, Show } from 'solid-js';
 import { useValue } from '@lib/effects/solid';
 import { Flex, Text } from '@lib/ui';
-import { $device, $feed } from '../state';
+import { $device, $feed, deviceLabel } from '../state';
 import { FeedItem } from './feed-item';
 
 /**
@@ -23,6 +23,17 @@ export const Feed = (props: {
   const ready = () => feed().loaded && feed().groupId === props.groupId;
 
   const newestFirst = () => feed().items.toReversed();
+
+  /**
+   * What to call whoever wrote an item. A device that has since left the
+   * group is no longer listed, and has no name here.
+   */
+  const authorOf = (author: string): string => {
+    if (author === device().id) return 'This device';
+
+    const member = feed().members.find((it) => it.id === author);
+    return member ? deviceLabel(member) : 'Another device';
+  };
 
   return (
     <Show when={ready()}>
@@ -47,7 +58,7 @@ export const Feed = (props: {
                 <FeedItem
                   groupId={props.groupId}
                   item={item}
-                  mine={item.author === device().id}
+                  author={authorOf(item.author)}
                 />
               </Flex>
             )}

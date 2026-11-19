@@ -1,4 +1,4 @@
-import type { Item } from '@crate/beam';
+import type { Item, Member } from '@crate/beam';
 import { defineCommand, defineStore } from '@lib/state';
 
 /**
@@ -20,6 +20,9 @@ export interface FeedState {
 
   /** Everything shared to the group, oldest first. */
   items: Item[];
+
+  /** The devices in the group. Empty until the database has answered. */
+  members: Member[];
 }
 
 /** The feed of the group on screen. */
@@ -27,6 +30,7 @@ export const $feed = defineStore<FeedState>(() => ({
   groupId: null,
   loaded: false,
   items: [],
+  members: [],
 }));
 
 /**
@@ -41,6 +45,7 @@ export const $groupViewed = defineCommand(
     feed.groupId = groupId;
     feed.loaded = false;
     feed.items = [];
+    feed.members = [];
   },
 );
 
@@ -55,6 +60,19 @@ export const $feedChanged = defineCommand(
 
     feed.loaded = true;
     feed.items = items;
+  },
+);
+
+/**
+ * The database listed a group's devices again. Replaces them whole, unless
+ * the page has moved on to another group.
+ */
+export const $membersChanged = defineCommand(
+  [$feed],
+  (feed) => (groupId: string, members: Member[]) => {
+    if (feed.groupId !== groupId) return;
+
+    feed.members = members;
   },
 );
 

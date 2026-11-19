@@ -1,6 +1,6 @@
 /** Unit tests for the device worker's engine, over a fake lock manager. */
 
-import type { Device, Group, Item } from '@crate/beam';
+import type { Device, Group, Item, Member } from '@crate/beam';
 import { Engine, type EngineDeps, type EngineEvents } from '../engine';
 
 const ID = 'a1b2c3d4e5f6';
@@ -72,6 +72,12 @@ const createDevice = () => ({
   items: vi.fn<Device['items']>(() => Promise.resolve<Item[]>([])),
   addItem: vi.fn<Device['addItem']>(() => Promise.resolve()),
   deleteItem: vi.fn<Device['deleteItem']>(() => Promise.resolve()),
+  members: vi.fn<Device['members']>(() => Promise.resolve([])),
+  setDeviceName: vi.fn<Device['setDeviceName']>(() => Promise.resolve()),
+  renameGroup: vi.fn<Device['renameGroup']>(() => Promise.resolve()),
+  removeDevice: vi.fn<Device['removeDevice']>(() => Promise.resolve()),
+  leaveGroup: vi.fn<Device['leaveGroup']>(() => Promise.resolve()),
+  replaceGroup: vi.fn<Device['replaceGroup']>(() => Promise.resolve(OTHER)),
   beginFile: vi.fn<Device['beginFile']>(() => Promise.resolve(7)),
   writeFile: vi.fn<Device['writeFile']>(() => Promise.resolve()),
   finishFile: vi.fn<Device['finishFile']>(() => Promise.resolve()),
@@ -89,6 +95,27 @@ const createEvents = () => ({
   relayChanged: vi.fn<EngineEvents['relayChanged']>(),
   groupsChanged: vi.fn<EngineEvents['groupsChanged']>(),
   feedChanged: vi.fn<EngineEvents['feedChanged']>(),
+  membersChanged: vi.fn<EngineEvents['membersChanged']>(),
+});
+
+const group = (
+  id: string,
+  name: string,
+  extra: Partial<Group> = {},
+): Group => ({
+  id,
+  name,
+  member: true,
+  removed: false,
+  deviceName: 'Laptop',
+  ...extra,
+});
+
+const member = (id: string, name: string): Member => ({
+  id,
+  name,
+  me: id === ID,
+  online: true,
 });
 
 const setup = (locks = createLocks()) => {
@@ -101,6 +128,7 @@ const setup = (locks = createLocks()) => {
     openDevice: vi.fn<EngineDeps['openDevice']>(() =>
       Promise.resolve<Device>(device),
     ),
+    defaultDeviceName: vi.fn(() => 'Linux PC'),
   };
 
   return { engine: new Engine(deps, events), deps, device, events, locks };
@@ -236,19 +264,13 @@ describe('Engine', () => {
 
   it('lists the groups by name once open', async () => {
     const { engine, events, device } = setup();
-    device.groups.mockResolvedValue([
-      { id: 'b', name: 'Work', member: true },
-      { id: 'a', name: 'Home', member: true },
-    ]);
+    device.groups.mockResolvedValue([group('b', 'Work'), group('a', 'Home')]);
 
     engine.open();
     await settle();
 
     expect(events.groupsChanged).toHaveBeenCalledWith({
-      groups: [
-        { id: 'a', name: 'Home', member: true },
-        { id: 'b', name: 'Work', member: true },
-      ],
+      groups: [group('a', 'Home'), group('b', 'Work')],
     });
   });
 
@@ -419,6 +441,104 @@ describe('Engine', () => {
     await expect(engine.readFile(GROUP, '1', 5)).rejects.toThrow(
       'not all here',
     );
+  });
+
+  it('sends the devices of the watched group, and again on change', async () => {
+    const { engine, events, deps, device } = setup();
+    device.members.mockResolvedValue([member(ID, 'Laptop')]);
+
+    engine.open();
+    await settle();
+    engine.watch(GROUP);
+    await settle();
+
+    expect(events.membersChanged).toHaveBeenCalledWith({
+      groupId: GROUP,
+      members: [member(ID, 'Laptop')],
+    });
+
+    events.membersChanged.mockClear();
+    deps.openDevice.mock.calls[0]?.[2](GROUP);
+    deps.openDevice.mock.calls[0]?.[2](OTHER);
+    await settle();
+
+    expect(events.membersChanged).toHaveBeenCalledOnce();
+  });
+
+  it('names this device in a group it has no name in, with a guess', async () => {
+    const { engine, device } = setup();
+    device.groups.mockResolvedValue([group(GROUP, 'Home', { deviceName: '' })]);
+
+    engine.open();
+    await settle();
+
+    expect(device.setDeviceName).toHaveBeenCalledExactlyOnceWith(
+      GROUP,
+      'Linux PC',
+    );
+  });
+
+  it('carries the name it already goes by into a new group', async () => {
+    const { engine, device } = setup();
+    device.groups.mockResolvedValue([
+      group(GROUP, 'Home', { deviceName: 'Kitchen tablet' }),
+      group(OTHER, 'Work', { deviceName: '' }),
+    ]);
+
+    engine.open();
+    await settle();
+
+    expect(device.setDeviceName).toHaveBeenCalledExactlyOnceWith(
+      OTHER,
+      'Kitchen tablet',
+    );
+  });
+
+  it('leaves a group it is not in unnamed', async () => {
+    const { engine, device } = setup();
+    device.groups.mockResolvedValue([
+      group(GROUP, '', { member: false, deviceName: '' }),
+    ]);
+
+    engine.open();
+    await settle();
+
+    expect(device.setDeviceName).not.toHaveBeenCalled();
+  });
+
+  it('renames this device in every group it is in', async () => {
+    const { engine, device } = setup();
+    device.groups.mockResolvedValue([
+      group(GROUP, 'Home'),
+      group(OTHER, 'Work'),
+      group('cccc', '', { member: false }),
+    ]);
+
+    engine.open();
+    await settle();
+    await engine.renameDevice('Desk');
+
+    expect(device.setDeviceName.mock.calls).toEqual([
+      [GROUP, 'Desk'],
+      [OTHER, 'Desk'],
+    ]);
+  });
+
+  it('hands membership changes to the device', async () => {
+    const { engine, device } = setup();
+
+    engine.open();
+    await settle();
+
+    await engine.renameGroup(GROUP, 'Home');
+    await engine.removeDevice(GROUP, 'beef');
+    await engine.leaveGroup(GROUP);
+    await expect(engine.replaceGroup(GROUP)).resolves.toBe(OTHER);
+
+    expect(device.renameGroup).toHaveBeenCalledWith(GROUP, 'Home');
+    expect(device.removeDevice).toHaveBeenCalledWith(GROUP, 'beef');
+    expect(device.leaveGroup).toHaveBeenCalledWith(GROUP);
+    expect(device.replaceGroup).toHaveBeenCalledWith(GROUP);
   });
 
   it('hands invitations to the device', async () => {

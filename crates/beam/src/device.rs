@@ -6,7 +6,7 @@
 //! comes back as someone else, on both layers at once.
 
 use std::cell::{Cell, RefCell};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::rc::Rc;
 
 use iroh::endpoint::presets;
@@ -14,12 +14,12 @@ use iroh::{SecretKey, Watcher};
 use n0_future::StreamExt;
 use n0_future::task::{AbortOnDropHandle, spawn};
 use wasm_bindgen::prelude::*;
-use woodland::{BlobPolicy, BrowserStore, Database, GroupId, ImportId, Transaction};
+use woodland::{GroupId, ImportId, Transaction};
 
-use crate::core::{Core, Db, PeerId, Token};
+use crate::core::{Core, Db, PeerId, Token, has_role, open_database};
 use crate::hex;
 use crate::net;
-use crate::schema::{Group, Schema, item_key};
+use crate::schema::{Group, Member, Schema, Standing, item_key};
 
 /// This device, open: a database over the browser's store, and an endpoint
 /// bound under the database's key.
@@ -57,17 +57,7 @@ impl Device {
         on_relay_change: js_sys::Function,
         on_change: js_sys::Function,
     ) -> Result<Device, JsError> {
-        let store = BrowserStore::open(&store).await.map_err(to_js)?;
-
-        // Fresh bytes every time. They're used only if the store is new;
-        // after that the store's own key wins, and that's the one read
-        // back below.
-        let mut database = Database::open(store, random()?).await.map_err(to_js)?;
-
-        // Said on every start, since there's no default and no group can
-        // be held until it is. This device keeps whatever its groups share.
-        let outputs = database.set_blob_policy(BlobPolicy::All).await;
-        let outputs = outputs.map_err(to_js)?;
+        let (mut database, steps) = open_database(&store).await.map_err(to_js)?;
 
         let endpoint = iroh::Endpoint::builder(presets::N0)
             .secret_key(SecretKey::from_bytes(&database.device_secret()))
@@ -75,15 +65,6 @@ impl Device {
             .bind()
             .await
             .map_err(to_js)?;
-
-        // An import outlives a restart, and nothing here carries one on:
-        // the page that was reading the file is gone. Whatever was
-        // unfinished, or finished and never written, is let go.
-        let mut steps = vec![outputs];
-        for import in database.imports().await.map_err(to_js)? {
-            let abandoned = database.abandon_import(import.id).await;
-            steps.push(abandoned.map_err(to_js)?);
-        }
 
         let id = database.id().to_bytes();
         let core = Rc::new(Core::new(id, endpoint.clone(), on_change));
@@ -135,34 +116,165 @@ impl Device {
         let (group, outputs) = founded.map_err(to_js)?;
         self.core.finish(database, outputs).await.map_err(to_js)?;
 
-        let founding = Schema::of(group).found(&name);
+        let founding = Schema::of(group, group).found(&name);
         self.write(database, group, founding).await?;
 
         Ok(hex::encode(group.as_bytes()))
     }
 
-    /// Every group this device holds, as `{ id, name, member }`, in id
-    /// order.
+    /// Every group this device holds and hasn't put behind it, as
+    /// `{ id, name, member, removed, deviceName }`, in id order.
     pub async fn groups(&self) -> Result<JsValue, JsError> {
         let database = self.core.database.lock().await;
         let database = database.as_ref().ok_or_else(closed)?;
-        let me = database.id();
+        let me = self.core.id;
+
+        // A group that another was founded to carry on from is still
+        // held, and is no longer where anything happens.
+        let held: Vec<GroupId> = database.groups().collect();
+        let succeeded = held.iter().filter_map(|&group| database.succeeds(group));
+        let succeeded: BTreeSet<GroupId> = succeeded.collect();
 
         let mut groups: Vec<Group> = Vec::new();
-        for group in database.groups() {
-            let schema = Schema::of(group);
-            let answer = database.read(&schema.name_query()).await;
+        for group in held {
+            let schema = Self::schema(database, group).await?;
+            let closed = database.read(&schema.closed_query()).await;
+            if succeeded.contains(&group) || !closed.map_err(to_js)?.found().is_empty() {
+                continue;
+            }
+
+            let name = database.read(&schema.name_query()).await;
+            let names = database.read(&schema.devices_query()).await;
+            let mut names = Schema::device_names(names.map_err(to_js)?.into_found());
 
             // Holding a group isn't being in it. A device that was just
             // let in carries the group until a checkpoint gives it a role.
-            let configuration = database.configuration(group);
-            let role = configuration.is_some_and(|it| it.role(&me).is_some());
-            let member = role && database.reads(group);
+            let standing = Standing {
+                member: has_role(database, group, &me) && database.reads(group),
+                removed: database.is_shut_out(group),
+                device_name: names.remove(&me[..]).unwrap_or_default(),
+            };
 
-            groups.push(schema.group(answer.map_err(to_js)?.into_found(), member));
+            groups.push(schema.group(name.map_err(to_js)?.into_found(), standing));
         }
 
         serde_wasm_bindgen::to_value(&groups).map_err(to_js)
+    }
+
+    /// The devices with a role in `group`, as `{ id, name, me, online }`,
+    /// in id order.
+    pub async fn members(&self, group: String) -> Result<JsValue, JsError> {
+        let group = group_id(&group)?;
+        let database = self.core.database.lock().await;
+        let database = database.as_ref().ok_or_else(closed)?;
+
+        let schema = Self::schema(database, group).await?;
+        let names = database.read(&schema.devices_query()).await;
+        let mut names = Schema::device_names(names.map_err(to_js)?.into_found());
+
+        let roles = database.configuration(group).map(|it| it.roles);
+        let members = roles.into_iter().flatten().map(|(peer, _)| {
+            let id = peer.to_bytes();
+            let me = id == self.core.id;
+
+            Member {
+                id: hex::encode(&id),
+                name: names.remove(&id[..]).unwrap_or_default(),
+                me,
+                online: me || self.core.is_connected(&id),
+            }
+        });
+
+        let members: Vec<Member> = members.collect();
+        serde_wasm_bindgen::to_value(&members).map_err(to_js)
+    }
+
+    /// Say what this device is called in `group`.
+    #[wasm_bindgen(js_name = setDeviceName)]
+    pub async fn set_device_name(&self, group: String, name: String) -> Result<(), JsError> {
+        let group = group_id(&group)?;
+        let mut database = self.core.database.lock().await;
+        let database = database.as_mut().ok_or_else(closed)?;
+        let schema = Self::schema(database, group).await?;
+        let named = schema.name_device(self.core.id, &name);
+
+        self.write(database, group, named).await
+    }
+
+    /// Call `group` something else, for every device in it.
+    #[wasm_bindgen(js_name = renameGroup)]
+    pub async fn rename_group(&self, group: String, name: String) -> Result<(), JsError> {
+        let group = group_id(&group)?;
+        let mut database = self.core.database.lock().await;
+        let database = database.as_mut().ok_or_else(closed)?;
+
+        let renamed = Self::schema(database, group).await?.rename(&name);
+
+        self.write(database, group, renamed).await
+    }
+
+    /// Ask `group` to remove `device`. It happens when the group agrees:
+    /// with equal weights, once most of its devices have been reachable,
+    /// the one being removed among those counted.
+    #[wasm_bindgen(js_name = removeDevice)]
+    pub async fn remove_device(&self, group: String, device: String) -> Result<(), JsError> {
+        let group = group_id(&group)?;
+        let device = hex::decode_array::<32>(&device);
+        let device = device.ok_or_else(|| JsError::new("not a device id"))?;
+        let mut database = self.core.database.lock().await;
+        let database = database.as_mut().ok_or_else(closed)?;
+
+        self.without(database, group, device).await
+    }
+
+    /// Be done with `group`.
+    ///
+    /// A device with no role in it forgets it at once. One with a role
+    /// asks to be removed, and forgets the group when it has been: a
+    /// member has signed things it can't walk away from. The last member
+    /// can't be removed, so it closes the group, which hides it.
+    #[wasm_bindgen(js_name = leaveGroup)]
+    pub async fn leave_group(&self, group: String) -> Result<(), JsError> {
+        let group = group_id(&group)?;
+        let mut database = self.core.database.lock().await;
+        let database = database.as_mut().ok_or_else(closed)?;
+
+        let roles = database.configuration(group).map(|it| it.roles.len());
+        let alone = roles.unwrap_or_default() <= 1;
+        if alone && has_role(database, group, &self.core.id) {
+            let closed = Self::schema(database, group).await?.close();
+            return self.write(database, group, closed).await;
+        }
+
+        self.core.depart(database, group).await.map_err(to_js)
+    }
+
+    /// Start `group` over as a new group with only this device in it,
+    /// resolving with the new group's id. Everything the old group had
+    /// committed comes with it; other devices have to be linked again.
+    ///
+    /// For a group that has lost, for good, the devices it takes to
+    /// agree on anything. Nothing can tell gone from away, so this is a
+    /// person's decision.
+    #[wasm_bindgen(js_name = replaceGroup)]
+    pub async fn replace_group(&self, group: String) -> Result<String, JsError> {
+        let old = group_id(&group)?;
+        let mut database = self.core.database.lock().await;
+        let database = database.as_mut().ok_or_else(closed)?;
+
+        // Read before the new group exists: it's the old group that knows.
+        let origin = Self::origin(database, old).await?;
+
+        let (new, outputs) = database.succeed(old, random()?).await.map_err(to_js)?;
+        self.core.finish(database, outputs).await.map_err(to_js)?;
+
+        // What it inherited is still under the ids the first group gave
+        // it. Whoever joins the new group has only its id to go on, so the
+        // new group says where its line began.
+        let rooted = Schema::of(new, origin).record_origin(origin);
+        self.write(database, new, rooted).await?;
+
+        Ok(hex::encode(new.as_bytes()))
     }
 
     /// Everything shared to `group`, oldest first, as
@@ -171,9 +283,10 @@ impl Device {
     /// Reads what this device knows right now, its own unsynced writes
     /// included. `committed` says which of it the group has made final.
     pub async fn items(&self, group: String) -> Result<JsValue, JsError> {
-        let schema = Schema::of(group_id(&group)?);
+        let group = group_id(&group)?;
         let database = self.core.database.lock().await;
         let database = database.as_ref().ok_or_else(closed)?;
+        let schema = Self::schema(database, group).await?;
 
         let shown = database.read(&schema.items_query()).await;
         let committed = database.read(&schema.items_query().committed()).await;
@@ -205,7 +318,8 @@ impl Device {
         )]
         let now = js_sys::Date::now() as i64;
         let key = item_key(now, random()?);
-        let add = Schema::of(group).add(key, body, self.core.id, now);
+        let schema = Self::schema(database, group).await?;
+        let add = schema.add(key, body, self.core.id, now);
 
         self.write(database, group, add).await
     }
@@ -216,9 +330,9 @@ impl Device {
     pub async fn delete_item(&self, group: String, item: String) -> Result<(), JsError> {
         let group = group_id(&group)?;
         let key = hex::decode(&item).ok_or_else(|| JsError::new("not an item id"))?;
-        let schema = Schema::of(group);
         let mut database = self.core.database.lock().await;
         let database = database.as_mut().ok_or_else(closed)?;
+        let schema = Self::schema(database, group).await?;
 
         let answer = database.read(&schema.item_query(&key)).await;
         let delete = schema.delete(answer.map_err(to_js)?.found(), &key);
@@ -297,7 +411,8 @@ impl Device {
         )]
         let now = js_sys::Date::now() as i64;
         let key = item_key(now, random()?);
-        let add = Schema::of(group).add_file(key, (blob, name, kind), self.core.id, now);
+        let schema = Self::schema(database, group).await?;
+        let add = schema.add_file(key, (blob, name, kind), self.core.id, now);
 
         // The item refers to the bytes from here, and the import is done.
         self.write(database, group, add).await?;
@@ -330,10 +445,11 @@ impl Device {
         item: String,
         offset: f64,
     ) -> Result<Option<Vec<u8>>, JsError> {
-        let schema = Schema::of(group_id(&group)?);
+        let group = group_id(&group)?;
         let key = hex::decode(&item).ok_or_else(|| JsError::new("not an item id"))?;
         let database = self.core.database.lock().await;
         let database = database.as_ref().ok_or_else(closed)?;
+        let schema = Self::schema(database, group).await?;
 
         let answer = database.read(&schema.item_query(&key)).await;
         let Some(blob) = schema.blob(answer.map_err(to_js)?.found(), &key) else {
@@ -376,6 +492,10 @@ impl Device {
 
     /// Use another device's invitation, resolving with the group's id.
     ///
+    /// Rejects with `left-behind` if this device was still in a group the
+    /// invitation's group replaced. It has left that group by then, and
+    /// the invitation is unspent: open the device again and use it again.
+    ///
     /// Needs the inviting device reachable right now. This device holds
     /// the group at once; it can read and write it when the group gives it
     /// a role, which the group list's `member` reports.
@@ -399,6 +519,57 @@ impl Device {
         let import = self.imports.borrow().get(&file).copied();
 
         import.ok_or_else(|| JsError::new("no such file being brought in"))
+    }
+
+    /// The group `group`'s line began with: itself, unless it was founded
+    /// to carry on from another.
+    ///
+    /// A group that carries on says so where its own id finds it. A device
+    /// that held the group before it may not have been handed that yet,
+    /// and has the older group to ask instead.
+    async fn origin(database: &Db, group: GroupId) -> Result<GroupId, JsError> {
+        let mut at = group;
+
+        loop {
+            let recorded = database.read(&Schema::origin_query(at)).await;
+            let recorded = recorded.map_err(to_js)?;
+            if !recorded.found().is_empty() {
+                return Ok(Schema::origin(at, recorded.found()));
+            }
+
+            let before = database.succeeds(at);
+            let held = before.filter(|old| database.groups().any(|it| it == *old));
+            let Some(before) = held else {
+                return Ok(at);
+            };
+
+            at = before;
+        }
+    }
+
+    /// Where `group` keeps what it holds.
+    async fn schema(database: &Db, group: GroupId) -> Result<Schema, JsError> {
+        Ok(Schema::of(group, Self::origin(database, group).await?))
+    }
+
+    /// Ask `group` to carry on without `device`.
+    async fn without(
+        &self,
+        database: &mut Db,
+        group: GroupId,
+        device: PeerId,
+    ) -> Result<(), JsError> {
+        let configuration = database.configuration(group);
+        let configuration = configuration.ok_or_else(|| JsError::new("no such group"))?;
+
+        // Everyone the group has now, but for the one.
+        let mut roles = configuration.roles;
+        roles.retain(|(peer, _)| peer.to_bytes() != device);
+
+        let asked = database.reconfigure(group, roles).await.map_err(to_js)?;
+        let settled = self.core.finish_and_tick(database, asked).await;
+
+        settled.map_err(to_js)
     }
 
     /// Write to `group`, and let time pass so a lone device commits it.

@@ -6,6 +6,7 @@ import {
   $deviceOpened,
   $feedChanged,
   $groupsChanged,
+  $membersChanged,
   $relayChanged,
 } from '../state';
 
@@ -26,8 +27,17 @@ export const $openDevice = collect(
     $relayChanged,
     $groupsChanged,
     $feedChanged,
+    $membersChanged,
   ],
-  (opened, heldElsewhere, failed, relayChanged, groupsChanged, feedChanged) => {
+  (
+    opened,
+    heldElsewhere,
+    failed,
+    relayChanged,
+    groupsChanged,
+    feedChanged,
+    membersChanged,
+  ) => {
     const connection = connectDevice({
       opened: ({ deviceId }) => opened(deviceId),
       heldElsewhere: () => heldElsewhere(),
@@ -35,6 +45,8 @@ export const $openDevice = collect(
       relayChanged: ({ homeRelay }) => relayChanged(homeRelay),
       groupsChanged: ({ groups }) => groupsChanged(groups),
       feedChanged: ({ groupId, items }) => feedChanged(groupId, items),
+      membersChanged: ({ groupId, members }) =>
+        membersChanged(groupId, members),
     });
 
     return resource(connection, () => connection.release());

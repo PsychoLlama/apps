@@ -8,3 +8,10 @@ export {
   $shareItem,
   $viewGroup,
 } from './groups';
+export {
+  $leaveGroup,
+  $removeDevice,
+  $renameDevice,
+  $renameGroup,
+  $replaceGroup,
+} from './members';

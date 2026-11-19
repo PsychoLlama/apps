@@ -1,4 +1,4 @@
-import type { Device, Group, Item } from '@crate/beam';
+import type { Device, Group, Item, Member } from '@crate/beam';
 import { assert } from '@lib/assert';
 import { createLogger, toError } from '@lib/observability';
 
@@ -66,6 +66,12 @@ export interface EngineEvents {
    * watch starts and whenever the group changes under it.
    */
   feedChanged(change: { groupId: string; items: Item[] }): void;
+
+  /**
+   * The devices in the watched group, whole. Sent with the feed, and
+   * whenever one of them comes or goes.
+   */
+  membersChanged(change: { groupId: string; members: Member[] }): void;
 }
 
 /** What the engine needs from its surroundings, so a test can stand in. */
@@ -82,6 +88,12 @@ export interface EngineDeps {
     onRelayChange: (homeRelay: string | undefined) => void,
     onChange: (group: string) => void,
   ): Promise<Device>;
+
+  /**
+   * What to call this device until someone says otherwise. A guess from
+   * its surroundings, and deliberately a vague one.
+   */
+  defaultDeviceName(): string;
 }
 
 /** The state one worker holds for one page. */
@@ -104,6 +116,9 @@ export class Engine {
    * the page has nowhere to put the others.
    */
   #watched: string | null = null;
+
+  /** Groups this device is being named in right now. */
+  readonly #naming = new Set<string>();
 
   constructor(deps: EngineDeps, events: EngineEvents) {
     this.#deps = deps;
@@ -171,7 +186,10 @@ export class Engine {
    */
   watch(groupId: string | null): void {
     this.#watched = groupId;
-    if (groupId !== null) void this.#pushFeed(groupId);
+    if (groupId === null) return;
+
+    void this.#pushFeed(groupId);
+    void this.#pushMembers(groupId);
   }
 
   /** Found a group called `name`, resolving with its id. */
@@ -187,6 +205,44 @@ export class Engine {
   /** Delete an item from a group, for every device. */
   deleteItem(groupId: string, itemId: string): Promise<void> {
     return this.#open().deleteItem(groupId, itemId);
+  }
+
+  /**
+   * Call this device `name`, in every group it's in. A device has one
+   * name; each group keeps its own copy, since that's where the others
+   * read it.
+   */
+  async renameDevice(name: string): Promise<void> {
+    const device = this.#open();
+    const groups = await device.groups();
+    const mine = groups.filter((group) => group.member);
+
+    await Promise.all(
+      mine.map((group) => device.setDeviceName(group.id, name)),
+    );
+  }
+
+  /** Call a group something else, for every device in it. */
+  renameGroup(groupId: string, name: string): Promise<void> {
+    return this.#open().renameGroup(groupId, name);
+  }
+
+  /** Ask a group to remove a device. */
+  removeDevice(groupId: string, deviceId: string): Promise<void> {
+    return this.#open().removeDevice(groupId, deviceId);
+  }
+
+  /** Be done with a group. */
+  leaveGroup(groupId: string): Promise<void> {
+    return this.#open().leaveGroup(groupId);
+  }
+
+  /**
+   * Start a group over with only this device in it, resolving with the
+   * new group's id.
+   */
+  replaceGroup(groupId: string): Promise<string> {
+    return this.#open().replaceGroup(groupId);
   }
 
   /**
@@ -281,8 +337,56 @@ export class Engine {
           left.name.localeCompare(right.name) || (left.id < right.id ? -1 : 1),
       );
       this.#events.groupsChanged({ groups });
+      this.#nameSelf(groups);
     } catch (error) {
       logger.error('Failed to read the groups.', { error: toError(error) });
+    }
+  }
+
+  /**
+   * Give this device a name in every group it's in and hasn't one for.
+   *
+   * Nobody is asked. The name is whatever it already goes by elsewhere,
+   * or a guess, and can be changed whenever. A group it has just founded
+   * or been let into gets here by being listed.
+   */
+  #nameSelf(groups: Group[]): void {
+    const known = groups.find((group) => group.deviceName)?.deviceName;
+    const unnamed = groups.filter(
+      (group) =>
+        group.member && !group.deviceName && !this.#naming.has(group.id),
+    );
+
+    for (const group of unnamed) {
+      const name = known ?? this.#deps.defaultDeviceName();
+
+      this.#naming.add(group.id);
+      void this.#device
+        ?.setDeviceName(group.id, name)
+        .catch((error: unknown) => {
+          logger.warn('Could not name this device in a group.', {
+            groupId: group.id,
+            error: toError(error),
+          });
+        })
+        .finally(() => this.#naming.delete(group.id));
+    }
+  }
+
+  /** Send the page a group's devices, if it's still the one watched. */
+  async #pushMembers(groupId: string): Promise<void> {
+    if (this.#watched !== groupId) return;
+
+    try {
+      const members = await this.#device?.members(groupId);
+      if (!members || this.#watched !== groupId) return;
+
+      this.#events.membersChanged({ groupId, members });
+    } catch (error) {
+      logger.error('Failed to read the devices in a group.', {
+        groupId,
+        error: toError(error),
+      });
     }
   }
 
@@ -331,6 +435,7 @@ export class Engine {
         (groupId) => {
           void this.#pushGroups();
           void this.#pushFeed(groupId);
+          void this.#pushMembers(groupId);
         },
       );
 
@@ -348,7 +453,10 @@ export class Engine {
       this.#events.opened({ deviceId: device.id });
 
       void this.#pushGroups();
-      if (this.#watched !== null) void this.#pushFeed(this.#watched);
+      if (this.#watched !== null) {
+        void this.#pushFeed(this.#watched);
+        void this.#pushMembers(this.#watched);
+      }
     } catch (error) {
       const failure = toError(error);
       logger.error('Failed to open the device.', { error: failure });

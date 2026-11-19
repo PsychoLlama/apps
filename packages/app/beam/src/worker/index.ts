@@ -7,6 +7,7 @@ import {
 import { createLogger, toError } from '@lib/observability';
 import type { HostApi } from '../host-api';
 import { Engine, type EngineEvents } from '../engine/engine';
+import { inferDeviceName } from '../state/device-name';
 import { createEngineApi, type EngineApi } from './rpc';
 
 /**
@@ -48,6 +49,7 @@ const engine = new Engine(
     init: () => init(),
     openDevice: (store, onRelayChange, onChange) =>
       Device.open(store, onRelayChange, onChange),
+    defaultDeviceName: () => inferDeviceName(navigator.userAgent),
   },
   {
     opened: (device) => announce('opened', device),
@@ -56,6 +58,7 @@ const engine = new Engine(
     relayChanged: (change) => announce('relayChanged', change),
     groupsChanged: (change) => announce('groupsChanged', change),
     feedChanged: (change) => announce('feedChanged', change),
+    membersChanged: (change) => announce('membersChanged', change),
   },
 );
 

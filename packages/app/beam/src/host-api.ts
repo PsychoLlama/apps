@@ -1,4 +1,4 @@
-import type { Group, Item } from '@crate/beam';
+import type { Group, Item, Member } from '@crate/beam';
 import type { EngineEvents } from './engine/engine';
 
 /**
@@ -23,6 +23,8 @@ export const createHostHandlers = (feed: EngineEvents) => ({
     groupsChanged: (change: { groups: Group[] }) => feed.groupsChanged(change),
     feedChanged: (change: { groupId: string; items: Item[] }) =>
       feed.feedChanged(change),
+    membersChanged: (change: { groupId: string; members: Member[] }) =>
+      feed.membersChanged(change),
   },
 });
 

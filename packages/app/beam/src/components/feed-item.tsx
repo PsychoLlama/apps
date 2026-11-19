@@ -34,8 +34,8 @@ export const FeedItem = (props: {
   /** The item itself. */
   item: Item;
 
-  /** Whether this device wrote it. */
-  mine: boolean;
+  /** What to call the device that wrote it. */
+  author: string;
 }) => {
   const deleteItem = useAction($deleteItem);
   const saveFile = useAction($saveFile);
@@ -78,7 +78,7 @@ export const FeedItem = (props: {
 
         <Flex as="footer" align="center" justify="between" gap={2}>
           <Text as="span" size={1} color="lowContrast" selectable={false}>
-            {props.mine ? 'This device' : 'Another device'}
+            {props.author}
             {' · '}
             <time datetime={new Date(props.item.createdAt).toISOString()}>
               {formatTime(props.item.createdAt)}

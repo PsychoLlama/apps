@@ -23,6 +23,31 @@ export const createEngineApi = (engine: Engine, exit: () => void) =>
       deleteItem: (input: { groupId: string; itemId: string }): Promise<void> =>
         engine.deleteItem(input.groupId, input.itemId),
 
+      /** Call this device something else, in every group it's in. */
+      renameDevice: (input: { name: string }): Promise<void> =>
+        engine.renameDevice(input.name),
+
+      /** Call a group something else, for every device in it. */
+      renameGroup: (input: { groupId: string; name: string }): Promise<void> =>
+        engine.renameGroup(input.groupId, input.name),
+
+      /** Ask a group to remove a device. */
+      removeDevice: (input: {
+        groupId: string;
+        deviceId: string;
+      }): Promise<void> => engine.removeDevice(input.groupId, input.deviceId),
+
+      /** Be done with a group. */
+      leaveGroup: (input: { groupId: string }): Promise<void> =>
+        engine.leaveGroup(input.groupId),
+
+      /**
+       * Start a group over with only this device in it, resolving with
+       * the new group's id.
+       */
+      replaceGroup: (input: { groupId: string }): Promise<string> =>
+        engine.replaceGroup(input.groupId),
+
       /** Share a file to a group. Resolves once it's all written here. */
       addFile: (input: {
         groupId: string;

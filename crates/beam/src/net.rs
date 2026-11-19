@@ -26,7 +26,7 @@ use tokio::sync::{Notify, mpsc};
 use wasm_bindgen::prelude::*;
 use woodland::{GroupId, SealingKey};
 
-use crate::core::{Core, PeerId, Token, warn};
+use crate::core::{Core, Db, PeerId, Token, warn};
 
 /// The ALPN the database is carried on. Versioned so a future format can
 /// land without a device on the old one mistaking it for something it
@@ -51,7 +51,31 @@ const MOST_MESSAGE: usize = 16 * 1024 * 1024;
 /// Largest invitation taken. It carries the group's chain of checkpoints.
 const MOST_INVITATION: usize = 16 * 1024 * 1024;
 
-/// Largest request to be let in: a token and a sealing key.
+/// The most groups an invitation names as the ones its group carried on
+/// from. A group is started over rarely; a line this long is nonsense.
+const MOST_ANCESTORS: usize = 32;
+
+/// What [`join`] rejects with when this device had to leave a group the
+/// invitation's group replaced. It's out now, and the invitation is
+/// unspent: open the device afresh and use it again.
+pub(crate) const LEFT_BEHIND: &str = "left-behind";
+
+/// How long a joiner waits to be let out of a group the one it's joining
+/// carried on from, and how often it looks.
+const DEPARTING: Duration = Duration::from_secs(45);
+const DEPARTING_STEP: Duration = Duration::from_millis(250);
+
+/// What a device says first on the link protocol: which of the two
+/// things it's asking.
+///
+/// Asking what a group carried on from is apart from joining it, and
+/// comes first, because the answer changes what the joiner has to do
+/// before it joins, and the inviter starts letting it in the moment it
+/// asks to be.
+const ASK_LINEAGE: u8 = 0;
+const ASK_TO_JOIN: u8 = 1;
+
+/// Largest request to be let in: a kind, a token, and a sealing key.
 const MOST_REQUEST: usize = 1024;
 
 /// How often to try peers that couldn't be reached.
@@ -190,7 +214,7 @@ async fn serve(core: Rc<Core>, connection: Connection) {
         key,
         Rc::clone(&blobs),
     )));
-    let (link, first) = core.attach(peer, outbound, blobs);
+    let (link, first) = core.attach(&connection, outbound, blobs);
 
     if first {
         let mut database = core.database.lock().await;
@@ -205,6 +229,8 @@ async fn serve(core: Rc<Core>, connection: Connection) {
                 warn(&format!("beam: couldn't greet a peer: {error}"));
             }
 
+            // Who is reachable is part of what a group shows.
+            core.announce_all(database);
             core.touch();
         }
     }
@@ -229,7 +255,12 @@ async fn serve(core: Rc<Core>, connection: Connection) {
         let mut database = core.database.lock().await;
         if let Some(database) = database.as_mut() {
             database.disconnected(key);
+            core.announce_all(database);
         }
+
+        // If it's still wanted, reach for it again now and not at the
+        // next round.
+        core.membership.notify_one();
     }
 }
 
@@ -378,8 +409,25 @@ async fn read(core: &Core, peer: VerifyingKey, kind: u8, stream: &mut RecvStream
 /// reachable.
 pub(crate) async fn join(core: &Core, inviter: PeerId, token: Token) -> Result<GroupId, JsError> {
     let id = EndpointId::from_bytes(&inviter).map_err(to_js)?;
-    let connection = core.endpoint.connect(id, LINK).await.map_err(to_js)?;
-    let (mut send, mut receive) = connection.open_bi().await.map_err(to_js)?;
+    let refused = || JsError::new("the invitation has expired or was already used");
+
+    // First, the groups this one carried on from. Nothing is spent yet.
+    let lineage = ask(core, id, &[&[ASK_LINEAGE], &token[..]]).await?;
+    let Some((&count, ancestors)) = lineage.split_first() else {
+        return Err(refused());
+    };
+
+    if ancestors.len() != usize::from(count) * 32 {
+        return Err(JsError::new("the invitation couldn't be read"));
+    }
+
+    let (ancestors, _) = ancestors.as_chunks::<32>();
+    let ancestors = ancestors.iter().copied().map(GroupId::from_bytes);
+    let ancestors: Vec<GroupId> = ancestors.collect();
+
+    if leave_behind(core, &ancestors).await? {
+        return Err(JsError::new(LEFT_BEHIND));
+    }
 
     let sealing = {
         let database = core.database.lock().await;
@@ -387,19 +435,11 @@ pub(crate) async fn join(core: &Core, inviter: PeerId, token: Token) -> Result<G
         database.sealing_key().to_bytes()
     };
 
-    send.write_all(&token).await.map_err(to_js)?;
-    send.write_all(&sealing).await.map_err(to_js)?;
-    send.finish().map_err(to_js)?;
-
-    let invitation = receive.read_to_end(MOST_INVITATION).await;
-    let invitation = invitation.map_err(to_js)?;
-    connection.close(DONE, b"done");
-
-    // Nothing back is the inviter saying no, without saying why.
+    // Then the invitation itself. Nothing back is the inviter saying no,
+    // without saying why.
+    let invitation = ask(core, id, &[&[ASK_TO_JOIN], &token[..], &sealing[..]]).await?;
     if invitation.is_empty() {
-        return Err(JsError::new(
-            "the invitation has expired or was already used",
-        ));
+        return Err(refused());
     }
 
     let mut database = core.database.lock().await;
@@ -414,6 +454,84 @@ pub(crate) async fn join(core: &Core, inviter: PeerId, token: Token) -> Result<G
     Ok(group)
 }
 
+/// Say one thing to `peer` on the link protocol, and read its answer.
+async fn ask(core: &Core, peer: EndpointId, request: &[&[u8]]) -> Result<Vec<u8>, JsError> {
+    let connection = core.endpoint.connect(peer, LINK).await.map_err(to_js)?;
+    let (mut send, mut receive) = connection.open_bi().await.map_err(to_js)?;
+
+    for part in request {
+        send.write_all(part).await.map_err(to_js)?;
+    }
+
+    send.finish().map_err(to_js)?;
+
+    let answer = receive.read_to_end(MOST_INVITATION).await;
+    connection.close(DONE, b"done");
+
+    answer.map_err(to_js)
+}
+
+/// Leave whichever of `ancestors` this device still holds, and wait to be
+/// let go. Resolves with whether there were any.
+///
+/// A device that holds a group can't usefully join the one that carried on
+/// from it: it joins, and reads nothing. Leaving the old group first, and
+/// then starting again from a fresh open, is what works. So the old group
+/// goes here, and the caller is told to start over rather than carry on.
+/// Nothing of the invitation has been spent by then.
+///
+/// The inviter is in both groups and is on the line, which is usually
+/// everyone the old group needs to agree to let this device go.
+async fn leave_behind(core: &Core, ancestors: &[GroupId]) -> Result<bool, JsError> {
+    let held = |database: &Db| {
+        let held: Vec<GroupId> = database.groups().collect();
+        ancestors
+            .iter()
+            .copied()
+            .filter(move |it| held.contains(it))
+    };
+
+    {
+        let mut database = core.database.lock().await;
+        let database = database.as_mut().ok_or_else(closed)?;
+        let leaving: Vec<GroupId> = held(database).collect();
+        if leaving.is_empty() {
+            return Ok(false);
+        }
+
+        for group in leaving {
+            // One that can't be left is waited out like one that's slow.
+            if let Err(error) = core.depart(database, group).await {
+                warn(&format!("beam: couldn't leave a group behind: {error}"));
+            }
+        }
+
+        core.membership.notify_one();
+    }
+
+    let mut waited = Duration::ZERO;
+    while waited < DEPARTING {
+        sleep(DEPARTING_STEP).await;
+        waited += DEPARTING_STEP;
+
+        let mut database = core.database.lock().await;
+        let database = database.as_mut().ok_or_else(closed)?;
+        if held(database).next().is_none() {
+            return Ok(true);
+        }
+
+        // Leaving is carried by a checkpoint, and this is what attempts
+        // one. Nothing else here is in a hurry.
+        if let Err(error) = core.tick(database).await {
+            warn(&format!("beam: a tick failed: {error}"));
+        }
+    }
+
+    Err(JsError::new(
+        "this device is still leaving the group this one replaced, so try again in a moment",
+    ))
+}
+
 /// Answer a device asking to be let in: check it was handed an invitation,
 /// give it what it needs to hold the group, and ask the group to give it a
 /// role.
@@ -422,17 +540,53 @@ async fn admit(core: &Core, connection: &Connection) -> Result<(), String> {
     let (mut send, mut receive) = connection.accept_bi().await.map_err(text)?;
     let request = receive.read_to_end(MOST_REQUEST).await.map_err(text)?;
 
-    let asked = request.split_first_chunk::<16>();
-    let asked = asked.and_then(|(token, key)| Some((*token, SealingKey::from_bytes(key)?)));
+    let asked = request.split_first();
+    let asked = asked.and_then(|(&kind, rest)| Some((kind, rest.split_first_chunk::<16>()?)));
+    let Some((kind, (token, rest))) = asked else {
+        // Finishing with nothing written is the refusal.
+        send.finish().map_err(text)?;
+        connection.closed().await;
+        return Ok(());
+    };
+
+    if kind == ASK_LINEAGE {
+        let invited = core.invites.borrow().get(token).copied();
+        if let Some(group) = invited {
+            let database = core.database.lock().await;
+            let database = database.as_ref().ok_or("the device is closed")?;
+
+            // Every group this one carried on from, nearest first.
+            let mut ancestors = Vec::new();
+            let mut at = group;
+            while let Some(before) = database.succeeds(at)
+                && ancestors.len() < MOST_ANCESTORS
+            {
+                ancestors.extend_from_slice(before.as_bytes());
+                at = before;
+            }
+
+            #[expect(
+                clippy::cast_possible_truncation,
+                reason = "bounded by MOST_ANCESTORS, which fits a byte"
+            )]
+            let count = [(ancestors.len() / 32) as u8];
+            send.write_all(&count).await.map_err(text)?;
+            send.write_all(&ancestors).await.map_err(text)?;
+        }
+
+        send.finish().map_err(text)?;
+        connection.closed().await;
+        return Ok(());
+    }
 
     // An invitation lets one device in, once.
-    let granted = asked.and_then(|(token, key)| {
-        let group = core.invites.borrow_mut().remove(&token)?;
+    let granted = SealingKey::from_bytes(rest).filter(|_| kind == ASK_TO_JOIN);
+    let granted = granted.and_then(|key| {
+        let group = core.invites.borrow_mut().remove(token)?;
         Some((group, key))
     });
 
     let Some((group, key)) = granted else {
-        // Finishing with nothing written is the refusal.
         send.finish().map_err(text)?;
         connection.closed().await;
         return Ok(());

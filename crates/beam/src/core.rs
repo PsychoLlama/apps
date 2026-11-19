@@ -11,11 +11,13 @@ use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use std::rc::Rc;
 
 use ed25519_dalek::VerifyingKey;
+use iroh::endpoint::Connection;
 use tokio::sync::mpsc::UnboundedSender;
 use tokio::sync::{Mutex, Notify};
 use wasm_bindgen::prelude::*;
 use woodland::{
-    BrowserStore, Changed, Database, Error, GroupId, Outputs, Reconfigured, Role, SealingKey,
+    BlobPolicy, BrowserStore, Changed, Database, Error, GroupId, Outputs, Reconfigured, Role,
+    SealingKey,
 };
 
 use crate::hex;
@@ -61,6 +63,38 @@ pub(crate) struct Admission {
     key: SealingKey,
 }
 
+/// Open the database kept in the store called `store`, ready to hold
+/// groups, with the steps that getting it ready took still to be
+/// [finished](Core::finish).
+pub(crate) async fn open_database(store: &str) -> Result<(Db, Vec<Outputs>), String> {
+    let store = BrowserStore::open(store).await.map_err(text)?;
+
+    // Fresh bytes every time. They're used only if the store is new;
+    // after that the store's own key wins.
+    let mut seed = [0; 32];
+    getrandom::fill(&mut seed).map_err(text)?;
+    let mut database = Database::open(store, seed).await.map_err(text)?;
+
+    // Said on every start, since there's no default and no group can be
+    // held until it is. This device keeps whatever its groups share.
+    let policy = database.set_blob_policy(BlobPolicy::All).await;
+    let mut steps = vec![policy.map_err(text)?];
+
+    // An import outlives a restart, and nothing here carries one on: the
+    // page that was reading the file is gone. Whatever was unfinished, or
+    // finished and never written, is let go.
+    for import in database.imports().await.map_err(text)? {
+        let abandoned = database.abandon_import(import.id).await;
+        steps.push(abandoned.map_err(text)?);
+    }
+
+    Ok((database, steps))
+}
+
+fn text(error: impl std::fmt::Display) -> String {
+    error.to_string()
+}
+
 pub(crate) struct Core {
     /// `None` once closed.
     ///
@@ -81,6 +115,9 @@ pub(crate) struct Core {
     /// Invitations out, and the group each lets a device into.
     pub(crate) invites: RefCell<BTreeMap<Token, GroupId>>,
     admissions: RefCell<Vec<Admission>>,
+    /// Groups this device has asked to be removed from, and will forget
+    /// once it has been.
+    pub(crate) leaving: RefCell<BTreeSet<GroupId>>,
     /// Peers being dialled, or served on a connection this device dialled.
     pub(crate) dialing: RefCell<BTreeSet<PeerId>>,
     /// Wakes the dialer: who this device should be connected to may have
@@ -101,6 +138,7 @@ impl Core {
             peers: RefCell::default(),
             invites: RefCell::default(),
             admissions: RefCell::default(),
+            leaving: RefCell::default(),
             dialing: RefCell::default(),
             membership: Notify::new(),
             active: Cell::new(js_sys::Date::now()),
@@ -164,6 +202,16 @@ impl Core {
                 changed.extend(group_of(change));
                 members |= matches!(change, Changed::Members { .. });
                 blobs |= matches!(change, Changed::Blob { .. });
+
+                // The group let this device go, as it asked. Only now can
+                // it forget the group: a member has signed things.
+                if let Changed::Members { group } = change
+                    && self.leaving.borrow().contains(group)
+                    && !has_role(database, *group, &self.id)
+                {
+                    self.leaving.borrow_mut().remove(group);
+                    steps.push_back(database.forget(*group).await?);
+                }
             }
 
             for (group, became) in outputs.reconfigured {
@@ -263,6 +311,32 @@ impl Core {
         database.reconfigure(group, roles).await.map(Some)
     }
 
+    /// Be done with a group other devices are in: forget it at once if
+    /// this device has no role in it, or else ask to be removed and forget
+    /// it when that's carried. A member has signed things it can't walk
+    /// away from.
+    ///
+    /// Not for the last member, who can't be removed.
+    pub(crate) async fn depart(&self, database: &mut Db, group: GroupId) -> Result<(), Error> {
+        if !has_role(database, group, &self.id) {
+            let outputs = database.forget(group).await?;
+            return self.finish(database, outputs).await;
+        }
+
+        let Some(configuration) = database.configuration(group) else {
+            return Ok(());
+        };
+
+        // Everyone the group has now, but for this device.
+        let mut roles = configuration.roles;
+        roles.retain(|(peer, _)| peer.to_bytes() != self.id);
+
+        self.leaving.borrow_mut().insert(group);
+        let asked = database.reconfigure(group, roles).await?;
+
+        self.finish_and_tick(database, asked).await
+    }
+
     /// Forget the promises a checkpoint has kept.
     fn settle_admissions(&self, database: &Db) {
         self.admissions.borrow_mut().retain(|admission| {
@@ -293,6 +367,15 @@ impl Core {
         wanted
     }
 
+    /// Tell the host to read every group again: something changed that
+    /// isn't in any of them, such as who is reachable.
+    pub(crate) fn announce_all(&self, database: &Db) {
+        for group in database.groups() {
+            let group = JsValue::from_str(&hex::encode(group.as_bytes()));
+            let _ = self.on_change.call1(&JsValue::NULL, &group);
+        }
+    }
+
     pub(crate) fn is_connected(&self, peer: &PeerId) -> bool {
         self.peers.borrow().contains_key(peer)
     }
@@ -301,10 +384,11 @@ impl Core {
     /// the only one: the peer has just become reachable.
     pub(crate) fn attach(
         &self,
-        peer: PeerId,
+        connection: &Connection,
         outbound: UnboundedSender<Vec<u8>>,
         blobs: Rc<Notify>,
     ) -> (u64, bool) {
+        let peer: PeerId = *connection.remote_id().as_bytes();
         let id = self.links.get();
         self.links.set(id + 1);
 
@@ -355,6 +439,16 @@ impl Core {
             let _ = link.outbound.send(message);
         }
     }
+}
+
+/// Whether `peer` holds a role in `group`, by the latest checkpoint here.
+pub(crate) fn has_role(database: &Db, group: GroupId, peer: &PeerId) -> bool {
+    let Ok(peer) = VerifyingKey::from_bytes(peer) else {
+        return false;
+    };
+
+    let configuration = database.configuration(group);
+    configuration.is_some_and(|it| it.role(&peer).is_some())
 }
 
 /// The group a change is to. A blob's bytes belong to no one group.

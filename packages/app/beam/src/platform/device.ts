@@ -22,6 +22,24 @@ export interface DeviceConnection {
   /** Delete an item from a group, for every device. */
   deleteItem(groupId: string, itemId: string): Promise<void>;
 
+  /** Call this device something else, in every group it's in. */
+  renameDevice(name: string): Promise<void>;
+
+  /** Call a group something else, for every device in it. */
+  renameGroup(groupId: string, name: string): Promise<void>;
+
+  /** Ask a group to remove a device. */
+  removeDevice(groupId: string, deviceId: string): Promise<void>;
+
+  /** Be done with a group. */
+  leaveGroup(groupId: string): Promise<void>;
+
+  /**
+   * Start a group over with only this device in it, resolving with the
+   * new group's id.
+   */
+  replaceGroup(groupId: string): Promise<string>;
+
   /**
    * Share a file to a group. Resolves once it's all written here. The
    * file is handed over by reference; the worker reads it.
@@ -98,6 +116,14 @@ export const connectDevice = (feed: EngineEvents): DeviceConnection => {
     addItem: (groupId, body) => rpc.request('addItem', { groupId, body }),
     deleteItem: (groupId, itemId) =>
       rpc.request('deleteItem', { groupId, itemId }),
+
+    renameDevice: (name) => rpc.request('renameDevice', { name }),
+    renameGroup: (groupId, name) =>
+      rpc.request('renameGroup', { groupId, name }),
+    removeDevice: (groupId, deviceId) =>
+      rpc.request('removeDevice', { groupId, deviceId }),
+    leaveGroup: (groupId) => rpc.request('leaveGroup', { groupId }),
+    replaceGroup: (groupId) => rpc.request('replaceGroup', { groupId }),
 
     addFile: (groupId, file) =>
       rpc.request('addFile', {

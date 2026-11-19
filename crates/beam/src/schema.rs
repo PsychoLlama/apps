@@ -4,8 +4,13 @@
 //! devices agree on where the items are without talking. Nothing here is
 //! created twice. The founder creates the tables in the transaction that
 //! names the group, and everyone else finds them there.
+//!
+//! A model's id is made from a group's id, and a group founded to carry on
+//! from another keeps the models it inherited under the ids they had. So
+//! the ids come from the group the line began with, its *origin*, which
+//! every group after the first records where its own id can find it.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use serde::Serialize;
 use woodland::{BlobRef, ColumnId, GroupId, ModelId, Query, Row, Table, Transaction, Value};
@@ -27,12 +32,21 @@ const fn nonce(name: &[u8]) -> [u8; 32] {
 /// The key the group's name is kept under, in its [`Schema::meta`].
 const NAME: &[u8] = b"name";
 
+/// The key that says a group is closed, in its [`Schema::meta`]: its last
+/// member is done with it. Present is closed, whatever it holds.
+const CLOSED: &[u8] = b"closed";
+
+/// The key a group's origin is kept under, in [`Schema::origin_model`].
+const ORIGIN: &[u8] = b"origin";
+
 /// The models of one group, and the columns of its tables.
 #[derive(Clone, Copy)]
 pub(crate) struct Schema {
     group: GroupId,
     /// What the group says about itself: a map, last write wins.
     meta: ModelId,
+    /// What each device is called, by its id. A device writes its own.
+    devices: ModelId,
     /// What's been shared, a row each. Keyed so that key order is the
     /// order they were written in: see [`item_key`].
     items: ModelId,
@@ -48,12 +62,38 @@ pub(crate) struct Schema {
 
 /// A group as the host lists it.
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub(crate) struct Group {
     id: String,
     name: String,
     /// Whether this device has a role in the group and can read it. A
     /// device that was just let in holds the group before it's in it.
     member: bool,
+    /// Whether this device was in the group and has been removed. It
+    /// keeps what it could read then, and reads nothing since.
+    removed: bool,
+    /// What this device is called in the group. Empty until it has said.
+    device_name: String,
+}
+
+/// What a group's own devices know about it, beyond its name.
+pub(crate) struct Standing {
+    pub(crate) member: bool,
+    pub(crate) removed: bool,
+    pub(crate) device_name: String,
+}
+
+/// A device with a role in a group.
+#[derive(Serialize)]
+pub(crate) struct Member {
+    /// The device's id. Hex.
+    pub(crate) id: String,
+    /// What it calls itself. Empty until it has said.
+    pub(crate) name: String,
+    /// Whether it's this device.
+    pub(crate) me: bool,
+    /// Whether it's reachable right now. This device always is.
+    pub(crate) online: bool,
 }
 
 /// Something shared to a group.
@@ -112,12 +152,15 @@ impl Item {
 }
 
 impl Schema {
-    pub(crate) fn of(group: GroupId) -> Self {
-        let items = ModelId::table(group, nonce(b"beam/items"));
+    /// The schema of `group`, whose line began with `origin`: itself, for
+    /// a group that was founded and not carried on from another.
+    pub(crate) fn of(group: GroupId, origin: GroupId) -> Self {
+        let items = ModelId::table(origin, nonce(b"beam/items"));
 
         Self {
             group,
-            meta: ModelId::kv(group, nonce(b"beam/meta")),
+            meta: ModelId::kv(origin, nonce(b"beam/meta")),
+            devices: ModelId::kv(origin, nonce(b"beam/devices")),
             items,
             body: ColumnId::text(items, nonce(b"body")),
             author: ColumnId::bytes(items, nonce(b"author")),
@@ -126,6 +169,35 @@ impl Schema {
             file_name: ColumnId::text(items, nonce(b"file_name")),
             file_type: ColumnId::text(items, nonce(b"file_type")),
         }
+    }
+
+    /// Where a group says which group its line began with. The one model
+    /// whose id is made from the group's own, so it can be found knowing
+    /// nothing else. A group that began its own line has nothing in it.
+    fn origin_model(group: GroupId) -> ModelId {
+        ModelId::kv(group, nonce(b"beam/origin"))
+    }
+
+    /// Finds the origin of `group`, if it isn't its own.
+    pub(crate) fn origin_query(group: GroupId) -> Query {
+        Query::key(group, Self::origin_model(group), ORIGIN)
+    }
+
+    /// The origin in the answer to [`Self::origin_query`]: `group` itself
+    /// if there's none recorded.
+    pub(crate) fn origin(group: GroupId, found: &[(Vec<u8>, Vec<u8>)]) -> GroupId {
+        let recorded = found
+            .first()
+            .and_then(|(_, origin)| origin[..].try_into().ok());
+
+        recorded.map_or(group, GroupId::from_bytes)
+    }
+
+    /// Records, in `group`, the origin this schema was made with.
+    pub(crate) fn record_origin(&self, origin: GroupId) -> Transaction {
+        let model = Self::origin_model(self.group);
+
+        Transaction::new().set(model, ORIGIN, origin.as_bytes().to_vec())
     }
 
     /// What a founder writes first: the tables, and the group's name.
@@ -151,15 +223,50 @@ impl Schema {
 
     /// The group as the host lists it, from the answer to
     /// [`Self::name_query`]. A group this device can't read has no name.
-    pub(crate) fn group(&self, found: Vec<(Vec<u8>, Vec<u8>)>, member: bool) -> Group {
+    pub(crate) fn group(&self, found: Vec<(Vec<u8>, Vec<u8>)>, standing: Standing) -> Group {
         let name = found.into_iter().next();
         let name = name.map(|(_, value)| String::from_utf8_lossy(&value).into_owned());
 
         Group {
             id: hex::encode(self.group.as_bytes()),
             name: name.unwrap_or_default(),
-            member,
+            member: standing.member,
+            removed: standing.removed,
+            device_name: standing.device_name,
         }
+    }
+
+    /// Calls the group something else.
+    pub(crate) fn rename(&self, name: &str) -> Transaction {
+        Transaction::new().set(self.meta, NAME, name)
+    }
+
+    /// Finds anything if the group is closed.
+    pub(crate) fn closed_query(&self) -> Query {
+        Query::key(self.group, self.meta, CLOSED)
+    }
+
+    /// Closes the group: its last member is done with it.
+    pub(crate) fn close(&self) -> Transaction {
+        Transaction::new().set(self.meta, CLOSED, "1")
+    }
+
+    /// What every device in the group is called.
+    pub(crate) fn devices_query(&self) -> Query {
+        Query::prefix(self.group, self.devices, &[])
+    }
+
+    /// The answer to [`Self::devices_query`], by device id.
+    pub(crate) fn device_names(found: Vec<(Vec<u8>, Vec<u8>)>) -> BTreeMap<Vec<u8>, String> {
+        let named = found.into_iter();
+        let named = named.map(|(id, name)| (id, String::from_utf8_lossy(&name).into_owned()));
+
+        named.collect()
+    }
+
+    /// Says what `device` is called.
+    pub(crate) fn name_device(&self, device: [u8; 32], name: &str) -> Transaction {
+        Transaction::new().set(self.devices, device, name)
     }
 
     pub(crate) fn items_query(&self) -> Query {

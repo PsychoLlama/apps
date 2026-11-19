@@ -23,6 +23,30 @@ export interface Group {
    * once a checkpoint says so.
    */
   member: boolean;
+
+  /**
+   * Whether this device was in the group and has been removed. It keeps
+   * what it could read then, and reads nothing since.
+   */
+  removed: boolean;
+
+  /** What this device is called in the group. Empty until it has said. */
+  deviceName: string;
+}
+
+/** A device with a role in a group. */
+export interface Member {
+  /** The device's id, as a hex string. */
+  id: string;
+
+  /** What it calls itself. Empty until it has said. */
+  name: string;
+
+  /** Whether it's this device. */
+  me: boolean;
+
+  /** Whether it's reachable right now. This device always is. */
+  online: boolean;
 }
 
 /** Something shared to a group. */
@@ -103,7 +127,7 @@ export interface Device extends Disposable {
    */
   createGroup(name: string): Promise<string>;
 
-  /** Every group this device holds, in id order. */
+  /** Every group this device holds and hasn't put behind it, in id order. */
   groups(): Promise<Group[]>;
 
   /**
@@ -123,6 +147,35 @@ export interface Device extends Disposable {
    * already gone does nothing.
    */
   deleteItem(group: string, item: string): Promise<void>;
+
+  /** The devices with a role in `group`, in id order. */
+  members(group: string): Promise<Member[]>;
+
+  /** Say what this device is called in `group`. */
+  setDeviceName(group: string, name: string): Promise<void>;
+
+  /** Call `group` something else, for every device in it. */
+  renameGroup(group: string, name: string): Promise<void>;
+
+  /**
+   * Ask `group` to remove `device`. It happens when the group agrees,
+   * which takes most of its devices being reachable.
+   */
+  removeDevice(group: string, device: string): Promise<void>;
+
+  /**
+   * Be done with `group`. A device with no role forgets it at once; one
+   * with a role asks to be removed and forgets it then; the last member
+   * closes it.
+   */
+  leaveGroup(group: string): Promise<void>;
+
+  /**
+   * Start `group` over as a new group with only this device in it,
+   * resolving with the new group's id. For a group that has lost, for
+   * good, the devices it takes to agree on anything.
+   */
+  replaceGroup(group: string): Promise<string>;
 
   /**
    * Start bringing a file in, resolving with a handle to write its bytes
@@ -174,6 +227,11 @@ export interface Device extends Disposable {
    * Use another device's invitation, resolving with the group's id. Needs
    * the inviting device reachable right now. Rejects if the code isn't
    * one, was this device's own, has expired, or was already used.
+   *
+   * Rejects with the message `left-behind` if this device was still in a
+   * group the invitation's group replaced. It has left that group by
+   * then, and the invitation is unspent: open the device again, and use
+   * the invitation again.
    */
   join(code: string): Promise<string>;
 

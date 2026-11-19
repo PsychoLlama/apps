@@ -6,6 +6,7 @@ import {
   $feed,
   $feedChanged,
   $groupViewed,
+  $membersChanged,
   ITEM_MAX_LENGTH,
   linkOf,
   normalizeBody,
@@ -28,7 +29,12 @@ describe('$feed', () => {
     await using effects = createTestController();
     const feed = await effects.run($feed);
 
-    expect(feed).toEqual({ groupId: null, loaded: false, items: [] });
+    expect(feed).toEqual({
+      groupId: null,
+      loaded: false,
+      items: [],
+      members: [],
+    });
   });
 });
 
@@ -40,7 +46,12 @@ describe('$groupViewed', () => {
 
     groupViewed(GROUP);
 
-    expect(feed).toEqual({ groupId: GROUP, loaded: false, items: [] });
+    expect(feed).toEqual({
+      groupId: GROUP,
+      loaded: false,
+      items: [],
+      members: [],
+    });
   });
 
   it('empties the feed when the group changes', async () => {
@@ -53,7 +64,12 @@ describe('$groupViewed', () => {
     feedChanged(GROUP, [item('1', 'hello')]);
     groupViewed(OTHER);
 
-    expect(feed).toEqual({ groupId: OTHER, loaded: false, items: [] });
+    expect(feed).toEqual({
+      groupId: OTHER,
+      loaded: false,
+      items: [],
+      members: [],
+    });
   });
 
   it('keeps the feed when asked for the group it already shows', async () => {
@@ -95,7 +111,12 @@ describe('$feedChanged', () => {
     groupViewed(OTHER);
     feedChanged(GROUP, [item('1', 'stale')]);
 
-    expect(feed).toEqual({ groupId: OTHER, loaded: false, items: [] });
+    expect(feed).toEqual({
+      groupId: OTHER,
+      loaded: false,
+      items: [],
+      members: [],
+    });
   });
 });
 
@@ -139,5 +160,35 @@ describe('formatBytes', () => {
 
   it('never goes below nothing', () => {
     expect(formatBytes(-1)).toBe('0 B');
+  });
+});
+
+describe('$membersChanged', () => {
+  const laptop = { id: 'a1', name: 'Laptop', me: true, online: true };
+
+  it('replaces the devices of the group on screen', async () => {
+    await using effects = createTestController();
+    const feed = await effects.run($feed);
+    const groupViewed = await effects.run($groupViewed);
+    const membersChanged = await effects.run($membersChanged);
+
+    groupViewed(GROUP);
+    membersChanged(GROUP, [laptop]);
+
+    expect(feed.members).toEqual([laptop]);
+  });
+
+  it('ignores an answer for a group the page has left', async () => {
+    await using effects = createTestController();
+    const feed = await effects.run($feed);
+    const groupViewed = await effects.run($groupViewed);
+    const membersChanged = await effects.run($membersChanged);
+
+    groupViewed(GROUP);
+    membersChanged(GROUP, [laptop]);
+    groupViewed(OTHER);
+    membersChanged(GROUP, [laptop]);
+
+    expect(feed.members).toEqual([]);
   });
 });

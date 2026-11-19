@@ -70,7 +70,7 @@ describe('Device', () => {
 
     expect(id).toMatch(/^[0-9a-f]{64}$/);
     expect(await device.groups()).toEqual([
-      { id, name: 'My devices', member: true },
+      { id, name: 'My devices', member: true, removed: false, deviceName: '' },
     ]);
     expect(await device.items(id)).toEqual([]);
 
@@ -145,7 +145,13 @@ describe('Device', () => {
     const second = await open(store);
 
     expect(await second.groups()).toEqual([
-      { id: group, name: 'Notes', member: true },
+      {
+        id: group,
+        name: 'Notes',
+        member: true,
+        removed: false,
+        deviceName: '',
+      },
     ]);
     expect((await second.items(group)).map((item) => item.body)).toEqual([
       'still here',
@@ -281,6 +287,114 @@ describe('Device', () => {
     const [item] = await device.items(group);
     expect(item?.file).toBeUndefined();
     expect(await device.readFile(group, item?.id ?? '', 0)).toBeUndefined();
+
+    await device.close();
+    device.free();
+  });
+
+  it('lists itself as the only device of a group it founded', async () => {
+    const device = await open(storeName());
+    const group = await device.createGroup('Notes');
+
+    expect(await device.members(group)).toEqual([
+      { id: device.id, name: '', me: true, online: true },
+    ]);
+
+    await device.close();
+    device.free();
+  });
+
+  it('names itself in a group, and keeps the name', async () => {
+    const store = storeName();
+    const device = await open(store);
+    const group = await device.createGroup('Notes');
+
+    await device.setDeviceName(group, 'Laptop');
+    await device.setDeviceName(group, 'Desk');
+
+    expect(await device.members(group)).toMatchObject([{ name: 'Desk' }]);
+    expect(await device.groups()).toMatchObject([{ deviceName: 'Desk' }]);
+
+    await device.close();
+    device.free();
+
+    const second = await open(store);
+    expect(await second.members(group)).toMatchObject([{ name: 'Desk' }]);
+
+    await second.close();
+    second.free();
+  });
+
+  it('renames a group', async () => {
+    const device = await open(storeName());
+    const group = await device.createGroup('Notes');
+
+    await device.renameGroup(group, 'Scratch');
+
+    expect(await device.groups()).toMatchObject([
+      { id: group, name: 'Scratch' },
+    ]);
+
+    await device.close();
+    device.free();
+  });
+
+  it('closes a group its only device leaves, for good', async () => {
+    const store = storeName();
+    const device = await open(store);
+    const group = await device.createGroup('Notes');
+    const kept = await device.createGroup('Kept');
+
+    await device.leaveGroup(group);
+
+    expect(await device.groups()).toMatchObject([{ id: kept }]);
+
+    await device.close();
+    device.free();
+
+    const second = await open(store);
+    expect(await second.groups()).toMatchObject([{ id: kept }]);
+
+    await second.close();
+    second.free();
+  });
+
+  it('starts a group over, with what it had and only itself in it', async () => {
+    const device = await open(storeName());
+    const group = await device.createGroup('Notes');
+    await device.setDeviceName(group, 'Laptop');
+    await device.addItem(group, 'carried over');
+
+    const successor = await device.replaceGroup(group);
+
+    expect(successor).not.toBe(group);
+
+    // The old group is still held, and no longer listed.
+    expect(await device.groups()).toMatchObject([
+      { id: successor, name: 'Notes', member: true, deviceName: 'Laptop' },
+    ]);
+    expect(await device.items(successor)).toMatchObject([
+      { body: 'carried over', committed: true },
+    ]);
+    expect(await device.members(successor)).toMatchObject([
+      { id: device.id, name: 'Laptop', me: true },
+    ]);
+
+    await device.addItem(successor, 'written since');
+    expect(await device.items(successor)).toHaveLength(2);
+
+    await device.close();
+    device.free();
+  });
+
+  it('refuses to remove the last device of a group', async () => {
+    const device = await open(storeName());
+    const group = await device.createGroup('Notes');
+
+    await expect(device.removeDevice(group, device.id)).rejects.toThrow();
+    await expect(device.removeDevice(group, 'nonsense')).rejects.toThrow(
+      'not a device id',
+    );
 
     await device.close();
     device.free();
