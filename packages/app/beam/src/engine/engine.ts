@@ -312,11 +312,6 @@ export class Engine {
     return this.#open().invite(groupId);
   }
 
-  /** Take back an invitation that hasn't been used. */
-  cancelInvite(code: string): void {
-    this.#device?.cancelInvite(code);
-  }
-
   /** Use another device's invitation, resolving with the group's id. */
   join(code: string): Promise<string> {
     return this.#open().join(code);

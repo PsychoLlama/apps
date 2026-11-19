@@ -63,6 +63,11 @@ pub(crate) struct Admission {
     key: SealingKey,
 }
 
+/// How long an invitation can be used for, in milliseconds. Long enough
+/// to find the other device and open a link on it. It's kept in memory,
+/// so it also ends when this device is closed.
+const INVITE_FOR: f64 = 600_000.0;
+
 /// How often committed history is shed while the device stays open, in
 /// milliseconds. It's also shed on every open.
 const UPKEEP: f64 = 600_000.0;
@@ -122,7 +127,7 @@ pub(crate) struct Core {
     /// while it has any, and messages go out on the newest.
     peers: RefCell<BTreeMap<PeerId, Vec<Link>>>,
     /// Invitations out, and the group each lets a device into.
-    pub(crate) invites: RefCell<BTreeMap<Token, GroupId>>,
+    invites: RefCell<BTreeMap<Token, (GroupId, f64)>>,
     admissions: RefCell<Vec<Admission>>,
     /// Groups this device holds a role in, as of the last time it looked.
     /// Kept to notice the moment it stops holding one.
@@ -471,6 +476,31 @@ impl Core {
         }
 
         roles.remove(&group)
+    }
+
+    /// Remember an invitation to `group`, good for [`INVITE_FOR`].
+    pub(crate) fn invite(&self, token: Token, group: GroupId) {
+        let now = js_sys::Date::now();
+        let mut invites = self.invites.borrow_mut();
+
+        invites.retain(|_, (_, expires)| *expires > now);
+        invites.insert(token, (group, now + INVITE_FOR));
+    }
+
+    /// The group `token` invites to, if it's one of this device's and
+    /// hasn't run out.
+    pub(crate) fn invited(&self, token: &Token) -> Option<GroupId> {
+        let (group, expires) = self.invites.borrow().get(token).copied()?;
+
+        (expires > js_sys::Date::now()).then_some(group)
+    }
+
+    /// Use `token` up: the group it invites to, once.
+    pub(crate) fn spend(&self, token: &Token) -> Option<GroupId> {
+        let group = self.invited(token)?;
+        self.invites.borrow_mut().remove(token);
+
+        Some(group)
     }
 
     /// Tell the host to read every group again: something changed that

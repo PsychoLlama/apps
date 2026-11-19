@@ -94,10 +94,6 @@ export const createEngineApi = (engine: Engine, exit: () => void) =>
       watch: (input: { groupId: string | null }): void =>
         engine.watch(input.groupId),
 
-      /** Take back an invitation that hasn't been used. */
-      cancelInvite: (input: { code: string }): void =>
-        engine.cancelInvite(input.code),
-
       /**
        * Close the device and end the worker. An event because the caller
        * is a synchronous teardown path with nowhere to put an answer.

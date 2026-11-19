@@ -193,9 +193,6 @@ describe('Device', () => {
     expect(code.startsWith(device.id)).toBe(true);
     expect(device.invite(group)).not.toBe(code);
 
-    device.cancelInvite(code);
-    device.cancelInvite('not a code');
-
     await device.close();
     device.free();
   });

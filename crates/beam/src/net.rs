@@ -588,7 +588,7 @@ async fn admit(core: &Core, connection: &Connection) -> Result<(), String> {
     };
 
     if kind == ASK_LINEAGE {
-        let invited = core.invites.borrow().get(token).copied();
+        let invited = core.invited(token);
         if let Some(group) = invited {
             let database = core.database.lock().await;
             let database = database.as_ref().ok_or("the device is closed")?;
@@ -620,7 +620,7 @@ async fn admit(core: &Core, connection: &Connection) -> Result<(), String> {
     // An invitation lets one device in, once.
     let granted = SealingKey::from_bytes(rest).filter(|_| kind == ASK_TO_JOIN);
     let granted = granted.and_then(|key| {
-        let group = core.invites.borrow_mut().remove(token)?;
+        let group = core.spend(token)?;
         Some((group, key))
     });
 

@@ -11,6 +11,7 @@ import { ThemeMeta } from '@lib/theme/meta';
 import { PwaMeta } from '@lib/shell/pwa';
 import { AppProvider, type AppConfig } from '@lib/shell/context';
 import { installServiceWorker } from '@lib/service-worker/client';
+import { DeviceRoot } from './components/device-root';
 import { name } from './constants';
 import { runStartupTasks } from './startup-tasks';
 
@@ -42,7 +43,9 @@ export default function App() {
                     <ErrorBoundaryFallback error={error} reset={reset} />
                   )}
                 >
-                  <Suspense>{props.children}</Suspense>
+                  <DeviceRoot>
+                    <Suspense>{props.children}</Suspense>
+                  </DeviceRoot>
                 </ErrorBoundary>
               </MetaProvider>
             </AppProvider>

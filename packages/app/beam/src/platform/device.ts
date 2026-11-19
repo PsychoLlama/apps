@@ -55,9 +55,6 @@ export interface DeviceConnection {
   /** Make an invitation to a group, resolving with its code. */
   invite(groupId: string): Promise<string>;
 
-  /** Take back an invitation that hasn't been used. */
-  cancelInvite(code: string): void;
-
   /**
    * Use another device's invitation, resolving with the group's id.
    * Rejects with the reason if the invitation didn't work.
@@ -137,14 +134,6 @@ export const connectDevice = (feed: EngineEvents): DeviceConnection => {
 
     invite: (groupId) => rpc.request('invite', { groupId }),
     join: (code) => rpc.request('join', { code }),
-
-    cancelInvite(code) {
-      void rpc.notify('cancelInvite', { code }).catch((error: unknown) => {
-        logger.warn('Could not reach the device worker.', {
-          error: toError(error),
-        });
-      });
-    },
 
     watch(groupId) {
       void rpc.notify('watch', { groupId }).catch((error: unknown) => {

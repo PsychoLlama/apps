@@ -215,9 +215,6 @@ export interface Device extends Disposable {
    */
   invite(group: string): string;
 
-  /** Take back an invitation that hasn't been used. */
-  cancelInvite(code: string): void;
-
   /**
    * Use another device's invitation, resolving with the group's id. Needs
    * the inviting device reachable right now. Rejects if the code isn't

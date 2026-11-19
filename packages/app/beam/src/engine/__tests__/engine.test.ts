@@ -84,7 +84,6 @@ const createDevice = () => ({
   abandonFile: vi.fn<Device['abandonFile']>(() => Promise.resolve()),
   readFile: vi.fn<Device['readFile']>(() => Promise.resolve(undefined)),
   invite: vi.fn<Device['invite']>(() => 'code'),
-  cancelInvite: vi.fn<Device['cancelInvite']>(),
   join: vi.fn<Device['join']>(() => Promise.resolve(GROUP)),
 });
 
@@ -562,11 +561,9 @@ describe('Engine', () => {
     await settle();
 
     expect(engine.invite(GROUP)).toBe('code');
-    engine.cancelInvite('code');
     await expect(engine.join('theirs')).resolves.toBe(GROUP);
 
     expect(device.invite).toHaveBeenCalledWith(GROUP);
-    expect(device.cancelInvite).toHaveBeenCalledWith('code');
     expect(device.join).toHaveBeenCalledWith('theirs');
   });
 });

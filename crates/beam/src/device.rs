@@ -477,26 +477,19 @@ impl Device {
     }
 
     /// Make an invitation to `group`: a code for one other device to
-    /// [join](Self::join) with, once, while this device is online.
+    /// [join](Self::join) with, once, in the next ten minutes, while this
+    /// device stays open and online.
     ///
     /// The code names this device and carries a secret. Whoever holds it
     /// can be let into the group, so show it only to the device meant to
-    /// have it, and [cancel](Self::cancel_invite) it when done.
+    /// have it. The other device dials this one and presents the secret;
+    /// this one never dials out for an invitation.
     pub fn invite(&self, group: String) -> Result<String, JsError> {
         let group = group_id(&group)?;
         let token: Token = random()?;
-        self.core.invites.borrow_mut().insert(token, group);
+        self.core.invite(token, group);
 
         Ok(hex::encode(&[&self.core.id[..], &token].concat()))
-    }
-
-    /// Take back an invitation that hasn't been used. One that has, or
-    /// was never made, is ignored.
-    #[wasm_bindgen(js_name = cancelInvite)]
-    pub fn cancel_invite(&self, code: String) {
-        if let Some((_, token)) = parse_invite(&code) {
-            self.core.invites.borrow_mut().remove(&token);
-        }
     }
 
     /// Use another device's invitation, resolving with the group's id.

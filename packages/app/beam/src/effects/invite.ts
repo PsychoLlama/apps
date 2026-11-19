@@ -2,12 +2,12 @@ import { collect, pipe } from '@lib/effects';
 import { toError } from '@lib/observability';
 import type { DeviceConnection } from '../platform/device';
 import { encodeQr } from '../platform/qr-code';
-import { $invite, $inviteClosed, $inviteOpened, inviteLink } from '../state';
+import { $inviteOpened, inviteLink } from '../state';
 import { $openDevice } from './device';
 
 /**
- * Make an invitation to a group and show it. The other device has to use
- * it while this one is online; it lets one device in, once.
+ * Make an invitation to a group and show it. It lets one device in,
+ * once, in the next ten minutes, while this device stays open.
  */
 export const $openInvite = collect(
   [$openDevice, $inviteOpened],
@@ -16,20 +16,6 @@ export const $openInvite = collect(
     const link = inviteLink(window.location.origin, code);
 
     inviteOpened({ groupId, code, link, grid: await encodeQr(link) });
-  },
-);
-
-/**
- * Put the invitation away and take it back. A code that was photographed
- * and never used shouldn't keep working.
- */
-export const $closeInvite = collect(
-  [$openDevice, $invite, $inviteClosed],
-  (connection, invite, inviteClosed) => () => {
-    const shown = invite();
-    if (shown) connection.cancelInvite(shown.code);
-
-    inviteClosed();
   },
 );
 
