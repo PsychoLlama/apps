@@ -244,7 +244,8 @@ export const Device: {
    * `onRelayChange` is called with the home relay's URL whenever one
    * connects, and with `undefined` when none is. `onChange` is called with
    * a group's id whenever something in that group may read differently:
-   * read it again.
+   * read it again. `onFault` is called once, with why, if the store fails
+   * while open: nothing works after that until the device is opened again.
    *
    * Rejects if the browser won't open the store, if another tab or worker
    * already has it open, or if the endpoint can't bind. {@link init} must
@@ -254,6 +255,7 @@ export const Device: {
     store: string,
     onRelayChange: (homeRelay: string | undefined) => void,
     onChange: (group: string) => void,
+    onFault: (reason: string) => void,
   ): Promise<Device>;
 };
 

@@ -541,6 +541,20 @@ describe('Engine', () => {
     expect(device.replaceGroup).toHaveBeenCalledWith(GROUP);
   });
 
+  it('reports a store that fails under an open device as a failed open', async () => {
+    const { engine, events, deps } = setup();
+
+    engine.open();
+    await settle();
+    expect(events.openFailed).not.toHaveBeenCalled();
+
+    deps.openDevice.mock.calls[0]?.[3]('the store failed');
+
+    expect(events.openFailed).toHaveBeenCalledWith({
+      reason: 'the store failed',
+    });
+  });
+
   it('hands invitations to the device', async () => {
     const { engine, device } = setup();
 

@@ -179,7 +179,8 @@ async fn tick(core: Rc<Core>) {
     loop {
         sleep(TICK).await;
 
-        if core.idle_for() > QUIET_AFTER {
+        let upkeep = core.upkeep_due();
+        if !upkeep && core.idle_for() > QUIET_AFTER {
             continue;
         }
 
@@ -187,6 +188,10 @@ async fn tick(core: Rc<Core>) {
         let Some(database) = database.as_mut() else {
             return;
         };
+
+        if upkeep {
+            core.upkeep(database).await;
+        }
 
         if let Err(error) = core.tick(database).await {
             warn(&format!("beam: a tick failed: {error}"));

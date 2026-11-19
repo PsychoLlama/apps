@@ -52,7 +52,10 @@ export interface EngineEvents {
   /** Another tab has the device. This one is now waiting for it. */
   heldElsewhere(): void;
 
-  /** The device couldn't be opened. Terminal. */
+  /**
+   * The device couldn't be opened, or its store failed once it was.
+   * Terminal either way.
+   */
   openFailed(failure: { reason: string }): void;
 
   /** The relay carrying this device changed, or went away. */
@@ -87,6 +90,7 @@ export interface EngineDeps {
     store: string,
     onRelayChange: (homeRelay: string | undefined) => void,
     onChange: (group: string) => void,
+    onFault: (reason: string) => void,
   ): Promise<Device>;
 
   /**
@@ -436,6 +440,17 @@ export class Engine {
           void this.#pushGroups();
           void this.#pushFeed(groupId);
           void this.#pushMembers(groupId);
+        },
+
+        // The store failed under an open device. Nothing it's asked will
+        // work until it's opened again, and the way to do that from here
+        // is a new worker: the page is told the same thing it's told
+        // when opening fails, which asks for a reload.
+        (reason) => {
+          logger.error('The store failed while the device was open.', {
+            reason,
+          });
+          this.#events.openFailed({ reason });
         },
       );
 

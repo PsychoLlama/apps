@@ -47,8 +47,10 @@ impl Device {
     /// `on_relay_change` is called with the home relay's URL whenever one
     /// connects, and with `undefined` when none is. `on_change` is called
     /// with a group's id whenever something in that group may read
-    /// differently. Both are given here rather than registered afterwards
-    /// so nothing happens unheard.
+    /// differently. `on_fault` is called once, with why, if the store fails
+    /// while open: nothing works after that until the device is opened
+    /// again. All are given here rather than registered afterwards so
+    /// nothing happens unheard.
     ///
     /// Rejects if the browser won't open the store, if another tab or
     /// worker already has it open, or if the endpoint can't bind.
@@ -56,6 +58,7 @@ impl Device {
         store: String,
         on_relay_change: js_sys::Function,
         on_change: js_sys::Function,
+        on_fault: js_sys::Function,
     ) -> Result<Device, JsError> {
         let (mut database, steps) = open_database(&store).await.map_err(to_js)?;
 
@@ -67,10 +70,14 @@ impl Device {
             .map_err(to_js)?;
 
         let id = database.id().to_bytes();
-        let core = Rc::new(Core::new(id, endpoint.clone(), on_change));
+        let core = Rc::new(Core::new(id, endpoint.clone(), on_change, on_fault));
+        core.remember_roles(&database);
         for outputs in steps {
             core.finish(&mut database, outputs).await.map_err(to_js)?;
         }
+
+        // Whatever was committed since this device last shed its history.
+        core.upkeep(&mut database).await;
 
         *core.database.lock().await = Some(database);
 
@@ -581,7 +588,8 @@ impl Device {
         group: GroupId,
         transaction: Transaction,
     ) -> Result<(), JsError> {
-        let outputs = database.write(group, transaction).await.map_err(to_js)?;
+        let written = self.core.check(database.write(group, transaction).await);
+        let outputs = written.map_err(to_js)?;
         let settled = self.core.finish_and_tick(database, outputs).await;
 
         settled.map_err(to_js)

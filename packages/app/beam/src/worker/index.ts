@@ -47,8 +47,8 @@ const engine = new Engine(
   {
     locks: navigator.locks,
     init: () => init(),
-    openDevice: (store, onRelayChange, onChange) =>
-      Device.open(store, onRelayChange, onChange),
+    openDevice: (store, onRelayChange, onChange, onFault) =>
+      Device.open(store, onRelayChange, onChange, onFault),
     defaultDeviceName: () => inferDeviceName(navigator.userAgent),
   },
   {

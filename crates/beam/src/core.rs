@@ -63,6 +63,10 @@ pub(crate) struct Admission {
     key: SealingKey,
 }
 
+/// How often committed history is shed while the device stays open, in
+/// milliseconds. It's also shed on every open.
+const UPKEEP: f64 = 600_000.0;
+
 /// Open the database kept in the store called `store`, ready to hold
 /// groups, with the steps that getting it ready took still to be
 /// [finished](Core::finish).
@@ -88,16 +92,6 @@ pub(crate) async fn open_database(store: &str) -> Result<(Db, Vec<Outputs>), Str
         steps.push(abandoned.map_err(text)?);
     }
 
-    // A group this device was removed from is forgotten when it hears of
-    // it. One it heard of and didn't get to forget, because it was closed
-    // first, is forgotten here.
-    let groups: Vec<GroupId> = database.groups().collect();
-    for group in groups {
-        if database.is_shut_out(group) {
-            steps.push(database.forget(group).await.map_err(text)?);
-        }
-    }
-
     Ok((database, steps))
 }
 
@@ -118,6 +112,11 @@ pub(crate) struct Core {
     /// Called with a group's id whenever something in it may read
     /// differently.
     on_change: js_sys::Function,
+    /// Called once, with why, if the store fails. Nothing works after.
+    on_fault: js_sys::Function,
+    faulted: Cell<bool>,
+    /// When history was last shed.
+    kept: Cell<f64>,
     /// Every live connection, by peer. Two devices that dial each other at
     /// once hold two for a while, and that's fine: a peer is connected
     /// while it has any, and messages go out on the newest.
@@ -125,9 +124,9 @@ pub(crate) struct Core {
     /// Invitations out, and the group each lets a device into.
     pub(crate) invites: RefCell<BTreeMap<Token, GroupId>>,
     admissions: RefCell<Vec<Admission>>,
-    /// Groups this device has asked to be removed from, and will forget
-    /// once it has been.
-    pub(crate) leaving: RefCell<BTreeSet<GroupId>>,
+    /// Groups this device holds a role in, as of the last time it looked.
+    /// Kept to notice the moment it stops holding one.
+    roles: RefCell<BTreeSet<GroupId>>,
     /// Peers being dialled, or served on a connection this device dialled.
     pub(crate) dialing: RefCell<BTreeSet<PeerId>>,
     /// Wakes the dialer: who this device should be connected to may have
@@ -139,8 +138,16 @@ pub(crate) struct Core {
 }
 
 impl Core {
-    pub(crate) fn new(id: PeerId, endpoint: iroh::Endpoint, on_change: js_sys::Function) -> Self {
+    pub(crate) fn new(
+        id: PeerId,
+        endpoint: iroh::Endpoint,
+        on_change: js_sys::Function,
+        on_fault: js_sys::Function,
+    ) -> Self {
         Self {
+            on_fault,
+            faulted: Cell::new(false),
+            kept: Cell::new(js_sys::Date::now()),
             database: Mutex::new(None),
             id,
             endpoint,
@@ -148,7 +155,7 @@ impl Core {
             peers: RefCell::default(),
             invites: RefCell::default(),
             admissions: RefCell::default(),
-            leaving: RefCell::default(),
+            roles: RefCell::default(),
             dialing: RefCell::default(),
             membership: Notify::new(),
             active: Cell::new(js_sys::Date::now()),
@@ -162,7 +169,59 @@ impl Core {
     /// dropped, and the protocol recovers when they meet again. The host is
     /// told last, once, which groups to read again.
     pub(crate) async fn finish(&self, database: &mut Db, outputs: Outputs) -> Result<(), Error> {
-        self.settle(database, outputs, false).await
+        let settled = self.settle(database, outputs, false).await;
+
+        self.check(settled)
+    }
+
+    /// Pass a step's result on, telling the host first if it says the
+    /// store has failed.
+    ///
+    /// A database whose store failed refuses everything until it's opened
+    /// again, and the worker that holds it is the thing to open again. So
+    /// the host is told once, and what it does is ask to be reloaded.
+    pub(crate) fn check<T>(&self, result: Result<T, Error>) -> Result<T, Error> {
+        if let Err(error @ (Error::Store(_) | Error::Broken)) = &result
+            && !self.faulted.replace(true)
+        {
+            let reason = JsValue::from_str(&error.to_string());
+            let _ = self.on_fault.call1(&JsValue::NULL, &reason);
+        }
+
+        result
+    }
+
+    /// Whether it's been long enough since history was last shed.
+    pub(crate) fn upkeep_due(&self) -> bool {
+        js_sys::Date::now() - self.kept.get() > UPKEEP
+    }
+
+    /// Shed the committed history of every group this device is in.
+    ///
+    /// Nothing reads differently afterwards. It's what lets go of deleted
+    /// items for good, and of the bytes of deleted files: a blob goes
+    /// when nothing refers to it, and until history is shed, the write
+    /// that shared it still does.
+    ///
+    /// A group that can't be compacted right now is left for next time.
+    pub(crate) async fn upkeep(&self, database: &mut Db) {
+        self.kept.set(js_sys::Date::now());
+
+        let groups: Vec<GroupId> = database.groups().collect();
+        for group in groups {
+            if !has_role(database, group, &self.id) || !database.reads(group) {
+                continue;
+            }
+
+            let compacted = match self.check(database.compact(group).await) {
+                Ok(outputs) => self.finish(database, outputs).await,
+                Err(error) => Err(error),
+            };
+
+            if let Err(error) = compacted {
+                warn(&format!("beam: couldn't compact a group: {error}"));
+            }
+        }
     }
 
     /// [`Self::finish`] a step, then let time pass and finish that too,
@@ -177,7 +236,9 @@ impl Core {
         database: &mut Db,
         outputs: Outputs,
     ) -> Result<(), Error> {
-        self.settle(database, outputs, true).await
+        let settled = self.settle(database, outputs, true).await;
+
+        self.check(settled)
     }
 
     async fn settle(&self, database: &mut Db, outputs: Outputs, tick: bool) -> Result<(), Error> {
@@ -222,11 +283,14 @@ impl Core {
                 // Best-effort, as it has to be. A device that was taken
                 // rather than removed only does this if it's running this
                 // code and hears about it.
-                if let Changed::Members { group } = change
-                    && self.is_out(database, *group)
+                //
+                // Looked for on every change and not only a change of
+                // members: that's also how a role this device was given,
+                // or founded a group with, comes to be known here.
+                if let Some(group) = group_of(change)
+                    && self.lost_role(database, group)
                 {
-                    self.leaving.borrow_mut().remove(group);
-                    steps.push_back(database.forget(*group).await?);
+                    steps.push_back(database.forget(group).await?);
                 }
             }
 
@@ -271,7 +335,7 @@ impl Core {
 
     /// Let time pass: attempt a checkpoint, and see it through.
     pub(crate) async fn tick(&self, database: &mut Db) -> Result<(), Error> {
-        let outputs = database.tick().await?;
+        let outputs = self.check(database.tick().await)?;
 
         self.finish(database, outputs).await
     }
@@ -347,7 +411,6 @@ impl Core {
         let mut roles = configuration.roles;
         roles.retain(|(peer, _)| peer.to_bytes() != self.id);
 
-        self.leaving.borrow_mut().insert(group);
         let asked = database.reconfigure(group, roles).await?;
 
         self.finish_and_tick(database, asked).await
@@ -383,12 +446,31 @@ impl Core {
         wanted
     }
 
-    /// Whether this device was in `group` and no longer is: it asked to
-    /// leave and has been let go, or it was removed.
-    pub(crate) fn is_out(&self, database: &Db, group: GroupId) -> bool {
-        let left = self.leaving.borrow().contains(&group) && !has_role(database, group, &self.id);
+    /// Note which groups this device holds a role in. Called once, when
+    /// the database is opened.
+    pub(crate) fn remember_roles(&self, database: &Db) {
+        let held = database.groups();
+        let held = held.filter(|group| has_role(database, *group, &self.id));
 
-        left || database.is_shut_out(group)
+        *self.roles.borrow_mut() = held.collect();
+    }
+
+    /// Whether this device held a role in `group` when it last looked and
+    /// doesn't now. Looks, so it says so once.
+    ///
+    /// The change is what matters, and not the standing. A device that
+    /// was removed, forgot the group, and is being let back in also has
+    /// no role, and the group still says it was shut out. Going by that
+    /// would have it forget the group it's in the middle of joining.
+    fn lost_role(&self, database: &Db, group: GroupId) -> bool {
+        let mut roles = self.roles.borrow_mut();
+
+        if has_role(database, group, &self.id) {
+            roles.insert(group);
+            return false;
+        }
+
+        roles.remove(&group)
     }
 
     /// Tell the host to read every group again: something changed that

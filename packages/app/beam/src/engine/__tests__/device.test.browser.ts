@@ -11,7 +11,12 @@ import init, { Device } from '@crate/beam';
 const storeName = () => `beam-test-${crypto.randomUUID()}`;
 
 const open = (store: string, onChange: (group: string) => void = () => {}) =>
-  Device.open(store, () => {}, onChange);
+  Device.open(
+    store,
+    () => {},
+    onChange,
+    () => {},
+  );
 
 beforeAll(async () => {
   await init();
@@ -395,6 +400,39 @@ describe('Device', () => {
     await expect(device.removeDevice(group, 'nonsense')).rejects.toThrow(
       'not a device id',
     );
+
+    await device.close();
+    device.free();
+  });
+
+  it('keeps what it holds across the compaction every open does', async () => {
+    const store = storeName();
+    let device = await open(store);
+    const group = await device.createGroup('Notes');
+    await device.addItem(group, 'kept');
+    await device.addItem(group, 'deleted');
+
+    const handle = await device.beginFile();
+    await device.writeFile(handle, new Uint8Array([1, 2, 3]));
+    await device.finishFile(group, handle, 'kept.bin', '');
+
+    const [, deleted] = await device.items(group);
+    await device.deleteItem(group, deleted?.id ?? '');
+
+    // Twice: once to shed the history, once over what's left.
+    for (let round = 0; round < 2; round++) {
+      await device.close();
+      device.free();
+      device = await open(store);
+    }
+
+    const items = await device.items(group);
+    expect(items.map((item) => item.body)).toEqual(['kept', '']);
+    expect(items[1]?.file).toMatchObject({ name: 'kept.bin', held: 3 });
+    expect(await device.readFile(group, items[1]?.id ?? '', 0)).toEqual(
+      new Uint8Array([1, 2, 3]),
+    );
+    expect(await device.groups()).toMatchObject([{ id: group, name: 'Notes' }]);
 
     await device.close();
     device.free();
