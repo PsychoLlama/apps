@@ -5,6 +5,8 @@
 //! created twice. The founder creates the tables in the transaction that
 //! names the group, and everyone else finds them there.
 
+use std::collections::BTreeSet;
+
 use serde::Serialize;
 use woodland::{ColumnId, GroupId, ModelId, Query, Row, Table, Transaction, Value};
 
@@ -44,6 +46,9 @@ pub(crate) struct Schema {
 pub(crate) struct Group {
     id: String,
     name: String,
+    /// Whether this device has a role in the group and can read it. A
+    /// device that was just let in holds the group before it's in it.
+    member: bool,
 }
 
 /// Something shared to a group.
@@ -56,6 +61,10 @@ pub(crate) struct Item {
     author: String,
     /// When it was written, by its author's clock. Milliseconds.
     created_at: f64,
+    /// Whether the group has made it final. Until then it's this device's
+    /// word for it: shown, shared as peers are reachable, and not yet
+    /// agreed.
+    committed: bool,
 }
 
 impl Schema {
@@ -92,13 +101,14 @@ impl Schema {
 
     /// The group as the host lists it, from the answer to
     /// [`Self::name_query`]. A group this device can't read has no name.
-    pub(crate) fn group(&self, found: Vec<(Vec<u8>, Vec<u8>)>) -> Group {
+    pub(crate) fn group(&self, found: Vec<(Vec<u8>, Vec<u8>)>, member: bool) -> Group {
         let name = found.into_iter().next();
         let name = name.map(|(_, value)| String::from_utf8_lossy(&value).into_owned());
 
         Group {
             id: hex::encode(self.group.as_bytes()),
             name: name.unwrap_or_default(),
+            member,
         }
     }
 
@@ -110,15 +120,25 @@ impl Schema {
         Query::row(self.group, self.items, key)
     }
 
-    /// Every item in the answer to [`Self::items_query`], oldest first.
-    pub(crate) fn items(&self, found: &[(Vec<u8>, Vec<u8>)]) -> Vec<Item> {
-        let table = Table::read(found);
+    /// Every item in the answer to [`Self::items_query`], oldest first,
+    /// marked by whether the committed answer to the same query has it.
+    pub(crate) fn items(
+        &self,
+        shown: &[(Vec<u8>, Vec<u8>)],
+        committed: &[(Vec<u8>, Vec<u8>)],
+    ) -> Vec<Item> {
+        let committed = Table::read(committed);
+        let committed = committed.iter().flat_map(Table::rows).map(Row::key);
+        let committed: BTreeSet<&[u8]> = committed.collect();
+
+        let table = Table::read(shown);
         let rows = table.iter().flat_map(Table::rows);
 
-        rows.map(|row| self.item(row)).collect()
+        rows.map(|row| self.item(row, committed.contains(row.key())))
+            .collect()
     }
 
-    fn item(&self, row: &Row) -> Item {
+    fn item(&self, row: &Row, committed: bool) -> Item {
         let body = match row.get(self.body) {
             Value::Text(body) => body.clone(),
             _ => String::new(),
@@ -141,6 +161,7 @@ impl Schema {
             body,
             author,
             created_at,
+            committed,
         }
     }
 

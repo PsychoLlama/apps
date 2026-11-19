@@ -69,7 +69,9 @@ describe('Device', () => {
     const id = await device.createGroup('My devices');
 
     expect(id).toMatch(/^[0-9a-f]{64}$/);
-    expect(await device.groups()).toEqual([{ id, name: 'My devices' }]);
+    expect(await device.groups()).toEqual([
+      { id, name: 'My devices', member: true },
+    ]);
     expect(await device.items(id)).toEqual([]);
 
     await device.close();
@@ -90,7 +92,7 @@ describe('Device', () => {
       'https://example.com/second',
     ]);
 
-    expect(items[0]).toMatchObject({ author: device.id });
+    expect(items[0]).toMatchObject({ author: device.id, committed: true });
     expect(items[0]?.createdAt).toBeGreaterThan(Date.now() - 60_000);
 
     await device.close();
@@ -142,7 +144,9 @@ describe('Device', () => {
 
     const second = await open(store);
 
-    expect(await second.groups()).toEqual([{ id: group, name: 'Notes' }]);
+    expect(await second.groups()).toEqual([
+      { id: group, name: 'Notes', member: true },
+    ]);
     expect((await second.items(group)).map((item) => item.body)).toEqual([
       'still here',
     ]);
@@ -163,6 +167,36 @@ describe('Device', () => {
       'Mine',
       'Shared',
     ]);
+
+    await device.close();
+    device.free();
+  });
+
+  it('makes an invitation naming this device', async () => {
+    const device = await open(storeName());
+    const group = await device.createGroup('Notes');
+
+    const code = device.invite(group);
+
+    expect(code).toMatch(/^[0-9a-f]{96}$/);
+    expect(code.startsWith(device.id)).toBe(true);
+    expect(device.invite(group)).not.toBe(code);
+
+    device.cancelInvite(code);
+    device.cancelInvite('not a code');
+
+    await device.close();
+    device.free();
+  });
+
+  it('refuses a code that is not one, and its own', async () => {
+    const device = await open(storeName());
+    const group = await device.createGroup('Notes');
+
+    await expect(device.join('nonsense')).rejects.toThrow('not an invitation');
+    await expect(device.join(device.invite(group))).rejects.toThrow(
+      'this device made that invitation',
+    );
 
     await device.close();
     device.free();

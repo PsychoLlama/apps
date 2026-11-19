@@ -43,7 +43,10 @@ export default defineConfig({
         // from `/`. Groups exist only in the client's database, and the
         // page's first paint is independent of which one it is.
         // See `docs/dynamic-prerendered-shells.md`.
-        config.prerender.routes = ['/group/[id]'];
+        //
+        // `/join` is only ever reached from an invitation link, so the
+        // crawler can't find it either.
+        config.prerender.routes = ['/group/[id]', '/join'];
         config.hooks = {
           'prerender:generate'(route) {
             // Move the shell under `/_dynamic/`, so the rewrite target

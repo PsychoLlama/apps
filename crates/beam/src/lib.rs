@@ -15,7 +15,11 @@ use wasm_bindgen::prelude::*;
 // under iroh. Neither builds nor means anything off wasm — see the
 // target-gated dependencies in Cargo.toml.
 #[cfg(target_arch = "wasm32")]
+mod core;
+#[cfg(target_arch = "wasm32")]
 mod device;
+#[cfg(target_arch = "wasm32")]
+mod net;
 #[cfg(target_arch = "wasm32")]
 mod schema;
 

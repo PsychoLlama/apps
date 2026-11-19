@@ -143,6 +143,7 @@ name = "beam"
 version = "0.0.0"
 dependencies = [
  "console_error_panic_hook",
+ "ed25519-dalek",
  "getrandom 0.4.3",
  "iroh",
  "js-sys",

@@ -1,0 +1,395 @@
+//! Carrying the database between devices.
+//!
+//! Woodland asks its transport for one thing: an ordered, reliable,
+//! authenticated stream between two keys. An iroh connection is
+//! authenticated by the peer's key, and a QUIC stream is ordered and
+//! reliable, so each side opens one stream per connection and writes its
+//! messages down it, each behind its length.
+//!
+//! Two protocols are spoken:
+//!
+//! - [`SYNC`] carries the database, for as long as two devices that share
+//!   a group can reach each other.
+//! - [`LINK`] is how a device gets into a group: once, briefly, between a
+//!   device showing an invitation and the one that was handed it.
+
+use std::rc::Rc;
+use std::time::Duration;
+
+use ed25519_dalek::VerifyingKey;
+use iroh::EndpointId;
+use iroh::endpoint::{Connection, RecvStream, VarInt};
+use n0_future::future::or;
+use n0_future::task::{AbortOnDropHandle, spawn};
+use n0_future::time::sleep;
+use tokio::sync::mpsc;
+use wasm_bindgen::prelude::*;
+use woodland::{GroupId, SealingKey};
+
+use crate::core::{Core, PeerId, Token, warn};
+
+/// The ALPN the database is carried on. Versioned so a future format can
+/// land without a device on the old one mistaking it for something it
+/// can read.
+pub(crate) const SYNC: &[u8] = b"beam/sync/1";
+
+/// The ALPN a device is let into a group on.
+pub(crate) const LINK: &[u8] = b"beam/link/1";
+
+/// Marks a stream as carrying sync messages. A stream says what it's for
+/// in its first byte, so another kind can be added beside this one.
+const SYNC_STREAM: u8 = 1;
+
+/// Largest single message read off a stream. A ceiling on what a peer can
+/// make this device buffer, far above anything sync sends in one step.
+const MOST_MESSAGE: usize = 16 * 1024 * 1024;
+
+/// Largest invitation taken. It carries the group's chain of checkpoints.
+const MOST_INVITATION: usize = 16 * 1024 * 1024;
+
+/// Largest request to be let in: a token and a sealing key.
+const MOST_REQUEST: usize = 1024;
+
+/// How often to try peers that couldn't be reached.
+const REDIAL: Duration = Duration::from_secs(20);
+
+/// How often time passes, while there's something for it to do.
+const TICK: Duration = Duration::from_secs(2);
+
+/// How long after the last change to keep ticking, in milliseconds. A
+/// checkpoint takes a few exchanges; after this, nothing is coming.
+const QUIET_AFTER: f64 = 30_000.0;
+
+/// Sent when a connection is closed on purpose. Nothing reads it.
+const DONE: VarInt = VarInt::from_u32(0);
+
+/// Everything that runs for as long as the device is open: answering
+/// peers, reaching for them, and letting time pass.
+pub(crate) fn run(core: &Rc<Core>) -> Vec<AbortOnDropHandle<()>> {
+    vec![
+        AbortOnDropHandle::new(spawn(accept(Rc::clone(core)))),
+        AbortOnDropHandle::new(spawn(dial(Rc::clone(core)))),
+        AbortOnDropHandle::new(spawn(tick(Rc::clone(core)))),
+    ]
+}
+
+/// Answer whoever dials, for as long as the endpoint is up.
+async fn accept(core: Rc<Core>) {
+    while let Some(incoming) = core.endpoint.accept().await {
+        let core = Rc::clone(&core);
+
+        // Each on a task of its own: a slow handshake holds up nobody.
+        spawn(async move {
+            let Ok(connection) = incoming.await else {
+                return;
+            };
+
+            let alpn = connection.alpn().to_vec();
+            if alpn == LINK {
+                if let Err(error) = admit(&core, &connection).await {
+                    warn(&format!("beam: couldn't let a device in: {error}"));
+                }
+            } else if alpn == SYNC && wants(&core, &connection).await {
+                serve(core, connection).await;
+            } else {
+                connection.close(DONE, b"unknown");
+            }
+        });
+    }
+}
+
+/// Whether the peer on `connection` is one this device shares a group
+/// with. Anyone else has no business on the sync protocol. Woodland would
+/// verify whatever they sent, but there's no reason to do the work.
+async fn wants(core: &Core, connection: &Connection) -> bool {
+    let database = core.database.lock().await;
+    let peer = connection.remote_id();
+
+    database
+        .as_ref()
+        .is_some_and(|it| core.wanted(it).contains(peer.as_bytes()))
+}
+
+/// Keep reaching for every peer this device shares a group with and isn't
+/// connected to. Woken when who that is may have changed, and otherwise
+/// every so often: a peer that was asleep may not be now.
+async fn dial(core: Rc<Core>) {
+    loop {
+        let wanted = {
+            let database = core.database.lock().await;
+            database.as_ref().map(|it| core.wanted(it))
+        };
+
+        for peer in wanted.into_iter().flatten() {
+            let reaching = core.is_connected(&peer) || !core.dialing.borrow_mut().insert(peer);
+            if reaching {
+                continue;
+            }
+
+            let core = Rc::clone(&core);
+            spawn(async move {
+                if let Ok(id) = EndpointId::from_bytes(&peer)
+                    && let Ok(connection) = core.endpoint.connect(id, SYNC).await
+                {
+                    serve(Rc::clone(&core), connection).await;
+                }
+
+                core.dialing.borrow_mut().remove(&peer);
+            });
+        }
+
+        or(core.membership.notified(), sleep(REDIAL)).await;
+    }
+}
+
+/// Let time pass, while there's something for it to do.
+///
+/// A tick is when a device attempts a checkpoint, which is what makes
+/// writes final. Nothing about correctness depends on when it happens, so
+/// it happens on a coarse timer, and stops once the group has gone quiet.
+async fn tick(core: Rc<Core>) {
+    loop {
+        sleep(TICK).await;
+
+        if core.idle_for() > QUIET_AFTER {
+            continue;
+        }
+
+        let mut database = core.database.lock().await;
+        let Some(database) = database.as_mut() else {
+            return;
+        };
+
+        if let Err(error) = core.tick(database).await {
+            warn(&format!("beam: a tick failed: {error}"));
+        }
+    }
+}
+
+/// Carry the database over one connection until it ends.
+///
+/// Both directions are the same thing once a connection is up: who dialled
+/// stops mattering. Each side opens a stream to write on and reads the one
+/// the other opened.
+async fn serve(core: Rc<Core>, connection: Connection) {
+    let peer: PeerId = *connection.remote_id().as_bytes();
+    let Ok(key) = VerifyingKey::from_bytes(&peer) else {
+        return;
+    };
+
+    let (outbound, messages) = mpsc::unbounded_channel();
+    let _writer = AbortOnDropHandle::new(spawn(write(connection.clone(), messages)));
+    let (link, first) = core.attach(peer, outbound);
+
+    if first {
+        let mut database = core.database.lock().await;
+        if let Some(database) = database.as_mut() {
+            // Each side says what it holds, and the exchange begins.
+            let greeted = match database.connected(key).await {
+                Ok(outputs) => core.finish(database, outputs).await,
+                Err(error) => Err(error),
+            };
+
+            if let Err(error) = greeted {
+                warn(&format!("beam: couldn't greet a peer: {error}"));
+            }
+
+            core.touch();
+        }
+    }
+
+    while let Ok(mut stream) = connection.accept_uni().await {
+        let mut kind = [0];
+        if stream.read_exact(&mut kind).await.is_ok() && kind[0] == SYNC_STREAM {
+            read(&core, key, &mut stream).await;
+        }
+    }
+
+    if core.detach(&peer, link) {
+        let mut database = core.database.lock().await;
+        if let Some(database) = database.as_mut() {
+            database.disconnected(key);
+        }
+    }
+}
+
+/// Write queued messages down a stream of this side's own, in order, each
+/// behind its length. Ends when the connection does.
+async fn write(connection: Connection, mut messages: mpsc::UnboundedReceiver<Vec<u8>>) {
+    let Ok(mut stream) = connection.open_uni().await else {
+        return;
+    };
+
+    if stream.write_all(&[SYNC_STREAM]).await.is_err() {
+        return;
+    }
+
+    while let Some(message) = messages.recv().await {
+        let Ok(length) = u32::try_from(message.len()) else {
+            continue;
+        };
+
+        let sent = stream.write_all(&length.to_be_bytes()).await.is_ok()
+            && stream.write_all(&message).await.is_ok();
+        if !sent {
+            return;
+        }
+    }
+}
+
+/// Hand the database every message on a stream, in order, until the
+/// stream ends or says something it shouldn't.
+async fn read(core: &Core, peer: VerifyingKey, stream: &mut RecvStream) {
+    loop {
+        let mut length = [0; 4];
+        if stream.read_exact(&mut length).await.is_err() {
+            return;
+        }
+
+        let length = u32::from_be_bytes(length) as usize;
+        if length > MOST_MESSAGE {
+            return;
+        }
+
+        let mut message = vec![0; length];
+        if stream.read_exact(&mut message).await.is_err() {
+            return;
+        }
+
+        let mut database = core.database.lock().await;
+        let Some(database) = database.as_mut() else {
+            return;
+        };
+
+        let received = match database.receive(peer, &message).await {
+            Ok(outputs) => core.finish(database, outputs).await,
+            Err(error) => Err(error),
+        };
+
+        if let Err(error) = received {
+            warn(&format!("beam: couldn't take a message: {error}"));
+        }
+    }
+}
+
+/// Use an invitation: dial the device that showed it, prove this one was
+/// handed it, and hold the group it leads to.
+///
+/// An invitation is believed, which is why it's fetched here and not
+/// carried in the code. The code names the inviter's key, the connection
+/// is to that key and no other, and so what comes back is from the device
+/// that was trusted when its code was scanned.
+///
+/// This device holds the group at once, and can read and write it when a
+/// checkpoint gives it a role: moments later, if the group's quorum is
+/// reachable.
+pub(crate) async fn join(core: &Core, inviter: PeerId, token: Token) -> Result<GroupId, JsError> {
+    let id = EndpointId::from_bytes(&inviter).map_err(to_js)?;
+    let connection = core.endpoint.connect(id, LINK).await.map_err(to_js)?;
+    let (mut send, mut receive) = connection.open_bi().await.map_err(to_js)?;
+
+    let sealing = {
+        let database = core.database.lock().await;
+        let database = database.as_ref().ok_or_else(closed)?;
+        database.sealing_key().to_bytes()
+    };
+
+    send.write_all(&token).await.map_err(to_js)?;
+    send.write_all(&sealing).await.map_err(to_js)?;
+    send.finish().map_err(to_js)?;
+
+    let invitation = receive.read_to_end(MOST_INVITATION).await;
+    let invitation = invitation.map_err(to_js)?;
+    connection.close(DONE, b"done");
+
+    // Nothing back is the inviter saying no, without saying why.
+    if invitation.is_empty() {
+        return Err(JsError::new(
+            "the invitation has expired or was already used",
+        ));
+    }
+
+    let mut database = core.database.lock().await;
+    let database = database.as_mut().ok_or_else(closed)?;
+    let (group, outputs) = database.join(&invitation).await.map_err(to_js)?;
+    core.finish(database, outputs).await.map_err(to_js)?;
+
+    // There's someone to talk to now.
+    core.touch();
+    core.membership.notify_one();
+
+    Ok(group)
+}
+
+/// Answer a device asking to be let in: check it was handed an invitation,
+/// give it what it needs to hold the group, and ask the group to give it a
+/// role.
+async fn admit(core: &Core, connection: &Connection) -> Result<(), String> {
+    let peer = VerifyingKey::from_bytes(connection.remote_id().as_bytes()).map_err(text)?;
+    let (mut send, mut receive) = connection.accept_bi().await.map_err(text)?;
+    let request = receive.read_to_end(MOST_REQUEST).await.map_err(text)?;
+
+    let asked = request.split_first_chunk::<16>();
+    let asked = asked.and_then(|(token, key)| Some((*token, SealingKey::from_bytes(key)?)));
+
+    // An invitation lets one device in, once.
+    let granted = asked.and_then(|(token, key)| {
+        let group = core.invites.borrow_mut().remove(&token)?;
+        Some((group, key))
+    });
+
+    let Some((group, key)) = granted else {
+        // Finishing with nothing written is the refusal.
+        send.finish().map_err(text)?;
+        connection.closed().await;
+        return Ok(());
+    };
+
+    let invitation = {
+        let database = core.database.lock().await;
+        let database = database.as_ref().ok_or("the device is closed")?;
+        database.invite(group).ok_or("the group is gone")?
+    };
+
+    // Promised before the answer goes out, so the joiner's first dial on
+    // the sync protocol finds this device expecting it.
+    core.promise(group, peer, key);
+
+    // Written with the database let go: a joiner that stalls here holds
+    // up nothing but itself.
+    send.write_all(&invitation).await.map_err(text)?;
+    send.finish().map_err(text)?;
+
+    {
+        let mut database = core.database.lock().await;
+        let database = database.as_mut().ok_or("the device is closed")?;
+
+        if let Some(outputs) = core.admit(database, group).await.map_err(text)? {
+            core.finish(database, outputs).await.map_err(text)?;
+        }
+
+        // A device that is its group's whole quorum carries the change now.
+        core.tick(database).await.map_err(text)?;
+        core.touch();
+    }
+
+    // The joiner hangs up once it has read the answer. Leaving first could
+    // cut the answer short.
+    connection.closed().await;
+
+    Ok(())
+}
+
+/// What a call on a closed device rejects with.
+fn closed() -> JsError {
+    JsError::new("the device is closed")
+}
+
+/// An error as the host sees it: a JS `Error` carrying the message.
+fn to_js(error: impl std::fmt::Display) -> JsError {
+    JsError::new(&error.to_string())
+}
+
+fn text(error: impl std::fmt::Display) -> String {
+    error.to_string()
+}

@@ -12,6 +12,7 @@ const item = (id: string, body: string): Item => ({
   body,
   author: ID,
   createdAt: 0,
+  committed: true,
 });
 
 /** Let every pending microtask and promise chain run. */
@@ -71,6 +72,9 @@ const createDevice = () => ({
   items: vi.fn<Device['items']>(() => Promise.resolve<Item[]>([])),
   addItem: vi.fn<Device['addItem']>(() => Promise.resolve()),
   deleteItem: vi.fn<Device['deleteItem']>(() => Promise.resolve()),
+  invite: vi.fn<Device['invite']>(() => 'code'),
+  cancelInvite: vi.fn<Device['cancelInvite']>(),
+  join: vi.fn<Device['join']>(() => Promise.resolve(GROUP)),
 });
 
 const createEvents = () => ({
@@ -228,8 +232,8 @@ describe('Engine', () => {
   it('lists the groups by name once open', async () => {
     const { engine, events, device } = setup();
     device.groups.mockResolvedValue([
-      { id: 'b', name: 'Work' },
-      { id: 'a', name: 'Home' },
+      { id: 'b', name: 'Work', member: true },
+      { id: 'a', name: 'Home', member: true },
     ]);
 
     engine.open();
@@ -237,8 +241,8 @@ describe('Engine', () => {
 
     expect(events.groupsChanged).toHaveBeenCalledWith({
       groups: [
-        { id: 'a', name: 'Home' },
-        { id: 'b', name: 'Work' },
+        { id: 'a', name: 'Home', member: true },
+        { id: 'b', name: 'Work', member: true },
       ],
     });
   });
@@ -334,5 +338,20 @@ describe('Engine', () => {
     expect(device.createGroup).toHaveBeenCalledWith('Home');
     expect(device.addItem).toHaveBeenCalledWith(GROUP, 'hello');
     expect(device.deleteItem).toHaveBeenCalledWith(GROUP, '1');
+  });
+
+  it('hands invitations to the device', async () => {
+    const { engine, device } = setup();
+
+    engine.open();
+    await settle();
+
+    expect(engine.invite(GROUP)).toBe('code');
+    engine.cancelInvite('code');
+    await expect(engine.join('theirs')).resolves.toBe(GROUP);
+
+    expect(device.invite).toHaveBeenCalledWith(GROUP);
+    expect(device.cancelInvite).toHaveBeenCalledWith('code');
+    expect(device.join).toHaveBeenCalledWith('theirs');
   });
 });

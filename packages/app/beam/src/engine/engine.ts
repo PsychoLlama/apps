@@ -170,6 +170,24 @@ export class Engine {
     return this.#open().deleteItem(groupId, itemId);
   }
 
+  /**
+   * Make an invitation to a group: a code for one other device to join
+   * with, once.
+   */
+  invite(groupId: string): string {
+    return this.#open().invite(groupId);
+  }
+
+  /** Take back an invitation that hasn't been used. */
+  cancelInvite(code: string): void {
+    this.#device?.cancelInvite(code);
+  }
+
+  /** Use another device's invitation, resolving with the group's id. */
+  join(code: string): Promise<string> {
+    return this.#open().join(code);
+  }
+
   /** The open device. The page only offers these once it has opened. */
   #open(): Device {
     assert(this.#device, 'The device is not open.');

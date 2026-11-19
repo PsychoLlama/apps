@@ -5,23 +5,19 @@
 //! its identity in a group are one thing. A device that loses its store
 //! comes back as someone else, on both layers at once.
 
-use std::collections::BTreeSet;
+use std::rc::Rc;
 
 use iroh::endpoint::presets;
 use iroh::{SecretKey, Watcher};
 use n0_future::StreamExt;
 use n0_future::task::{AbortOnDropHandle, spawn};
-use tokio::sync::Mutex;
 use wasm_bindgen::prelude::*;
-use woodland::{BlobPolicy, BrowserStore, Changed, Database, Error, GroupId, Outputs, Transaction};
+use woodland::{BlobPolicy, BrowserStore, Database, GroupId, Transaction};
 
+use crate::core::{Core, Db, PeerId, Token};
 use crate::hex;
+use crate::net;
 use crate::schema::{Group, Schema, item_key};
-
-/// The ALPN two beam devices negotiate on. Versioned so a future format
-/// can land without a device on the old one mistaking it for something it
-/// can read.
-const PROTOCOL: &[u8] = b"beam/1";
 
 /// This device, open: a database over the browser's store, and an endpoint
 /// bound under the database's key.
@@ -31,21 +27,11 @@ const PROTOCOL: &[u8] = b"beam/1";
 /// through the handler given to [`Device::open`].
 #[wasm_bindgen]
 pub struct Device {
-    /// `None` once closed.
-    ///
-    /// Behind a lock because the database is a state machine that takes
-    /// one step at a time, and the host doesn't wait for one call to
-    /// settle before making the next. Whoever holds the lock is the step.
-    database: Mutex<Option<Database<BrowserStore>>>,
-    /// The key peers know this device by, and items name as their author.
-    id: [u8; 32],
-    endpoint: iroh::Endpoint,
-    /// Called with a group's id whenever something in it may read
-    /// differently.
-    on_change: js_sys::Function,
-    // The home-relay watcher. An `AbortOnDropHandle`, so freeing the device
-    // stops it.
-    _relay: AbortOnDropHandle<()>,
+    core: Rc<Core>,
+    // The home-relay watcher, and the loops that answer peers, reach for
+    // them, and let time pass. `AbortOnDropHandle`s, so freeing the device
+    // stops them.
+    _tasks: Vec<AbortOnDropHandle<()>>,
 }
 
 #[wasm_bindgen]
@@ -80,31 +66,30 @@ impl Device {
 
         let endpoint = iroh::Endpoint::builder(presets::N0)
             .secret_key(SecretKey::from_bytes(&database.device_secret()))
-            .alpns(vec![PROTOCOL.to_vec()])
+            .alpns(vec![net::SYNC.to_vec(), net::LINK.to_vec()])
             .bind()
             .await
             .map_err(to_js)?;
 
-        let device = Device {
-            id: database.id().to_bytes(),
-            database: Mutex::new(None),
-            _relay: watch_home_relay(on_relay_change, endpoint.clone()),
-            endpoint,
-            on_change,
-        };
+        let id = database.id().to_bytes();
+        let core = Rc::new(Core::new(id, endpoint.clone(), on_change));
+        core.finish(&mut database, outputs).await.map_err(to_js)?;
+        *core.database.lock().await = Some(database);
 
-        let changed = device.settle(&mut database, outputs).await;
-        *device.database.lock().await = Some(database);
-        device.announce(changed.map_err(to_js)?);
+        let mut tasks = net::run(&core);
+        tasks.push(watch_home_relay(on_relay_change, endpoint));
 
-        Ok(device)
+        Ok(Device {
+            core,
+            _tasks: tasks,
+        })
     }
 
     /// The address peers dial to reach this device, as a hex string. It is
     /// also the device's identity in every group it belongs to.
     #[wasm_bindgen(getter)]
     pub fn id(&self) -> String {
-        hex::encode(&self.id)
+        hex::encode(&self.core.id)
     }
 
     /// Leave the network and let go of the store, resolving once both are
@@ -113,8 +98,8 @@ impl Device {
     ///
     /// Terminal: open another `Device` to come back.
     pub async fn close(&self) {
-        self.endpoint.close().await;
-        drop(self.database.lock().await.take());
+        self.core.endpoint.close().await;
+        drop(self.core.database.lock().await.take());
     }
 
     /// Found a group called `name` with this device as its only member,
@@ -124,47 +109,59 @@ impl Device {
     /// it, whoever else ends up carrying it.
     #[wasm_bindgen(js_name = createGroup)]
     pub async fn create_group(&self, name: String) -> Result<String, JsError> {
-        let mut database = self.database.lock().await;
+        let mut database = self.core.database.lock().await;
         let database = database.as_mut().ok_or_else(closed)?;
 
         let founded = database.found_sealed(random()?).await;
         let (group, outputs) = founded.map_err(to_js)?;
-        let mut changed = self.settle(database, outputs).await.map_err(to_js)?;
+        self.core.finish(database, outputs).await.map_err(to_js)?;
 
         let founding = Schema::of(group).found(&name);
-        changed.append(&mut self.write(database, group, founding).await?);
-        self.announce(changed);
+        self.write(database, group, founding).await?;
 
         Ok(hex::encode(group.as_bytes()))
     }
 
-    /// Every group this device holds, as `{ id, name }`, in id order.
+    /// Every group this device holds, as `{ id, name, member }`, in id
+    /// order.
     pub async fn groups(&self) -> Result<JsValue, JsError> {
-        let database = self.database.lock().await;
+        let database = self.core.database.lock().await;
         let database = database.as_ref().ok_or_else(closed)?;
+        let me = database.id();
 
         let mut groups: Vec<Group> = Vec::new();
         for group in database.groups() {
             let schema = Schema::of(group);
             let answer = database.read(&schema.name_query()).await;
-            groups.push(schema.group(answer.map_err(to_js)?.into_found()));
+
+            // Holding a group isn't being in it. A device that was just
+            // let in carries the group until a checkpoint gives it a role.
+            let configuration = database.configuration(group);
+            let role = configuration.is_some_and(|it| it.role(&me).is_some());
+            let member = role && database.reads(group);
+
+            groups.push(schema.group(answer.map_err(to_js)?.into_found(), member));
         }
 
         serde_wasm_bindgen::to_value(&groups).map_err(to_js)
     }
 
     /// Everything shared to `group`, oldest first, as
-    /// `{ id, body, author, createdAt }`.
+    /// `{ id, body, author, createdAt, committed }`.
     ///
     /// Reads what this device knows right now, its own unsynced writes
-    /// included.
+    /// included. `committed` says which of it the group has made final.
     pub async fn items(&self, group: String) -> Result<JsValue, JsError> {
         let schema = Schema::of(group_id(&group)?);
-        let database = self.database.lock().await;
+        let database = self.core.database.lock().await;
         let database = database.as_ref().ok_or_else(closed)?;
 
-        let answer = database.read(&schema.items_query()).await;
-        let items = schema.items(answer.map_err(to_js)?.found());
+        let shown = database.read(&schema.items_query()).await;
+        let committed = database.read(&schema.items_query().committed()).await;
+        let items = schema.items(
+            shown.map_err(to_js)?.found(),
+            committed.map_err(to_js)?.found(),
+        );
 
         serde_wasm_bindgen::to_value(&items).map_err(to_js)
     }
@@ -174,7 +171,7 @@ impl Device {
     #[wasm_bindgen(js_name = addItem)]
     pub async fn add_item(&self, group: String, body: String) -> Result<(), JsError> {
         let group = group_id(&group)?;
-        let mut database = self.database.lock().await;
+        let mut database = self.core.database.lock().await;
         let database = database.as_mut().ok_or_else(closed)?;
 
         #[expect(
@@ -183,12 +180,9 @@ impl Device {
         )]
         let now = js_sys::Date::now() as i64;
         let key = item_key(now, random()?);
-        let add = Schema::of(group).add(key, body, self.id, now);
+        let add = Schema::of(group).add(key, body, self.core.id, now);
 
-        let changed = self.write(database, group, add).await?;
-        self.announce(changed);
-
-        Ok(())
+        self.write(database, group, add).await
     }
 
     /// Delete `item` from `group`, for every device. Deleting one that's
@@ -198,86 +192,81 @@ impl Device {
         let group = group_id(&group)?;
         let key = hex::decode(&item).ok_or_else(|| JsError::new("not an item id"))?;
         let schema = Schema::of(group);
-        let mut database = self.database.lock().await;
+        let mut database = self.core.database.lock().await;
         let database = database.as_mut().ok_or_else(closed)?;
 
         let answer = database.read(&schema.item_query(&key)).await;
         let delete = schema.delete(answer.map_err(to_js)?.found(), &key);
 
-        if let Some(delete) = delete {
-            let changed = self.write(database, group, delete).await?;
-            self.announce(changed);
+        match delete {
+            Some(delete) => self.write(database, group, delete).await,
+            None => Ok(()),
+        }
+    }
+
+    /// Make an invitation to `group`: a code for one other device to
+    /// [join](Self::join) with, once, while this device is online.
+    ///
+    /// The code names this device and carries a secret. Whoever holds it
+    /// can be let into the group, so show it only to the device meant to
+    /// have it, and [cancel](Self::cancel_invite) it when done.
+    pub fn invite(&self, group: String) -> Result<String, JsError> {
+        let group = group_id(&group)?;
+        let token: Token = random()?;
+        self.core.invites.borrow_mut().insert(token, group);
+
+        Ok(hex::encode(&[&self.core.id[..], &token].concat()))
+    }
+
+    /// Take back an invitation that hasn't been used. One that has, or
+    /// was never made, is ignored.
+    #[wasm_bindgen(js_name = cancelInvite)]
+    pub fn cancel_invite(&self, code: String) {
+        if let Some((_, token)) = parse_invite(&code) {
+            self.core.invites.borrow_mut().remove(&token);
+        }
+    }
+
+    /// Use another device's invitation, resolving with the group's id.
+    ///
+    /// Needs the inviting device reachable right now. This device holds
+    /// the group at once; it can read and write it when the group gives it
+    /// a role, which the group list's `member` reports.
+    pub async fn join(&self, code: String) -> Result<String, JsError> {
+        let invite = parse_invite(&code);
+        let (inviter, token) = invite.ok_or_else(|| JsError::new("not an invitation"))?;
+
+        if inviter == self.core.id {
+            return Err(JsError::new("this device made that invitation"));
         }
 
-        Ok(())
+        let group = net::join(&self.core, inviter, token).await?;
+
+        Ok(hex::encode(group.as_bytes()))
     }
 }
 
 impl Device {
-    /// Write to `group`, then let time pass.
-    ///
-    /// A write is provisional until a checkpoint commits it, and a device
-    /// attempts one when told time has passed. A device that is its
-    /// group's whole quorum commits on its own tick, so ticking here means
-    /// nothing a lone device writes is ever left provisional.
+    /// Write to `group`, and let time pass so a lone device commits it.
     async fn write(
         &self,
-        database: &mut Database<BrowserStore>,
+        database: &mut Db,
         group: GroupId,
         transaction: Transaction,
-    ) -> Result<BTreeSet<GroupId>, JsError> {
+    ) -> Result<(), JsError> {
         let outputs = database.write(group, transaction).await.map_err(to_js)?;
-        let mut changed = self.settle(database, outputs).await.map_err(to_js)?;
+        let settled = self.core.finish_and_tick(database, outputs).await;
 
-        let outputs = database.tick().await.map_err(to_js)?;
-        changed.append(&mut self.settle(database, outputs).await.map_err(to_js)?);
-
-        Ok(changed)
-    }
-
-    /// Do what a step asked for, and every step that follows from it,
-    /// returning the groups in which something may read differently.
-    ///
-    /// Nothing is sent yet: no device has anyone to send to.
-    async fn settle(
-        &self,
-        database: &mut Database<BrowserStore>,
-        mut outputs: Outputs,
-    ) -> Result<BTreeSet<GroupId>, Error> {
-        let mut changed = BTreeSet::new();
-
-        loop {
-            changed.extend(outputs.changed.iter().filter_map(group_of));
-
-            if !outputs.unfinished {
-                return Ok(changed);
-            }
-
-            outputs = database.resume().await?;
-        }
-    }
-
-    /// Tell the host which groups to read again. A handler that throws is
-    /// the host's problem, not the step's: the step is already durable.
-    fn announce(&self, changed: BTreeSet<GroupId>) {
-        for group in changed {
-            let group = JsValue::from_str(&hex::encode(group.as_bytes()));
-            let _ = self.on_change.call1(&JsValue::NULL, &group);
-        }
+        settled.map_err(to_js)
     }
 }
 
-/// The group a change is to. A blob's bytes belong to no one group.
-fn group_of(change: &Changed) -> Option<GroupId> {
-    match change {
-        Changed::Key { group, .. }
-        | Changed::Pending { group, .. }
-        | Changed::Indexed { group, .. }
-        | Changed::Members { group }
-        | Changed::Checkpoint { group, .. }
-        | Changed::Everything { group } => Some(*group),
-        Changed::Blob { .. } => None,
-    }
+/// An invitation code, back as who made it and its secret.
+fn parse_invite(code: &str) -> Option<(PeerId, Token)> {
+    let bytes = hex::decode_array::<48>(code)?;
+    let (inviter, token) = bytes.split_first_chunk::<32>()?;
+
+    Some((*inviter, token.try_into().ok()?))
 }
 
 /// A group id as the host gave it, back as the database's.

@@ -2,6 +2,7 @@ import type { Item } from '@crate/beam';
 import { Show } from 'solid-js';
 import { useAction } from '@lib/effects/solid';
 import { Card, Flex, IconButton, Link, Text } from '@lib/ui';
+import IconSync from 'virtual:icons/mdi/cloud-sync-outline';
 import IconContentCopy from 'virtual:icons/mdi/content-copy';
 import IconDelete from 'virtual:icons/mdi/delete-outline';
 import { $deleteItem } from '../effects';
@@ -73,6 +74,24 @@ export const FeedItem = (props: {
               {formatTime(props.item.createdAt)}
             </time>
           </Text>
+
+          {/* Shared, not yet agreed: the group's other devices haven't
+              all been reachable since it was written. It still shows
+              everywhere it has reached. */}
+          <Show when={!props.item.committed}>
+            <Flex
+              as="div"
+              align="center"
+              gap={1}
+              grow
+              testId="feed-item-pending"
+            >
+              <IconSync width="14" height="14" aria-hidden="true" />
+              <Text as="span" size={1} color="lowContrast" selectable={false}>
+                Waiting to sync
+              </Text>
+            </Flex>
+          </Show>
 
           <Flex as="div" gap={1}>
             <IconButton

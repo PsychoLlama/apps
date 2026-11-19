@@ -19,6 +19,7 @@ const item = (id: string, body: string): Item => ({
   body,
   author: 'author',
   createdAt: 0,
+  committed: true,
 });
 
 describe('$feed', () => {

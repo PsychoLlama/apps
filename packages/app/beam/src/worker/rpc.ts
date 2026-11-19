@@ -22,6 +22,17 @@ export const createEngineApi = (engine: Engine, exit: () => void) =>
       /** Delete an item from a group, for every device. */
       deleteItem: (input: { groupId: string; itemId: string }): Promise<void> =>
         engine.deleteItem(input.groupId, input.itemId),
+
+      /** Make an invitation to a group, resolving with its code. */
+      invite: (input: { groupId: string }): string =>
+        engine.invite(input.groupId),
+
+      /**
+       * Use another device's invitation, resolving with the group's id.
+       * Rejects with the reason if the invitation didn't work.
+       */
+      join: (input: { code: string }): Promise<string> =>
+        engine.join(input.code),
     },
 
     events: {
@@ -37,6 +48,10 @@ export const createEngineApi = (engine: Engine, exit: () => void) =>
        */
       watch: (input: { groupId: string | null }): void =>
         engine.watch(input.groupId),
+
+      /** Take back an invitation that hasn't been used. */
+      cancelInvite: (input: { code: string }): void =>
+        engine.cancelInvite(input.code),
 
       /**
        * Close the device and end the worker. An event because the caller

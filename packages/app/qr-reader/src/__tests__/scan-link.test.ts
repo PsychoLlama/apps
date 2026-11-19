@@ -206,8 +206,8 @@ describe('internalPath', () => {
   const origin = window.location.origin;
 
   it('maps a same-origin link to its router path', () => {
-    expect(internalPath(`${origin}/beam/share/abc123`)).toBe(
-      '/beam/share/abc123',
+    expect(internalPath(`${origin}/beam/group/abc123`)).toBe(
+      '/beam/group/abc123',
     );
   });
 
@@ -219,7 +219,7 @@ describe('internalPath', () => {
     // Same path, different host: the browser would navigate off-site, so it
     // must never be handed to the in-app router.
     expect(
-      internalPath('https://evil.example/beam/share/abc123'),
+      internalPath('https://evil.example/beam/group/abc123'),
     ).toBeUndefined();
   });
 
@@ -239,9 +239,9 @@ describe('resolveScanTarget', () => {
   });
 
   it('routes a same-origin link in-app', () => {
-    expect(resolveScanTarget(urlScan(`${origin}/beam/share/abc123`))).toEqual({
+    expect(resolveScanTarget(urlScan(`${origin}/beam/group/abc123`))).toEqual({
       kind: 'internal',
-      path: '/beam/share/abc123',
+      path: '/beam/group/abc123',
     });
   });
 

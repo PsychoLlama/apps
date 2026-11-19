@@ -16,6 +16,13 @@ export interface Group {
    * one whose founding hasn't reached it yet.
    */
   name: string;
+
+  /**
+   * Whether this device has a role in the group and can read it. A device
+   * that was just let in holds the group before it's in it: it's a member
+   * once a checkpoint says so.
+   */
+  member: boolean;
 }
 
 /** Something shared to a group. */
@@ -34,6 +41,12 @@ export interface Item {
 
   /** When it was written, by its author's clock. Epoch milliseconds. */
   createdAt: number;
+
+  /**
+   * Whether the group has made it final. Until then it's shown here and
+   * shared as peers are reachable, but not yet agreed.
+   */
+  committed: boolean;
 }
 
 /**
@@ -83,6 +96,24 @@ export interface Device extends Disposable {
    * already gone does nothing.
    */
   deleteItem(group: string, item: string): Promise<void>;
+
+  /**
+   * Make an invitation to `group`: a code for one other device to
+   * {@link Device.join} with, once, while this device is online. Whoever
+   * holds the code can be let in, so show it only to the device meant to
+   * have it. Throws if `group` isn't a group id.
+   */
+  invite(group: string): string;
+
+  /** Take back an invitation that hasn't been used. */
+  cancelInvite(code: string): void;
+
+  /**
+   * Use another device's invitation, resolving with the group's id. Needs
+   * the inviting device reachable right now. Rejects if the code isn't
+   * one, was this device's own, has expired, or was already used.
+   */
+  join(code: string): Promise<string>;
 
   /** Release the wasm object. Reaching for it afterwards throws. */
   free(): void;
