@@ -217,7 +217,7 @@ catalogs:
       version: 7.0.1
     '@testing-library/user-event':
       specifier: ^14.6.1
-      version: 14.6.10
+      version: 14.6.12
     '@types/web-app-manifest':
       specifier: ^1.0.9
       version: 1.0.9
@@ -1327,7 +1327,7 @@ importers:
         version: 0.8.10(@solidjs/router@1.0.0(solid-js@1.9.19))(solid-js@1.9.19)
       '@testing-library/user-event':
         specifier: 'catalog:'
-        version: 14.6.10(@testing-library/dom@10.4.1)
+        version: 14.6.12(@testing-library/dom@10.4.1)
       solid-js:
         specifier: 1.9.19
         version: 1.9.19
@@ -2934,8 +2934,8 @@ packages:
       vitest:
         optional: true
 
-  '@testing-library/user-event@14.6.10':
-    resolution: {integrity: sha512-tA4stGNp3mLGOGO+lh87UA56Tz4c8NVGBSkyIF58O+W/bs2Re9BCI9xihnL70+DsThncFznE0skS88SM1D2hyg==}
+  '@testing-library/user-event@14.6.12':
+    resolution: {integrity: sha512-8yQV8v+eToBhsUO4oYrZY7fzhpTEMZx4IDx0/iuER/x0Xuy0NdqQOhsaaUNlvXE03N7vQ+4RCXUieKC0NJty9w==}
     engines: {node: '>=12', npm: '>=6'}
     peerDependencies:
       '@testing-library/dom': '>=7.21.4'
@@ -6210,7 +6210,7 @@ snapshots:
     optionalDependencies:
       vitest: 5.1.0(@types/node@26.1.2)(@vitest/browser-playwright@5.1.0)(@vitest/coverage-v8@5.1.0)(@vitest/ui@5.1.0)(jsdom@31.0.1)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))
 
-  '@testing-library/user-event@14.6.10(@testing-library/dom@10.4.1)':
+  '@testing-library/user-event@14.6.12(@testing-library/dom@10.4.1)':
     dependencies:
       '@testing-library/dom': 10.4.1
 
