@@ -6,10 +6,12 @@ import { Button, Callout, Flex, Text } from '@lib/ui';
 import { $leaveGroup } from '../effects';
 
 /**
- * A group this device holds and isn't in: either it was just let in and
- * the group hasn't agreed yet, or it was in and has been removed.
+ * A group this device holds and isn't in yet: it was let in, and the
+ * group hasn't agreed. If the group never does, there's nothing to wait
+ * for, so it offers to forget it.
  *
- * Both end the same way if nothing changes, so both offer to forget it.
+ * A device that was in a group and is removed never gets here. It forgets
+ * the group by itself.
  */
 export const GroupOutside = (props: {
   /** The group. */
@@ -23,15 +25,11 @@ export const GroupOutside = (props: {
   });
 
   return (
-    <Callout
-      testId={props.group.removed ? 'group-removed' : 'group-joining'}
-      color={props.group.removed ? 'warning' : 'neutral'}
-    >
+    <Callout testId="group-joining" color="neutral">
       <Flex as="div" direction="column" gap={3} align="start">
         <Text as="p" selectable={false}>
-          {props.group.removed
-            ? 'This device was removed from the group. Nothing shared since then reaches it.'
-            : "Joining. This device is let in once enough of the group's devices are online to agree to it."}
+          Joining. This device is let in once enough of the group's devices are
+          online to agree to it.
         </Text>
 
         <Button

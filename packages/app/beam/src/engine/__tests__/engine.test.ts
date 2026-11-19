@@ -106,7 +106,7 @@ const group = (
   id,
   name,
   member: true,
-  removed: false,
+
   deviceName: 'Laptop',
   ...extra,
 });

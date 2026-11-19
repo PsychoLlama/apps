@@ -70,7 +70,7 @@ describe('Device', () => {
 
     expect(id).toMatch(/^[0-9a-f]{64}$/);
     expect(await device.groups()).toEqual([
-      { id, name: 'My devices', member: true, removed: false, deviceName: '' },
+      { id, name: 'My devices', member: true, deviceName: '' },
     ]);
     expect(await device.items(id)).toEqual([]);
 
@@ -149,7 +149,7 @@ describe('Device', () => {
         id: group,
         name: 'Notes',
         member: true,
-        removed: false,
+
         deviceName: '',
       },
     ]);

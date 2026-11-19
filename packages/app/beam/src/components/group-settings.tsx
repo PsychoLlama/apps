@@ -106,7 +106,8 @@ export const GroupSettings = (props: {
           <MemberList groupId={props.group.id} />
           <Text as="p" size={1} color="lowContrast" selectable={false}>
             Removing a device takes most of the group's devices being online to
-            agree, the one being removed among those counted.
+            agree, the one being removed among those counted. It deletes what it
+            held of the group when it hears.
           </Text>
         </Flex>
 

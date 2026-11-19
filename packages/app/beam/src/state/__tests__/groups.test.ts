@@ -24,18 +24,12 @@ describe('$groupsChanged', () => {
     const groups = await effects.run($groups);
     const groupsChanged = await effects.run($groupsChanged);
 
-    groupsChanged([
-      { id: 'a', name: 'Home', member: true, removed: false, deviceName: '' },
-    ]);
-    groupsChanged([
-      { id: 'b', name: 'Work', member: true, removed: false, deviceName: '' },
-    ]);
+    groupsChanged([{ id: 'a', name: 'Home', member: true, deviceName: '' }]);
+    groupsChanged([{ id: 'b', name: 'Work', member: true, deviceName: '' }]);
 
     expect(groups).toEqual({
       loaded: true,
-      list: [
-        { id: 'b', name: 'Work', member: true, removed: false, deviceName: '' },
-      ],
+      list: [{ id: 'b', name: 'Work', member: true, deviceName: '' }],
     });
   });
 

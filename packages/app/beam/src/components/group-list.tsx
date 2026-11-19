@@ -52,7 +52,7 @@ export const GroupList = () => {
                           color="lowContrast"
                           selectable={false}
                         >
-                          {group.removed ? 'Removed' : 'Joining…'}
+                          Joining…
                         </Text>
                       </Show>
                     </Flex>

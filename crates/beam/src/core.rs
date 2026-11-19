@@ -88,6 +88,16 @@ pub(crate) async fn open_database(store: &str) -> Result<(Db, Vec<Outputs>), Str
         steps.push(abandoned.map_err(text)?);
     }
 
+    // A group this device was removed from is forgotten when it hears of
+    // it. One it heard of and didn't get to forget, because it was closed
+    // first, is forgotten here.
+    let groups: Vec<GroupId> = database.groups().collect();
+    for group in groups {
+        if database.is_shut_out(group) {
+            steps.push(database.forget(group).await.map_err(text)?);
+        }
+    }
+
     Ok((database, steps))
 }
 
@@ -203,11 +213,17 @@ impl Core {
                 members |= matches!(change, Changed::Members { .. });
                 blobs |= matches!(change, Changed::Blob { .. });
 
-                // The group let this device go, as it asked. Only now can
-                // it forget the group: a member has signed things.
+                // The group let this device go, whether it asked to be or
+                // not. Either way it forgets the group, and everything it
+                // held of it, now that it can: a member has signed things,
+                // and a device that isn't one has no business keeping what
+                // the group shared.
+                //
+                // Best-effort, as it has to be. A device that was taken
+                // rather than removed only does this if it's running this
+                // code and hears about it.
                 if let Changed::Members { group } = change
-                    && self.leaving.borrow().contains(group)
-                    && !has_role(database, *group, &self.id)
+                    && self.is_out(database, *group)
                 {
                     self.leaving.borrow_mut().remove(group);
                     steps.push_back(database.forget(*group).await?);
@@ -365,6 +381,14 @@ impl Core {
         wanted.remove(&self.id);
 
         wanted
+    }
+
+    /// Whether this device was in `group` and no longer is: it asked to
+    /// leave and has been let go, or it was removed.
+    pub(crate) fn is_out(&self, database: &Db, group: GroupId) -> bool {
+        let left = self.leaving.borrow().contains(&group) && !has_role(database, group, &self.id);
+
+        left || database.is_shut_out(group)
     }
 
     /// Tell the host to read every group again: something changed that

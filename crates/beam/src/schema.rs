@@ -69,9 +69,6 @@ pub(crate) struct Group {
     /// Whether this device has a role in the group and can read it. A
     /// device that was just let in holds the group before it's in it.
     member: bool,
-    /// Whether this device was in the group and has been removed. It
-    /// keeps what it could read then, and reads nothing since.
-    removed: bool,
     /// What this device is called in the group. Empty until it has said.
     device_name: String,
 }
@@ -79,7 +76,6 @@ pub(crate) struct Group {
 /// What a group's own devices know about it, beyond its name.
 pub(crate) struct Standing {
     pub(crate) member: bool,
-    pub(crate) removed: bool,
     pub(crate) device_name: String,
 }
 
@@ -231,7 +227,6 @@ impl Schema {
             id: hex::encode(self.group.as_bytes()),
             name: name.unwrap_or_default(),
             member: standing.member,
-            removed: standing.removed,
             device_name: standing.device_name,
         }
     }

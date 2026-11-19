@@ -24,12 +24,6 @@ export interface Group {
    */
   member: boolean;
 
-  /**
-   * Whether this device was in the group and has been removed. It keeps
-   * what it could read then, and reads nothing since.
-   */
-  removed: boolean;
-
   /** What this device is called in the group. Empty until it has said. */
   deviceName: string;
 }
@@ -159,7 +153,8 @@ export interface Device extends Disposable {
 
   /**
    * Ask `group` to remove `device`. It happens when the group agrees,
-   * which takes most of its devices being reachable.
+   * which takes most of its devices being reachable. A device that learns
+   * it was removed forgets the group and everything shared to it.
    */
   removeDevice(group: string, device: string): Promise<void>;
 

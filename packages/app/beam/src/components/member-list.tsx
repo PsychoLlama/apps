@@ -13,7 +13,8 @@ import { $feed, deviceLabel } from '../state';
  *
  * Removing asks the group, and the group has to agree. The device stays
  * listed until it does, which is how a removal that's still waiting on
- * someone shows.
+ * someone shows. A removed device deletes what it held of the group when
+ * it hears, if it ever does.
  */
 export const MemberList = (props: {
   /** The group whose devices these are. */

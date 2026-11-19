@@ -1,7 +1,7 @@
 import { createEffect, onCleanup, Show } from 'solid-js';
 import { useParams } from '@solidjs/router';
 import { useAction, useValue } from '@lib/effects/solid';
-import { Button, Flex } from '@lib/ui';
+import { Button, Callout, Flex, Link, Text } from '@lib/ui';
 import IconLink from 'virtual:icons/mdi/cellphone-link';
 import IconSettings from 'virtual:icons/mdi/cog-outline';
 import { BeamFrame } from '../../components/beam-frame';
@@ -51,7 +51,29 @@ const BeamGroup = () => {
 
   return (
     <BeamFrame trail={trail()}>
-      <Show when={group()}>
+      <Show
+        when={group()}
+        fallback={
+          // Not one of this device's groups: a link to a group it never
+          // had, one it left, or one it was removed from and has forgotten.
+          // Only once the database has said so. Before that, nothing.
+          <Show when={groups().loaded}>
+            <Callout testId="group-missing" color="neutral">
+              <Flex as="div" direction="column" gap={2}>
+                <Text as="p" selectable={false}>
+                  This group isn't on this device. If it was removed from the
+                  group, what was shared to it has been deleted here.
+                </Text>
+                <Text as="p" selectable={false}>
+                  <Link testId="group-missing-home" href="/">
+                    Back to your groups
+                  </Link>
+                </Text>
+              </Flex>
+            </Callout>
+          </Show>
+        }
+      >
         {(known) => (
           <Show
             when={known().member}

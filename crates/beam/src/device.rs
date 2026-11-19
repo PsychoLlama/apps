@@ -123,7 +123,7 @@ impl Device {
     }
 
     /// Every group this device holds and hasn't put behind it, as
-    /// `{ id, name, member, removed, deviceName }`, in id order.
+    /// `{ id, name, member, deviceName }`, in id order.
     pub async fn groups(&self) -> Result<JsValue, JsError> {
         let database = self.core.database.lock().await;
         let database = database.as_ref().ok_or_else(closed)?;
@@ -151,7 +151,6 @@ impl Device {
             // let in carries the group until a checkpoint gives it a role.
             let standing = Standing {
                 member: has_role(database, group, &me) && database.reads(group),
-                removed: database.is_shut_out(group),
                 device_name: names.remove(&me[..]).unwrap_or_default(),
             };
 
@@ -213,7 +212,10 @@ impl Device {
         self.write(database, group, renamed).await
     }
 
-    /// Ask `group` to remove `device`. It happens when the group agrees:
+    /// Ask `group` to remove `device`. A device that learns it was removed
+    /// forgets the group and everything shared to it.
+    ///
+    /// It happens when the group agrees:
     /// with equal weights, once most of its devices have been reachable,
     /// the one being removed among those counted.
     #[wasm_bindgen(js_name = removeDevice)]
