@@ -5,6 +5,8 @@
 //! its identity in a group are one thing. A device that loses its store
 //! comes back as someone else, on both layers at once.
 
+use std::cell::{Cell, RefCell};
+use std::collections::BTreeMap;
 use std::rc::Rc;
 
 use iroh::endpoint::presets;
@@ -12,7 +14,7 @@ use iroh::{SecretKey, Watcher};
 use n0_future::StreamExt;
 use n0_future::task::{AbortOnDropHandle, spawn};
 use wasm_bindgen::prelude::*;
-use woodland::{BlobPolicy, BrowserStore, Database, GroupId, Transaction};
+use woodland::{BlobPolicy, BrowserStore, Database, GroupId, ImportId, Transaction};
 
 use crate::core::{Core, Db, PeerId, Token};
 use crate::hex;
@@ -28,6 +30,9 @@ use crate::schema::{Group, Schema, item_key};
 #[wasm_bindgen]
 pub struct Device {
     core: Rc<Core>,
+    /// Files being brought in, by the handle the host knows each by.
+    imports: RefCell<BTreeMap<u32, ImportId>>,
+    next_import: Cell<u32>,
     // The home-relay watcher, and the loops that answer peers, reach for
     // them, and let time pass. `AbortOnDropHandle`s, so freeing the device
     // stops them.
@@ -71,9 +76,21 @@ impl Device {
             .await
             .map_err(to_js)?;
 
+        // An import outlives a restart, and nothing here carries one on:
+        // the page that was reading the file is gone. Whatever was
+        // unfinished, or finished and never written, is let go.
+        let mut steps = vec![outputs];
+        for import in database.imports().await.map_err(to_js)? {
+            let abandoned = database.abandon_import(import.id).await;
+            steps.push(abandoned.map_err(to_js)?);
+        }
+
         let id = database.id().to_bytes();
         let core = Rc::new(Core::new(id, endpoint.clone(), on_change));
-        core.finish(&mut database, outputs).await.map_err(to_js)?;
+        for outputs in steps {
+            core.finish(&mut database, outputs).await.map_err(to_js)?;
+        }
+
         *core.database.lock().await = Some(database);
 
         let mut tasks = net::run(&core);
@@ -81,6 +98,8 @@ impl Device {
 
         Ok(Device {
             core,
+            imports: RefCell::default(),
+            next_import: Cell::new(0),
             _tasks: tasks,
         })
     }
@@ -158,10 +177,16 @@ impl Device {
 
         let shown = database.read(&schema.items_query()).await;
         let committed = database.read(&schema.items_query().committed()).await;
-        let items = schema.items(
+        let mut items = schema.items(
             shown.map_err(to_js)?.found(),
             committed.map_err(to_js)?.found(),
         );
+
+        for item in &mut items {
+            if let Some(blob) = item.blob() {
+                item.hold(database.blob_held(&blob).await.map_err(to_js)?);
+            }
+        }
 
         serde_wasm_bindgen::to_value(&items).map_err(to_js)
     }
@@ -202,6 +227,128 @@ impl Device {
             Some(delete) => self.write(database, group, delete).await,
             None => Ok(()),
         }
+    }
+
+    /// Start bringing a file in, resolving with a handle to
+    /// [write](Self::write_file) its bytes to.
+    ///
+    /// Nothing is shared until [`Self::finish_file`]. A file that won't
+    /// be finished should be [abandoned](Self::abandon_file), or its bytes
+    /// stay until the device next opens.
+    #[wasm_bindgen(js_name = beginFile)]
+    pub async fn begin_file(&self) -> Result<u32, JsError> {
+        let mut database = self.core.database.lock().await;
+        let database = database.as_mut().ok_or_else(closed)?;
+
+        // Encrypted under a key of its own, which travels in the item
+        // that refers to it: whoever can read the group can read the file.
+        let begun = database.begin_sealed_import(random()?).await;
+        let (import, outputs) = begun.map_err(to_js)?;
+        self.core.finish(database, outputs).await.map_err(to_js)?;
+
+        let handle = self.next_import.get();
+        self.next_import.set(handle.wrapping_add(1));
+        self.imports.borrow_mut().insert(handle, import);
+
+        Ok(handle)
+    }
+
+    /// Take in the next bytes of a file, in order. Any amount at a time.
+    #[wasm_bindgen(js_name = writeFile)]
+    pub async fn write_file(&self, file: u32, bytes: Vec<u8>) -> Result<(), JsError> {
+        let import = self.import(file)?;
+        let mut rest = &bytes[..];
+
+        while !rest.is_empty() {
+            // The lock is taken for each step, not the whole write, so a
+            // large file doesn't keep sync waiting.
+            let mut database = self.core.database.lock().await;
+            let database = database.as_mut().ok_or_else(closed)?;
+
+            let (taken, outputs) = database.import(import, rest).await.map_err(to_js)?;
+            self.core.finish(database, outputs).await.map_err(to_js)?;
+            rest = &rest[taken..];
+        }
+
+        Ok(())
+    }
+
+    /// Share a file whose bytes are all in to `group`, as `name` and of
+    /// media type `kind`.
+    #[wasm_bindgen(js_name = finishFile)]
+    pub async fn finish_file(
+        &self,
+        group: String,
+        file: u32,
+        name: String,
+        kind: String,
+    ) -> Result<(), JsError> {
+        let group = group_id(&group)?;
+        let import = self.import(file)?;
+        let mut database = self.core.database.lock().await;
+        let database = database.as_mut().ok_or_else(closed)?;
+
+        let (blob, outputs) = database.finish_import(import).await.map_err(to_js)?;
+        self.core.finish(database, outputs).await.map_err(to_js)?;
+
+        #[expect(
+            clippy::cast_possible_truncation,
+            reason = "milliseconds since 1970, a whole number well inside an i64"
+        )]
+        let now = js_sys::Date::now() as i64;
+        let key = item_key(now, random()?);
+        let add = Schema::of(group).add_file(key, (blob, name, kind), self.core.id, now);
+
+        // The item refers to the bytes from here, and the import is done.
+        self.write(database, group, add).await?;
+        self.imports.borrow_mut().remove(&file);
+
+        Ok(())
+    }
+
+    /// Give up on a file that was begun, and let its bytes go.
+    #[wasm_bindgen(js_name = abandonFile)]
+    pub async fn abandon_file(&self, file: u32) -> Result<(), JsError> {
+        let Some(import) = self.imports.borrow_mut().remove(&file) else {
+            return Ok(());
+        };
+
+        let mut database = self.core.database.lock().await;
+        let database = database.as_mut().ok_or_else(closed)?;
+        let outputs = database.abandon_import(import).await.map_err(to_js)?;
+
+        self.core.finish(database, outputs).await.map_err(to_js)
+    }
+
+    /// Read a file's bytes from `offset`: as many as one step gives, and
+    /// fewer at its end, and none past it. Nothing if `item` isn't a file,
+    /// or this device doesn't hold that part of it yet.
+    #[wasm_bindgen(js_name = readFile)]
+    pub async fn read_file(
+        &self,
+        group: String,
+        item: String,
+        offset: f64,
+    ) -> Result<Option<Vec<u8>>, JsError> {
+        let schema = Schema::of(group_id(&group)?);
+        let key = hex::decode(&item).ok_or_else(|| JsError::new("not an item id"))?;
+        let database = self.core.database.lock().await;
+        let database = database.as_ref().ok_or_else(closed)?;
+
+        let answer = database.read(&schema.item_query(&key)).await;
+        let Some(blob) = schema.blob(answer.map_err(to_js)?.found(), &key) else {
+            return Ok(None);
+        };
+
+        #[expect(
+            clippy::cast_possible_truncation,
+            clippy::cast_sign_loss,
+            reason = "a whole, non-negative offset from the host"
+        )]
+        let offset = offset.max(0.0) as u64;
+        let bytes = database.read_blob(&blob, offset, Db::BLOB_STEP).await;
+
+        bytes.map_err(to_js)
     }
 
     /// Make an invitation to `group`: a code for one other device to
@@ -247,6 +394,13 @@ impl Device {
 }
 
 impl Device {
+    /// The import behind a handle [`Self::begin_file`] gave.
+    fn import(&self, file: u32) -> Result<ImportId, JsError> {
+        let import = self.imports.borrow().get(&file).copied();
+
+        import.ok_or_else(|| JsError::new("no such file being brought in"))
+    }
+
     /// Write to `group`, and let time pass so a lone device commits it.
     async fn write(
         &self,

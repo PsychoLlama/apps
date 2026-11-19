@@ -1,6 +1,12 @@
 import { collect, pipe } from '@lib/effects';
 import type { DeviceConnection } from '../platform/device';
-import { $groupViewed, normalizeBody, normalizeGroupName } from '../state';
+import { saveFile } from '../platform/save-file';
+import {
+  $groupViewed,
+  FILE_NAME_MAX_LENGTH,
+  normalizeBody,
+  normalizeGroupName,
+} from '../state';
 import { $openDevice } from './device';
 
 /**
@@ -49,4 +55,35 @@ export const $deleteItem = pipe([
   $openDevice,
   (connection: DeviceConnection) => (groupId: string, itemId: string) =>
     connection.deleteItem(groupId, itemId),
+]);
+
+/**
+ * Share files to a group, one after another, in the order given. Resolves
+ * once they're all written here.
+ */
+export const $shareFiles = pipe([
+  $openDevice,
+  (connection: DeviceConnection) =>
+    async (groupId: string, files: readonly File[]): Promise<void> => {
+      for (const file of files) {
+        await connection.addFile(groupId, file);
+      }
+    },
+]);
+
+/**
+ * Save a file from a group to this device's downloads, under the name it
+ * was shared with.
+ */
+export const $saveFile = pipe([
+  $openDevice,
+  (connection: DeviceConnection) =>
+    async (
+      groupId: string,
+      itemId: string,
+      file: { name: string; size: number },
+    ): Promise<void> => {
+      const bytes = await connection.readFile(groupId, itemId, file.size);
+      saveFile(bytes, file.name.slice(0, FILE_NAME_MAX_LENGTH) || 'file');
+    },
 ]);

@@ -10,6 +10,8 @@ export {
   $feed,
   $feedChanged,
   $groupViewed,
+  FILE_NAME_MAX_LENGTH,
+  formatBytes,
   ITEM_MAX_LENGTH,
   linkOf,
   normalizeBody,

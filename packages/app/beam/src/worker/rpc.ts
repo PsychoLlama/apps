@@ -23,6 +23,26 @@ export const createEngineApi = (engine: Engine, exit: () => void) =>
       deleteItem: (input: { groupId: string; itemId: string }): Promise<void> =>
         engine.deleteItem(input.groupId, input.itemId),
 
+      /** Share a file to a group. Resolves once it's all written here. */
+      addFile: (input: {
+        groupId: string;
+        file: Blob;
+        name: string;
+        type: string;
+      }): Promise<void> =>
+        engine.addFile(input.groupId, input.file, input.name, input.type),
+
+      /**
+       * Read a whole file out of a group. Rejects if this device doesn't
+       * hold all of it yet.
+       */
+      readFile: (input: {
+        groupId: string;
+        itemId: string;
+        size: number;
+      }): Promise<Blob> =>
+        engine.readFile(input.groupId, input.itemId, input.size),
+
       /** Make an invitation to a group, resolving with its code. */
       invite: (input: { groupId: string }): string =>
         engine.invite(input.groupId),

@@ -72,6 +72,11 @@ const createDevice = () => ({
   items: vi.fn<Device['items']>(() => Promise.resolve<Item[]>([])),
   addItem: vi.fn<Device['addItem']>(() => Promise.resolve()),
   deleteItem: vi.fn<Device['deleteItem']>(() => Promise.resolve()),
+  beginFile: vi.fn<Device['beginFile']>(() => Promise.resolve(7)),
+  writeFile: vi.fn<Device['writeFile']>(() => Promise.resolve()),
+  finishFile: vi.fn<Device['finishFile']>(() => Promise.resolve()),
+  abandonFile: vi.fn<Device['abandonFile']>(() => Promise.resolve()),
+  readFile: vi.fn<Device['readFile']>(() => Promise.resolve(undefined)),
   invite: vi.fn<Device['invite']>(() => 'code'),
   cancelInvite: vi.fn<Device['cancelInvite']>(),
   join: vi.fn<Device['join']>(() => Promise.resolve(GROUP)),
@@ -338,6 +343,82 @@ describe('Engine', () => {
     expect(device.createGroup).toHaveBeenCalledWith('Home');
     expect(device.addItem).toHaveBeenCalledWith(GROUP, 'hello');
     expect(device.deleteItem).toHaveBeenCalledWith(GROUP, '1');
+  });
+
+  it('brings a file in and shares it', async () => {
+    const { engine, device } = setup();
+
+    engine.open();
+    await settle();
+
+    await engine.addFile(GROUP, new Blob(['hello']), 'note.txt', 'text/plain');
+
+    // Compared as text: the bytes come back in whichever realm read them.
+    const [handle, bytes] = device.writeFile.mock.calls[0] ?? [];
+    expect(handle).toBe(7);
+    expect(new TextDecoder().decode(bytes)).toBe('hello');
+    expect(device.finishFile).toHaveBeenCalledWith(
+      GROUP,
+      7,
+      'note.txt',
+      'text/plain',
+    );
+    expect(device.abandonFile).not.toHaveBeenCalled();
+  });
+
+  it('shares an empty file without writing anything', async () => {
+    const { engine, device } = setup();
+
+    engine.open();
+    await settle();
+
+    await engine.addFile(GROUP, new Blob([]), 'empty', '');
+
+    expect(device.writeFile).not.toHaveBeenCalled();
+    expect(device.finishFile).toHaveBeenCalledWith(GROUP, 7, 'empty', '');
+  });
+
+  it('lets go of a file that could not be brought in', async () => {
+    const { engine, device } = setup();
+    device.writeFile.mockRejectedValueOnce(new Error('the store is full'));
+
+    engine.open();
+    await settle();
+
+    await expect(
+      engine.addFile(GROUP, new Blob(['hello']), 'note.txt', ''),
+    ).rejects.toThrow('the store is full');
+
+    expect(device.abandonFile).toHaveBeenCalledWith(7);
+    expect(device.finishFile).not.toHaveBeenCalled();
+  });
+
+  it('reads a file out a step at a time, as bytes with no meaning', async () => {
+    const { engine, device } = setup();
+    const bytes = new TextEncoder().encode('hello');
+    device.readFile
+      .mockResolvedValueOnce(bytes.slice(0, 3))
+      .mockResolvedValueOnce(bytes.slice(3));
+
+    engine.open();
+    await settle();
+
+    const file = await engine.readFile(GROUP, '1', 5);
+
+    expect(await file.text()).toBe('hello');
+    expect(file.type).toBe('application/octet-stream');
+    expect(device.readFile).toHaveBeenNthCalledWith(2, GROUP, '1', 3);
+  });
+
+  it('refuses a file that is not all here', async () => {
+    const { engine } = setup();
+
+    engine.open();
+    await settle();
+
+    await expect(engine.readFile(GROUP, '1', 5)).rejects.toThrow(
+      'not all here',
+    );
   });
 
   it('hands invitations to the device', async () => {

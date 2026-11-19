@@ -22,6 +22,18 @@ export interface DeviceConnection {
   /** Delete an item from a group, for every device. */
   deleteItem(groupId: string, itemId: string): Promise<void>;
 
+  /**
+   * Share a file to a group. Resolves once it's all written here. The
+   * file is handed over by reference; the worker reads it.
+   */
+  addFile(groupId: string, file: File): Promise<void>;
+
+  /**
+   * Read a whole file out of a group. Rejects if this device doesn't hold
+   * all of it yet.
+   */
+  readFile(groupId: string, itemId: string, size: number): Promise<Blob>;
+
   /** Make an invitation to a group, resolving with its code. */
   invite(groupId: string): Promise<string>;
 
@@ -86,6 +98,16 @@ export const connectDevice = (feed: EngineEvents): DeviceConnection => {
     addItem: (groupId, body) => rpc.request('addItem', { groupId, body }),
     deleteItem: (groupId, itemId) =>
       rpc.request('deleteItem', { groupId, itemId }),
+
+    addFile: (groupId, file) =>
+      rpc.request('addFile', {
+        groupId,
+        file,
+        name: file.name,
+        type: file.type,
+      }),
+    readFile: (groupId, itemId, size) =>
+      rpc.request('readFile', { groupId, itemId, size }),
 
     invite: (groupId) => rpc.request('invite', { groupId }),
     join: (code) => rpc.request('join', { code }),

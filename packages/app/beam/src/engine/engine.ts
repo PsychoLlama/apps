@@ -25,6 +25,25 @@ const STORE = 'beam';
  */
 const LOCK = 'beam/device';
 
+/**
+ * How much of a file is read and handed to the database at a time. Large
+ * enough that the hops are few, small enough that one is never much to
+ * hold.
+ */
+const FILE_STEP = 4 * 1024 * 1024;
+
+/**
+ * A file was asked for that this device doesn't hold all of. Not a bug:
+ * it arrives as the devices that have it are reachable.
+ */
+export class FileNotHeldError extends Error {
+  override name = 'FileNotHeldError';
+
+  constructor() {
+    super('The file is not all here yet.');
+  }
+}
+
 /** What the engine tells the page. All news, no answers. */
 export interface EngineEvents {
   /** The device is open under this identity. */
@@ -168,6 +187,61 @@ export class Engine {
   /** Delete an item from a group, for every device. */
   deleteItem(groupId: string, itemId: string): Promise<void> {
     return this.#open().deleteItem(groupId, itemId);
+  }
+
+  /**
+   * Share a file to a group. Its bytes are read from `file` a step at a
+   * time, so its size is bounded by the store and not by memory.
+   */
+  async addFile(
+    groupId: string,
+    file: Blob,
+    name: string,
+    type: string,
+  ): Promise<void> {
+    const device = this.#open();
+    const handle = await device.beginFile();
+
+    try {
+      for (let offset = 0; offset < file.size; offset += FILE_STEP) {
+        const step = file.slice(offset, offset + FILE_STEP);
+        await device.writeFile(
+          handle,
+          new Uint8Array(await step.arrayBuffer()),
+        );
+      }
+
+      await device.finishFile(groupId, handle, name, type);
+    } catch (error) {
+      // Nothing refers to the bytes that made it in. Let them go.
+      await device.abandonFile(handle).catch(() => undefined);
+      throw error;
+    }
+  }
+
+  /**
+   * Read a whole file out of a group, of `size` bytes. Rejects if this
+   * device doesn't hold all of it yet.
+   *
+   * Typed as bytes with no meaning: what a file claims to be is another
+   * device's word, and nothing should act on it.
+   */
+  async readFile(groupId: string, itemId: string, size: number): Promise<Blob> {
+    const device = this.#open();
+    const parts: Uint8Array<ArrayBuffer>[] = [];
+
+    let read = 0;
+    while (read < size) {
+      const part = await device.readFile(groupId, itemId, read);
+      if (!part || part.length === 0) {
+        throw new FileNotHeldError();
+      }
+
+      parts.push(new Uint8Array(part));
+      read += part.length;
+    }
+
+    return new Blob(parts, { type: 'application/octet-stream' });
   }
 
   /**

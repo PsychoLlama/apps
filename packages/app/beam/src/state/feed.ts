@@ -81,3 +81,25 @@ export const linkOf = (body: string): string | null => {
   const { protocol, href } = new URL(body);
   return protocol === 'https:' || protocol === 'http:' ? href : null;
 };
+
+/**
+ * The most of a shared file's name that's used to save it. The name is
+ * another device's word, and a file system has a limit of its own.
+ */
+export const FILE_NAME_MAX_LENGTH = 200;
+
+const BYTE_UNITS = ['B', 'KB', 'MB', 'GB', 'TB'] as const;
+
+/** A byte count as people read one: `0 B`, `512 B`, `1.4 MB`. */
+export const formatBytes = (bytes: number): string => {
+  let value = Math.max(0, bytes);
+  let unit = 0;
+  while (value >= 1024 && unit < BYTE_UNITS.length - 1) {
+    value /= 1024;
+    unit += 1;
+  }
+
+  // Whole bytes, and whole numbers once there are three digits of them.
+  const digits = unit === 0 || value >= 100 ? 0 : 1;
+  return `${value.toFixed(digits)} ${BYTE_UNITS[unit] ?? 'B'}`;
+};

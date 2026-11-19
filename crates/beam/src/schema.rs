@@ -8,7 +8,7 @@
 use std::collections::BTreeSet;
 
 use serde::Serialize;
-use woodland::{ColumnId, GroupId, ModelId, Query, Row, Table, Transaction, Value};
+use woodland::{BlobRef, ColumnId, GroupId, ModelId, Query, Row, Table, Transaction, Value};
 
 use crate::hex;
 
@@ -39,6 +39,11 @@ pub(crate) struct Schema {
     body: ColumnId,
     author: ColumnId,
     created: ColumnId,
+    /// A file's bytes, for an item that is one. A reference describes
+    /// nothing, so what the file is called and what it is sit beside it.
+    file: ColumnId,
+    file_name: ColumnId,
+    file_type: ColumnId,
 }
 
 /// A group as the host lists it.
@@ -65,6 +70,45 @@ pub(crate) struct Item {
     /// word for it: shown, shared as peers are reachable, and not yet
     /// agreed.
     committed: bool,
+    /// The file, for an item that is one. Its body is empty.
+    file: Option<File>,
+    /// Where the file's bytes are. Not the host's business: it carries the
+    /// key they're encrypted under.
+    #[serde(skip)]
+    blob: Option<BlobRef>,
+}
+
+/// A file shared to a group, as the host shows it.
+#[derive(Serialize)]
+pub(crate) struct File {
+    /// What its author's device called it. Another device's word: show
+    /// it, and don't trust it as a path.
+    name: String,
+    /// Its media type, as its author's device guessed. May be empty.
+    #[serde(rename = "type")]
+    kind: String,
+    /// How many bytes it is.
+    size: f64,
+    /// How many of them this device holds. All of them, once it's here.
+    held: f64,
+}
+
+impl Item {
+    /// Where the item's file is kept, if it is one.
+    pub(crate) fn blob(&self) -> Option<BlobRef> {
+        self.blob
+    }
+
+    /// Say how much of the item's file this device holds.
+    #[expect(
+        clippy::cast_precision_loss,
+        reason = "a file's length fits a double far past any file"
+    )]
+    pub(crate) fn hold(&mut self, held: u64) {
+        if let Some(file) = &mut self.file {
+            file.held = held as f64;
+        }
+    }
 }
 
 impl Schema {
@@ -78,6 +122,9 @@ impl Schema {
             body: ColumnId::text(items, nonce(b"body")),
             author: ColumnId::bytes(items, nonce(b"author")),
             created: ColumnId::integer(items, nonce(b"created")),
+            file: ColumnId::blob(items, nonce(b"file")),
+            file_name: ColumnId::text(items, nonce(b"file_name")),
+            file_type: ColumnId::text(items, nonce(b"file_type")),
         }
     }
 
@@ -87,6 +134,9 @@ impl Schema {
             (self.body, "body"),
             (self.author, "author"),
             (self.created, "created"),
+            (self.file, "file"),
+            (self.file_name, "file_name"),
+            (self.file_type, "file_type"),
         ];
 
         Transaction::new()
@@ -156,13 +206,71 @@ impl Schema {
             _ => 0.0,
         };
 
+        let blob = match row.get(self.file) {
+            Value::Blob(blob) => Some(*blob),
+            _ => None,
+        };
+
         Item {
             id: hex::encode(row.key()),
             body,
             author,
             created_at,
             committed,
+            file: blob.map(|blob| self.file_of(row, &blob)),
+            blob,
         }
+    }
+
+    #[expect(
+        clippy::cast_precision_loss,
+        reason = "a file's length fits a double far past any file"
+    )]
+    fn file_of(&self, row: &Row, blob: &BlobRef) -> File {
+        let text = |column| match row.get(column) {
+            Value::Text(text) => text.clone(),
+            _ => String::new(),
+        };
+
+        File {
+            name: text(self.file_name),
+            kind: text(self.file_type),
+            size: blob.length() as f64,
+            held: 0.0,
+        }
+    }
+
+    /// The file of the item in the answer to [`Self::item_query`], if the
+    /// item is there and is one.
+    pub(crate) fn blob(&self, found: &[(Vec<u8>, Vec<u8>)], key: &[u8]) -> Option<BlobRef> {
+        let table = Table::read(found)?;
+
+        match table.row(key)?.get(self.file) {
+            Value::Blob(blob) => Some(*blob),
+            _ => None,
+        }
+    }
+
+    /// Adds a file under `key`: a reference to bytes this device holds
+    /// whole, and what to call them.
+    pub(crate) fn add_file(
+        &self,
+        key: [u8; 16],
+        file: (BlobRef, String, String),
+        author: [u8; 32],
+        now: i64,
+    ) -> Transaction {
+        let (blob, name, kind) = file;
+        let cells = [
+            (self.body, Value::from(String::new())),
+            (self.author, Value::from(author.to_vec())),
+            (self.created, Value::from(now)),
+            (self.file, Value::from(blob)),
+            (self.file_name, Value::from(name)),
+            (self.file_type, Value::from(kind)),
+        ];
+
+        Transaction::new().insert(self.items, key, cells)
     }
 
     /// Adds an item under `key`.

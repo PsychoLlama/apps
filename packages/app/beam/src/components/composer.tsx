@@ -1,18 +1,23 @@
 import { useAction } from '@lib/effects/solid';
 import { Flex, IconButton, TextField } from '@lib/ui';
+import IconAttach from 'virtual:icons/mdi/paperclip';
 import IconSend from 'virtual:icons/mdi/send-outline';
-import { $shareItem } from '../effects';
+import { $shareFiles, $shareItem } from '../effects';
 import { ITEM_MAX_LENGTH } from '../state';
+import * as styles from './composer.css';
 
 /**
- * Where a note or a link is written, at the head of a group's feed.
+ * Where a note, a link, or a file is shared, at the head of a group's
+ * feed.
  *
  * It works offline and alone. What's shared is written to this device
  * first and reaches the group's other devices whenever they're reachable,
- * so there's nothing here to wait for and no state to report.
+ * so there's nothing here to wait for but a large file being read in.
  *
  * One line rather than a box: what gets shared is an address, a code, a
  * link. This is somewhere to paste, not somewhere to compose.
+ *
+ * Files come in three ways: picked, pasted, or dropped on the field.
  *
  * A real `<form>`, so Enter in the field and the button arrive at the same
  * handler. Uncontrolled, and cleared on submit.
@@ -22,6 +27,17 @@ export const Composer = (props: {
   groupId: string;
 }) => {
   const shareItem = useAction($shareItem);
+  const shareFiles = useAction($shareFiles);
+
+  let picker: HTMLInputElement | undefined;
+
+  /** Share whatever files a pick, paste, or drop carried. */
+  const share = (files: FileList | null | undefined): boolean => {
+    if (!files || files.length === 0) return false;
+
+    shareFiles(props.groupId, [...files]);
+    return true;
+  };
 
   const handleSubmit = (
     event: SubmitEvent & { currentTarget: HTMLFormElement },
@@ -37,17 +53,44 @@ export const Composer = (props: {
   };
 
   return (
-    <Flex as="form" direction="column" onSubmit={handleSubmit}>
+    <Flex
+      as="form"
+      direction="column"
+      onSubmit={handleSubmit}
+      onDragOver={(event) => event.preventDefault()}
+      onDrop={(event) => {
+        if (share(event.dataTransfer?.files)) event.preventDefault();
+      }}
+    >
       <TextField
         testId="composer"
         name="body"
         aria-label="Something to share"
-        placeholder="Type or paste something to share"
+        placeholder="Type, paste, or drop something to share"
         size={3}
         maxlength={ITEM_MAX_LENGTH}
         autocomplete="off"
         autocapitalize="sentences"
         enterkeyhint="send"
+        onPaste={(event) => {
+          // A pasted file is shared at once. Pasted text lands in the
+          // field as it always did.
+          if (share(event.clipboardData?.files)) event.preventDefault();
+        }}
+        left={
+          <IconButton
+            testId="composer-attach"
+            type="button"
+            aria-label="Share files"
+            variant="ghost"
+            color="neutral"
+            // One batch at a time: they're read in one after another.
+            disabled={shareFiles.pending}
+            onClick={() => picker?.click()}
+          >
+            <IconAttach aria-hidden="true" />
+          </IconButton>
+        }
         right={
           <IconButton
             testId="composer-send"
@@ -59,6 +102,24 @@ export const Composer = (props: {
             <IconSend aria-hidden="true" />
           </IconButton>
         }
+      />
+
+      {/* The platform's picker, behind the button. Not part of the form's
+          data: a pick is shared as it's made. */}
+      <input
+        ref={(element) => {
+          picker = element;
+        }}
+        class={styles.picker}
+        type="file"
+        multiple
+        tabindex={-1}
+        aria-hidden="true"
+        data-testid="composer-files"
+        onChange={(event) => {
+          share(event.currentTarget.files);
+          event.currentTarget.value = '';
+        }}
       />
     </Flex>
   );

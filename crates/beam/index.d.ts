@@ -33,7 +33,10 @@ export interface Item {
    */
   id: string;
 
-  /** What was shared: a note or a link, as plain text. */
+  /**
+   * What was shared: a note or a link, as plain text. Empty for an item
+   * that is a {@link Item.file}.
+   */
   body: string;
 
   /** The id of the device that wrote it, as that device says. */
@@ -47,6 +50,30 @@ export interface Item {
    * shared as peers are reachable, but not yet agreed.
    */
   committed: boolean;
+
+  /** The file, for an item that is one. */
+  file?: SharedFile;
+}
+
+/** A file shared to a group. */
+export interface SharedFile {
+  /**
+   * What its author's device called it. Another device's word: show it,
+   * and don't trust it as a path.
+   */
+  name: string;
+
+  /** Its media type, as its author's device guessed. May be empty. */
+  type: string;
+
+  /** How many bytes it is. */
+  size: number;
+
+  /**
+   * How many of them this device holds. Equal to {@link SharedFile.size}
+   * once the file is here; it arrives as peers that have it are reachable.
+   */
+  held: number;
 }
 
 /**
@@ -96,6 +123,41 @@ export interface Device extends Disposable {
    * already gone does nothing.
    */
   deleteItem(group: string, item: string): Promise<void>;
+
+  /**
+   * Start bringing a file in, resolving with a handle to write its bytes
+   * to. Nothing is shared until {@link Device.finishFile}; a file that
+   * won't be finished should be {@link Device.abandonFile abandoned}.
+   */
+  beginFile(): Promise<number>;
+
+  /** Take in the next bytes of a file, in order. Any amount at a time. */
+  writeFile(file: number, bytes: Uint8Array): Promise<void>;
+
+  /**
+   * Share a file whose bytes are all in to `group`, as `name` and of
+   * media type `type`.
+   */
+  finishFile(
+    group: string,
+    file: number,
+    name: string,
+    type: string,
+  ): Promise<void>;
+
+  /** Give up on a file that was begun, and let its bytes go. */
+  abandonFile(file: number): Promise<void>;
+
+  /**
+   * Read a file's bytes from `offset`: as many as one step gives, and
+   * fewer at its end, and none past it. `undefined` if `item` isn't a
+   * file, or this device doesn't hold that part of it yet.
+   */
+  readFile(
+    group: string,
+    item: string,
+    offset: number,
+  ): Promise<Uint8Array | undefined>;
 
   /**
    * Make an invitation to `group`: a code for one other device to

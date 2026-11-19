@@ -9,6 +9,7 @@ import {
   ITEM_MAX_LENGTH,
   linkOf,
   normalizeBody,
+  formatBytes,
 } from '../feed';
 
 const GROUP = 'aaaa';
@@ -123,5 +124,20 @@ describe('linkOf', () => {
     expect(linkOf('just a note')).toBeNull();
     expect(linkOf('javascript:alert(1)')).toBeNull();
     expect(linkOf('data:text/html,hi')).toBeNull();
+  });
+});
+
+describe('formatBytes', () => {
+  it('reads as people read sizes', () => {
+    expect(formatBytes(0)).toBe('0 B');
+    expect(formatBytes(512)).toBe('512 B');
+    expect(formatBytes(1024)).toBe('1.0 KB');
+    expect(formatBytes(1_500_000)).toBe('1.4 MB');
+    expect(formatBytes(250 * 1024 * 1024)).toBe('250 MB');
+    expect(formatBytes(3 * 1024 ** 3)).toBe('3.0 GB');
+  });
+
+  it('never goes below nothing', () => {
+    expect(formatBytes(-1)).toBe('0 B');
   });
 });

@@ -201,4 +201,88 @@ describe('Device', () => {
     await device.close();
     device.free();
   });
+
+  it('shares a file and reads it back, across steps and a restart', async () => {
+    const store = storeName();
+    const device = await open(store);
+    const group = await device.createGroup('Files');
+
+    // Larger than one step, so both the write and the read take several.
+    const bytes = new Uint8Array(3 * 1024 * 1024 + 17);
+    for (let index = 0; index < bytes.length; index++) {
+      bytes[index] = (index * 31) % 251;
+    }
+
+    const handle = await device.beginFile();
+    await device.writeFile(handle, bytes.slice(0, 1000));
+    await device.writeFile(handle, bytes.slice(1000));
+    await device.finishFile(group, handle, 'data.bin', 'application/x-test');
+
+    const [item] = await device.items(group);
+    expect(item).toMatchObject({
+      body: '',
+      committed: true,
+      file: {
+        name: 'data.bin',
+        type: 'application/x-test',
+        size: bytes.length,
+        held: bytes.length,
+      },
+    });
+
+    await device.close();
+    device.free();
+
+    const second = await open(store);
+    const read = new Uint8Array(bytes.length);
+    let offset = 0;
+    while (offset < bytes.length) {
+      const part = await second.readFile(group, item?.id ?? '', offset);
+      if (!part) break;
+      read.set(part, offset);
+      offset += part.length;
+    }
+
+    expect(offset).toBe(bytes.length);
+    expect(read.every((byte, index) => byte === bytes[index])).toBe(true);
+
+    // Past the end there's nothing to give, which isn't the same as not
+    // holding it.
+    const past = await second.readFile(group, item?.id ?? '', offset);
+    expect(past).toHaveLength(0);
+
+    await second.close();
+    second.free();
+  });
+
+  it('lets go of a file that is abandoned', async () => {
+    const device = await open(storeName());
+    const group = await device.createGroup('Files');
+
+    const handle = await device.beginFile();
+    await device.writeFile(handle, new Uint8Array([1, 2, 3]));
+    await device.abandonFile(handle);
+    await device.abandonFile(handle);
+
+    await expect(device.finishFile(group, handle, 'gone', '')).rejects.toThrow(
+      'no such file',
+    );
+    expect(await device.items(group)).toEqual([]);
+
+    await device.close();
+    device.free();
+  });
+
+  it('reads nothing from an item that is not a file', async () => {
+    const device = await open(storeName());
+    const group = await device.createGroup('Files');
+    await device.addItem(group, 'a note');
+
+    const [item] = await device.items(group);
+    expect(item?.file).toBeUndefined();
+    expect(await device.readFile(group, item?.id ?? '', 0)).toBeUndefined();
+
+    await device.close();
+    device.free();
+  });
 });

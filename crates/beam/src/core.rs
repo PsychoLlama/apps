@@ -8,6 +8,7 @@
 
 use std::cell::{Cell, RefCell};
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
+use std::rc::Rc;
 
 use ed25519_dalek::VerifyingKey;
 use tokio::sync::mpsc::UnboundedSender;
@@ -42,6 +43,9 @@ pub(crate) struct Link {
     id: u64,
     /// Messages to write, in order.
     outbound: UnboundedSender<Vec<u8>>,
+    /// Wakes whatever carries blob bytes on this connection: the database
+    /// has something to say to the peer about them.
+    blobs: Rc<Notify>,
 }
 
 /// A device that was let into a group, and hasn't been given its role by
@@ -131,6 +135,7 @@ impl Core {
     async fn settle(&self, database: &mut Db, outputs: Outputs, tick: bool) -> Result<(), Error> {
         let mut changed = BTreeSet::new();
         let mut members = false;
+        let mut blobs = false;
         let mut tick = tick;
         let mut steps = VecDeque::from([outputs]);
 
@@ -149,9 +154,16 @@ impl Core {
                 self.send(&peer.to_bytes(), message);
             }
 
+            // Blob bytes go on a stream of their own, a part at a time, so
+            // a large file never holds up anything here.
+            for peer in outputs.blobs {
+                self.wake_blobs(&peer.to_bytes());
+            }
+
             for change in &outputs.changed {
                 changed.extend(group_of(change));
                 members |= matches!(change, Changed::Members { .. });
+                blobs |= matches!(change, Changed::Blob { .. });
             }
 
             for (group, became) in outputs.reconfigured {
@@ -170,6 +182,13 @@ impl Core {
         if members {
             self.settle_admissions(database);
             self.membership.notify_one();
+        }
+
+        // How much of a file is here changed. A blob belongs to no one
+        // group, so every group is read again: finding which rows refer to
+        // it would cost the same reads.
+        if blobs {
+            changed.extend(database.groups());
         }
 
         if !changed.is_empty() {
@@ -280,13 +299,22 @@ impl Core {
 
     /// File a new connection to `peer`, returning its id and whether it's
     /// the only one: the peer has just become reachable.
-    pub(crate) fn attach(&self, peer: PeerId, outbound: UnboundedSender<Vec<u8>>) -> (u64, bool) {
+    pub(crate) fn attach(
+        &self,
+        peer: PeerId,
+        outbound: UnboundedSender<Vec<u8>>,
+        blobs: Rc<Notify>,
+    ) -> (u64, bool) {
         let id = self.links.get();
         self.links.set(id + 1);
 
         let mut peers = self.peers.borrow_mut();
         let links = peers.entry(peer).or_default();
-        links.push(Link { id, outbound });
+        links.push(Link {
+            id,
+            outbound,
+            blobs,
+        });
 
         (id, links.len() == 1)
     }
@@ -300,12 +328,23 @@ impl Core {
         };
 
         links.retain(|link| link.id != id);
-        if links.is_empty() {
+        let Some(newest) = links.last() else {
             peers.remove(peer);
             return true;
-        }
+        };
+
+        // Whatever the lost connection was carrying is the next one's now.
+        newest.blobs.notify_one();
 
         false
+    }
+
+    /// Tell `peer`'s newest connection there are blob bytes to carry.
+    fn wake_blobs(&self, peer: &PeerId) {
+        let peers = self.peers.borrow();
+        if let Some(link) = peers.get(peer).and_then(|links| links.last()) {
+            link.blobs.notify_one();
+        }
     }
 
     /// Queue a message for `peer` on its newest connection. Dropped if

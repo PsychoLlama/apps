@@ -22,7 +22,7 @@ use iroh::endpoint::{Connection, RecvStream, VarInt};
 use n0_future::future::or;
 use n0_future::task::{AbortOnDropHandle, spawn};
 use n0_future::time::sleep;
-use tokio::sync::mpsc;
+use tokio::sync::{Notify, mpsc};
 use wasm_bindgen::prelude::*;
 use woodland::{GroupId, SealingKey};
 
@@ -39,6 +39,10 @@ pub(crate) const LINK: &[u8] = b"beam/link/1";
 /// Marks a stream as carrying sync messages. A stream says what it's for
 /// in its first byte, so another kind can be added beside this one.
 const SYNC_STREAM: u8 = 1;
+
+/// Marks a stream as carrying blob bytes. Apart from sync, so a large
+/// file is never in the way of a small write.
+const BLOB_STREAM: u8 = 2;
 
 /// Largest single message read off a stream. A ceiling on what a peer can
 /// make this device buffer, far above anything sync sends in one step.
@@ -178,8 +182,15 @@ async fn serve(core: Rc<Core>, connection: Connection) {
     };
 
     let (outbound, messages) = mpsc::unbounded_channel();
+    let blobs = Rc::new(Notify::new());
     let _writer = AbortOnDropHandle::new(spawn(write(connection.clone(), messages)));
-    let (link, first) = core.attach(peer, outbound);
+    let _blob_writer = AbortOnDropHandle::new(spawn(write_blobs(
+        Rc::clone(&core),
+        connection.clone(),
+        key,
+        Rc::clone(&blobs),
+    )));
+    let (link, first) = core.attach(peer, outbound, blobs);
 
     if first {
         let mut database = core.database.lock().await;
@@ -198,12 +209,21 @@ async fn serve(core: Rc<Core>, connection: Connection) {
         }
     }
 
+    // Each stream is read on a task of its own: they run for as long as
+    // the connection does, and one mustn't wait on another.
+    let mut readers = Vec::new();
     while let Ok(mut stream) = connection.accept_uni().await {
-        let mut kind = [0];
-        if stream.read_exact(&mut kind).await.is_ok() && kind[0] == SYNC_STREAM {
-            read(&core, key, &mut stream).await;
-        }
+        let core = Rc::clone(&core);
+
+        readers.push(AbortOnDropHandle::new(spawn(async move {
+            let mut kind = [0];
+            if stream.read_exact(&mut kind).await.is_ok() {
+                read(&core, key, kind[0], &mut stream).await;
+            }
+        })));
     }
+
+    drop(readers);
 
     if core.detach(&peer, link) {
         let mut database = core.database.lock().await;
@@ -237,9 +257,76 @@ async fn write(connection: Connection, mut messages: mpsc::UnboundedReceiver<Vec
     }
 }
 
+/// Carry what the database has to say to `peer` about blobs: requests for
+/// parts, and the parts themselves, one bounded message at a time.
+///
+/// The next is only taken once the last has been written, so however
+/// large a file is, no more than one part of it is in memory here.
+async fn write_blobs(core: Rc<Core>, connection: Connection, peer: VerifyingKey, wake: Rc<Notify>) {
+    // Something may have been waiting for a connection.
+    wake.notify_one();
+
+    let mut stream = None;
+    loop {
+        wake.notified().await;
+
+        loop {
+            let next = {
+                let mut database = core.database.lock().await;
+                let Some(database) = database.as_mut() else {
+                    return;
+                };
+
+                database.next_blob_message(peer).await
+            };
+
+            let message = match next {
+                Ok(Some(message)) => message,
+                Ok(None) => break,
+                Err(error) => {
+                    warn(&format!("beam: couldn't read a blob to send: {error}"));
+                    break;
+                }
+            };
+
+            // Opened on first use. Most connections never carry a file.
+            if stream.is_none() {
+                let Ok(mut opened) = connection.open_uni().await else {
+                    return;
+                };
+
+                if opened.write_all(&[BLOB_STREAM]).await.is_err() {
+                    return;
+                }
+
+                stream = Some(opened);
+            }
+
+            let Some(stream) = stream.as_mut() else {
+                return;
+            };
+
+            let Ok(length) = u32::try_from(message.len()) else {
+                continue;
+            };
+
+            let sent = stream.write_all(&length.to_be_bytes()).await.is_ok()
+                && stream.write_all(&message).await.is_ok();
+            if !sent {
+                return;
+            }
+        }
+    }
+}
+
 /// Hand the database every message on a stream, in order, until the
-/// stream ends or says something it shouldn't.
-async fn read(core: &Core, peer: VerifyingKey, stream: &mut RecvStream) {
+/// stream ends or says something it shouldn't. `kind` is what the stream
+/// said it carries.
+async fn read(core: &Core, peer: VerifyingKey, kind: u8, stream: &mut RecvStream) {
+    if kind != SYNC_STREAM && kind != BLOB_STREAM {
+        return;
+    }
+
     loop {
         let mut length = [0; 4];
         if stream.read_exact(&mut length).await.is_err() {
@@ -261,7 +348,13 @@ async fn read(core: &Core, peer: VerifyingKey, stream: &mut RecvStream) {
             return;
         };
 
-        let received = match database.receive(peer, &message).await {
+        let outputs = if kind == BLOB_STREAM {
+            database.receive_blob(peer, &message).await
+        } else {
+            database.receive(peer, &message).await
+        };
+
+        let received = match outputs {
             Ok(outputs) => core.finish(database, outputs).await,
             Err(error) => Err(error),
         };
