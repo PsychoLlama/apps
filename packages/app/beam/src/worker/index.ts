@@ -7,6 +7,7 @@ import {
 import { createLogger, toError } from '@lib/observability';
 import type { HostApi } from '../host-api';
 import { Engine, type EngineEvents } from '../engine/engine';
+import { clearLegacyStore } from '../platform/legacy-store';
 import { inferDeviceName } from '../state/device-name';
 import { createEngineApi, type EngineApi } from './rpc';
 
@@ -47,8 +48,11 @@ const engine = new Engine(
   {
     locks: navigator.locks,
     init: () => init(),
-    openDevice: (store, onRelayChange, onChange, onFault) =>
-      Device.open(store, onRelayChange, onChange, onFault),
+    openDevice: async (store, onRelayChange, onChange, onFault) => {
+      // An earlier Beam's database under this name would refuse the open.
+      await clearLegacyStore(store);
+      return Device.open(store, onRelayChange, onChange, onFault);
+    },
     defaultDeviceName: () => inferDeviceName(navigator.userAgent),
   },
   {
