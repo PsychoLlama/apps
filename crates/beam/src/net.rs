@@ -78,11 +78,22 @@ const ASK_TO_JOIN: u8 = 1;
 /// Largest request to be let in: a kind, a token, and a sealing key.
 const MOST_REQUEST: usize = 1024;
 
+/// How long a joiner keeps trying to reach the device that invited it,
+/// and how long it waits between tries.
+const REACHING: Duration = Duration::from_secs(30);
+const REACHING_STEP: Duration = Duration::from_secs(1);
+
 /// How often to try peers that couldn't be reached.
 const REDIAL: Duration = Duration::from_secs(20);
 
 /// How often time passes, while there's something for it to do.
 const TICK: Duration = Duration::from_secs(2);
+
+/// How often time passes right after something changed, and for how long
+/// after, in milliseconds. A device being let in, or a note just shared,
+/// is waiting on a checkpoint, and someone is watching it wait.
+const QUICK_TICK: Duration = Duration::from_millis(300);
+const QUICK_FOR: f64 = 5_000.0;
 
 /// How long after the last change to keep ticking, in milliseconds. A
 /// checkpoint takes a few exchanges; after this, nothing is coming.
@@ -177,7 +188,8 @@ async fn dial(core: Rc<Core>) {
 /// it happens on a coarse timer, and stops once the group has gone quiet.
 async fn tick(core: Rc<Core>) {
     loop {
-        sleep(TICK).await;
+        let quick = core.idle_for() < QUICK_FOR;
+        sleep(if quick { QUICK_TICK } else { TICK }).await;
 
         let upkeep = core.upkeep_due();
         if !upkeep && core.idle_for() > QUIET_AFTER {
@@ -459,9 +471,30 @@ pub(crate) async fn join(core: &Core, inviter: PeerId, token: Token) -> Result<G
     Ok(group)
 }
 
+/// Connect to `peer` on the link protocol, trying for a while.
+///
+/// An invitation is usually opened seconds after it was made, on a device
+/// that was opened to use it. Either end may not have found its relay
+/// yet, or have said where it is, and then there is no way to the other:
+/// a dial fails at once with nothing wrong that waiting won't fix.
+async fn reach(core: &Core, peer: EndpointId) -> Result<Connection, JsError> {
+    let mut waited = Duration::ZERO;
+
+    loop {
+        match core.endpoint.connect(peer, LINK).await {
+            Ok(connection) => return Ok(connection),
+            Err(error) if waited >= REACHING => return Err(to_js(error)),
+            Err(_) => {}
+        }
+
+        sleep(REACHING_STEP).await;
+        waited += REACHING_STEP;
+    }
+}
+
 /// Say one thing to `peer` on the link protocol, and read its answer.
 async fn ask(core: &Core, peer: EndpointId, request: &[&[u8]]) -> Result<Vec<u8>, JsError> {
-    let connection = core.endpoint.connect(peer, LINK).await.map_err(to_js)?;
+    let connection = reach(core, peer).await?;
     let (mut send, mut receive) = connection.open_bi().await.map_err(to_js)?;
 
     for part in request {
