@@ -1,13 +1,13 @@
 import { For, Show } from 'solid-js';
 import { useAction, useValue } from '@lib/effects/solid';
-import { Badge, Flex, IconButton, Text } from '@lib/ui';
+import { Flex, IconButton, Text } from '@lib/ui';
 import IconRemove from 'virtual:icons/mdi/close';
 import { $removeDevice } from '../effects';
 import { $feed, deviceLabel } from '../state';
 
 /**
- * The devices in a group: what each is called, whether it's reachable
- * right now, and a way to remove the ones that aren't this one.
+ * The devices in a group: what each is called, and a way to remove the
+ * ones that aren't this one.
  *
  * A name is another device's word and is only ever rendered as text.
  *
@@ -42,18 +42,16 @@ export const MemberList = (props: {
               <Show
                 when={!member.me}
                 fallback={
-                  <Badge color="neutral" variant="soft">
+                  <Text
+                    as="span"
+                    size={1}
+                    color="lowContrast"
+                    selectable={false}
+                  >
                     This device
-                  </Badge>
+                  </Text>
                 }
               >
-                <Badge
-                  color={member.online ? 'success' : 'neutral'}
-                  variant="soft"
-                >
-                  {member.online ? 'Online' : 'Offline'}
-                </Badge>
-
                 <IconButton
                   testId="member-remove"
                   aria-label={`Remove ${deviceLabel(member)} from the group`}

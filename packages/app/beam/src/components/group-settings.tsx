@@ -17,7 +17,7 @@ import {
   groupLabel,
 } from '../state';
 import { MemberList } from './member-list';
-import { NameForm } from './name-form';
+import { NameField } from './name-field';
 
 /**
  * Everything about a group that isn't what's shared to it: what it's
@@ -56,30 +56,28 @@ export const GroupSettings = (props: {
       <SettingsSection
         title="Group name"
         headingId="group-name-heading"
-        description="Shown to every device in the group. Leave it empty and the group goes by “My devices”."
+        description="Everyone in the group sees this."
       >
-        <NameForm
-          testId="group"
+        <NameField
+          testId="group-name"
           label="Group name"
           value={props.group.name}
           placeholder={groupLabel({ name: '' })}
           maxLength={GROUP_NAME_MAX_LENGTH}
-          pending={renameGroup.pending}
           onSave={(name) => renameGroup(props.group.id, name)}
         />
       </SettingsSection>
 
       <SettingsSection
-        title="This device"
+        title="Device name"
         headingId="device-name-heading"
-        description="What the others see this device as, in every group it's in."
+        description="How this device appears to the others."
       >
-        <NameForm
-          testId="device"
-          label="This device's name"
+        <NameField
+          testId="device-name"
+          label="Device name"
           value={props.group.deviceName}
           maxLength={DEVICE_NAME_MAX_LENGTH}
-          pending={renameDevice.pending}
           onSave={(name) => renameDevice(name)}
         />
       </SettingsSection>
@@ -87,7 +85,7 @@ export const GroupSettings = (props: {
       <SettingsSection
         title="Devices"
         headingId="devices-heading"
-        description="Removing a device takes most of the group's devices being online to agree, the one being removed among those counted. It deletes what it held of the group when it hears."
+        description="Removing a device needs most of the group online."
       >
         <MemberList groupId={props.group.id} />
       </SettingsSection>
@@ -95,7 +93,7 @@ export const GroupSettings = (props: {
       <SettingsSection
         title="Leave group"
         headingId="leave-heading"
-        description="This device forgets the group and everything shared to it. The other devices keep it."
+        description="Deletes this group from this device. The other devices keep it."
       >
         <Flex as="div">
           <Button
@@ -116,7 +114,7 @@ export const GroupSettings = (props: {
         <SettingsSection
           title="Start over"
           headingId="replace-heading"
-          description="For when a device is gone for good and the group can no longer agree on anything. Makes a new group from everything synced so far, with only this device in it. The others have to be linked again."
+          description="For a group stuck waiting on a lost device. Makes a new group from what has synced, with only this device in it."
         >
           <Flex as="div">
             <Button

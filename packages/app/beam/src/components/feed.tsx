@@ -4,6 +4,7 @@ import { Flex, Text } from '@lib/ui';
 import { $device, $feed, dayOf, deviceLabel, timeline } from '../state';
 import * as styles from './feed.css';
 import { FeedItem } from './feed-item';
+import { LinkPrompt } from './link-prompt';
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -38,6 +39,9 @@ const formatTime = (epochMilliseconds: number): string =>
  * Grouped by day, and within a day by sitting: what one device shared
  * without a long pause sits under one line saying who and when.
  *
+ * While this device is alone in the group, the feed ends with a prompt
+ * to link another.
+ *
  * Renders nothing until the database has answered for this group. An empty
  * feed before then would read as "nothing has been shared".
  */
@@ -64,6 +68,12 @@ export const Feed = (props: {
     return member ? deviceLabel(member) : 'Another device';
   };
 
+  /**
+   * Whether this device is the only one in the group. The list always
+   * has this device in it, so one is an answer and none is not yet.
+   */
+  const alone = () => feed().members.length === 1;
+
   let list: HTMLElement | undefined;
 
   // Keep the newest in view: on arriving, and whenever there's a new one.
@@ -80,89 +90,94 @@ export const Feed = (props: {
 
   return (
     <Show when={ready()}>
-      <Show
-        when={feed().items.length > 0}
-        fallback={
-          <Text
-            as="p"
-            selectable={false}
-            color="lowContrast"
-            testId="feed-empty"
-            class={styles.feed}
-          >
-            Nothing here yet. Share a note, a link, or a file below, and it
-            shows up on every device you link.
-          </Text>
-        }
+      <Flex
+        as="div"
+        direction="column"
+        gap={5}
+        class={styles.feed}
+        ref={(element: HTMLElement) => {
+          list = element;
+        }}
       >
-        <Flex
-          as="ol"
-          direction="column"
-          gap={5}
-          testId="feed"
-          class={styles.feed}
-          ref={(element: HTMLElement) => {
-            list = element;
-          }}
-        >
-          <For each={days()}>
-            {(day) => (
-              <Flex as="li" direction="column" gap={4}>
-                <Text
-                  as="span"
-                  size={1}
-                  color="lowContrast"
-                  selectable={false}
-                  class={styles.day}
-                  testId="feed-day"
-                >
-                  <time datetime={new Date(day.day).toISOString()}>
-                    {formatDay(day.day)}
-                  </time>
-                </Text>
+        <Show when={feed().items.length > 0}>
+          <Flex as="ol" direction="column" gap={5} testId="feed">
+            <For each={days()}>
+              {(day) => (
+                <Flex as="li" direction="column" gap={4}>
+                  <Text
+                    as="span"
+                    size={1}
+                    color="lowContrast"
+                    selectable={false}
+                    class={styles.day}
+                    testId="feed-day"
+                  >
+                    <time datetime={new Date(day.day).toISOString()}>
+                      {formatDay(day.day)}
+                    </time>
+                  </Text>
 
-                <Flex as="ol" direction="column" gap={4}>
-                  <For each={day.runs}>
-                    {(run) => (
-                      <Flex as="li" direction="column" gap={1}>
-                        <Text
-                          as="span"
-                          size={1}
-                          color="lowContrast"
-                          selectable={false}
-                          testId="feed-run"
-                        >
-                          {authorOf(run.author)}
-                          {' · '}
-                          <time
-                            datetime={new Date(run.startedAt).toISOString()}
+                  <Flex as="ol" direction="column" gap={4}>
+                    <For each={day.runs}>
+                      {(run) => (
+                        <Flex as="li" direction="column" gap={1}>
+                          <Text
+                            as="span"
+                            size={1}
+                            color="lowContrast"
+                            selectable={false}
+                            testId="feed-run"
                           >
-                            {formatTime(run.startedAt)}
-                          </time>
-                        </Text>
+                            {authorOf(run.author)}
+                            {' · '}
+                            <time
+                              datetime={new Date(run.startedAt).toISOString()}
+                            >
+                              {formatTime(run.startedAt)}
+                            </time>
+                          </Text>
 
-                        <Flex as="ol" direction="column" gap={1}>
-                          <For each={run.items}>
-                            {(item) => (
-                              <Flex as="li" direction="column">
-                                <FeedItem
-                                  groupId={props.groupId}
-                                  item={item}
-                                  mine={item.author === device().id}
-                                />
-                              </Flex>
-                            )}
-                          </For>
+                          <Flex as="ol" direction="column" gap={1}>
+                            <For each={run.items}>
+                              {(item) => (
+                                <Flex as="li" direction="column">
+                                  <FeedItem
+                                    groupId={props.groupId}
+                                    item={item}
+                                    mine={item.author === device().id}
+                                  />
+                                </Flex>
+                              )}
+                            </For>
+                          </Flex>
                         </Flex>
-                      </Flex>
-                    )}
-                  </For>
+                      )}
+                    </For>
+                  </Flex>
                 </Flex>
-              </Flex>
-            )}
-          </For>
-        </Flex>
-      </Show>
+              )}
+            </For>
+          </Flex>
+        </Show>
+
+        <Show
+          when={alone()}
+          fallback={
+            <Show when={feed().items.length === 0}>
+              <Text
+                as="p"
+                selectable={false}
+                color="lowContrast"
+                testId="feed-empty"
+              >
+                Nothing here yet.
+              </Text>
+            </Show>
+          }
+        >
+          <LinkPrompt groupId={props.groupId} />
+        </Show>
+      </Flex>
     </Show>
   );
 };
