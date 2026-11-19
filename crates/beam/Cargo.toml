@@ -1,0 +1,64 @@
+[package]
+name = "beam"
+version = "0.0.0"
+publish = false
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[features]
+default = ["console_error_panic_hook"]
+# Routes Rust panics to `console.error` with a readable message. Cheap
+# and worth keeping on — without it a panic is an opaque wasm trap.
+console_error_panic_hook = ["dep:console_error_panic_hook"]
+
+[dependencies]
+# Pinned to the `wasm-bindgen-cli` version the flake pulls from nixpkgs
+# (`wasm-bindgen-cli_0_2_130`). The CLI refuses to process a module built
+# against a different crate version, so bump both together.
+wasm-bindgen = "=0.2.130"
+console_error_panic_hook = { version = "0.1", optional = true }
+
+# The app only exists in the browser, so everything it's built from is
+# scoped to the wasm target. This keeps the native build — what
+# `cargo clippy`/`cargo test --workspace` compile — down to the panic
+# hook above, instead of dragging iroh's tree through every check.
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+# The database: groups, tables, blobs, and sync between devices. Not
+# published as a crate, so pinned to a commit. `browser` is the IndexedDB
+# store; `blobs` keeps file bytes, not just references to them.
+woodland = { git = "https://github.com/Ambient-Computer/woodland", rev = "9b945b59b24082f990173915bf311b6ed0eaec6f", features = [
+  "browser",
+  "blobs",
+] }
+# The transport. Browser builds need every default feature off;
+# `tls-ring` is the one TLS backend that compiles to wasm. In the browser
+# iroh runs relay-only (no hole-punching), tunnelling QUIC over WebSocket
+# to the relay.
+iroh = { version = "1", default-features = false, features = ["tls-ring"] }
+# Woodland names peers by `ed25519_dalek::VerifyingKey`, and iroh by a key
+# type of its own over the same 32 bytes. Kept at woodland's version, so
+# the type built here is the type it takes.
+ed25519-dalek = "3"
+# Woodland takes its randomness from the application: a device secret,
+# seeds, nonces. On wasm that comes from the JS crypto API.
+getrandom = { version = "0.4", features = ["wasm_js"] }
+# What the host reads comes back as plain JS objects.
+# `serde-wasm-bindgen` serializes straight to a JS value, so nothing
+# round-trips through a JSON string.
+serde = { version = "1", features = ["derive"] }
+serde-wasm-bindgen = "0.6"
+# An exported `async fn` lowers to a JS Promise via this crate.
+wasm-bindgen-futures = "0.4"
+# Handlers arrive as `js_sys::Function`.
+js-sys = "0.3"
+# Background tasks whose handles abort on drop; `n0-future` (iroh's own
+# task runtime) provides both on wasm.
+n0-future = "0.3"
+# The async lock that makes the database take one step at a time. Already
+# in the tree by way of iroh; only `sync` is asked of it.
+tokio = { version = "1", default-features = false, features = ["sync"] }

@@ -6,7 +6,7 @@ import { black, radius, shadow, white } from '@lib/design';
  * themes. QR readers expect dark-on-light, so the colors pin to the opaque
  * black/white tokens rather than the theme-reactive surfaces — an inverted
  * code many scanners refuse. `fit-content` keeps the plate square around the
- * code and lets the column lay it out flush-left.
+ * code.
  */
 export const plate = style({
   display: 'block',
@@ -23,7 +23,7 @@ export const plate = style({
  */
 export const canvas = style({
   display: 'block',
-  width: '10rem',
+  width: '14rem',
   maxWidth: '100%',
   height: 'auto',
   aspectRatio: '1 / 1',

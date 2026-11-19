@@ -89,7 +89,9 @@
       "outputLogs": "errors-only"
     },
     "test:browser": {
-      "dependsOn": ["^typecheck"],
+      // `^build` for the same reason as `test:unit`: a suite that drives a
+      // crate in a real browser imports its wasm glue.
+      "dependsOn": ["^typecheck", "^build"],
       "inputs": ["src/**", "vitest.browser.config.ts"],
       "outputs": [],
       "outputLogs": "errors-only"

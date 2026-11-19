@@ -392,15 +392,18 @@ importers:
         specifier: 'catalog:'
         version: 5.1.0(@types/node@26.1.2)(@vitest/browser-playwright@5.1.0)(@vitest/coverage-v8@5.1.0)(@vitest/ui@5.1.0)(jsdom@31.0.1)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))
 
-  crates/p2p: {}
+  crates/beam: {}
 
   crates/qr-code: {}
 
   packages/app/beam:
     dependencies:
-      '@crate/p2p':
+      '@app/settings':
         specifier: workspace:*
-        version: link:../../../crates/p2p
+        version: link:../settings
+      '@crate/beam':
+        specifier: workspace:*
+        version: link:../../../crates/beam
       '@crate/qr-code':
         specifier: workspace:*
         version: link:../../../crates/qr-code
@@ -437,9 +440,6 @@ importers:
       '@lib/ui':
         specifier: workspace:*
         version: link:../../lib/ui
-      '@lib/vault':
-        specifier: workspace:*
-        version: link:../../lib/vault
       '@solidjs/meta':
         specifier: ^0.29.4
         version: 0.29.4(solid-js@1.9.19)
@@ -452,9 +452,6 @@ importers:
       '@vanilla-extract/css':
         specifier: 'catalog:'
         version: 1.21.3
-      idb:
-        specifier: 'catalog:'
-        version: 8.0.4
       solid-js:
         specifier: 1.9.19
         version: 1.9.19

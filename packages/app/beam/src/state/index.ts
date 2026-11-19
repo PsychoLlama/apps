@@ -1,84 +1,42 @@
 export {
-  $connected,
-  $connectFailed,
-  $connection,
+  $device,
+  $deviceFailed,
+  $deviceHeldElsewhere,
+  $deviceOpened,
   $relayChanged,
-  type ConnectionState,
-  type ConnectionStatus,
-} from './connection';
+  isOnline,
+} from './device';
 export {
-  $contactAdvertised,
-  $contactForgotten,
-  $contactRenamed,
-  $contacts,
-  $contactSeen,
-  $contactsRestored,
-  addressBookOf,
-  fallbackName,
-  type ContactBook,
-  type ContactView,
-} from './contacts';
+  $feed,
+  $feedChanged,
+  $groupViewed,
+  $membersChanged,
+  FILE_NAME_MAX_LENGTH,
+  formatBytes,
+  isPreviewable,
+  ITEM_MAX_LENGTH,
+  linkOf,
+  normalizeBody,
+} from './feed';
 export {
+  DEVICE_NAME_MAX_LENGTH,
+  deviceLabel,
+  normalizeDeviceName,
+} from './device-name';
+export {
+  $groups,
+  $groupsChanged,
+  GROUP_NAME_MAX_LENGTH,
+  groupLabel,
+  normalizeGroupName,
+} from './groups';
+export {
+  $invite,
   $inviteClosed,
-  $inviteOpen,
   $inviteOpened,
-  $removalClosed,
-  $removalOpened,
-  $removalTarget,
-  $renameClosed,
-  $renameOpened,
-  $renameTarget,
-  type RenameTarget,
-} from './dialogs';
-export { beamLink, isEndpointId } from './endpoint';
-export {
-  $codeEncoded,
-  $deviceNamed,
-  $identity,
-  $identityResolved,
-  $qrCode,
-  deviceFallbackOf,
-  deviceNameOf,
-  type DeviceIdentity,
-} from './identity';
-export { LABEL_MAX_LENGTH, generateLabel, normalizeLabel } from './labels';
-export { $beamLifetime } from './lifetime';
-export {
-  $onboarding,
-  $onboardingAdvanced,
-  $onboardingRestored,
-  $setupName,
-  $setupNameChanged,
-  type OnboardingProgress,
-} from './onboarding';
-export {
-  $peerClosed,
-  $peerDialing,
-  $peerHandles,
-  $peerLinked,
-  $peerLinks,
-  $peerReleased,
-  $peerUnreachable,
-  activePeersOf,
-  peerStateOf,
-  type PeerLinks,
-  type PeerLinkStatus,
-  type PeerState,
-} from './peers';
-export { SHARE_MAX_LENGTH, normalizeShare, shareLink } from './share-body';
-export {
-  $draftChanged,
-  $drafts,
-  $shareLog,
-  $shareQueued,
-  $shareReceived,
-  $shareSent,
-  SHARE_LOG_LIMIT,
-  sharesByPeerOf,
-  type Drafts,
-  type Share,
-  type ShareEntry,
-  type ShareLog,
-  type ShareStatus,
-} from './shares';
-export { surfaceForRoute, surfaceOf, type BeamSurface } from './surface';
+  inviteCodeOf,
+  inviteLink,
+  type QrGrid,
+} from './invite';
+export { dayOf, timeline, type FeedDay, type FeedRun } from './timeline';
+export { $removal, $removalAsked } from './removal';

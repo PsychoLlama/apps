@@ -39,29 +39,44 @@ export default defineConfig({
         path: 'src/service-worker/index.ts',
       },
       nitro: (config) => {
-        // One shell for every `/share/:id`, which the crawler can't reach
-        // from `/`. The id is a live relay handle that only exists
-        // client-side, and the page's first paint is independent of it.
+        // One shell for every `/group/:id`, which the crawler can't reach
+        // from `/`. Groups exist only in the client's database, and the
+        // page's first paint is independent of which one it is.
         // See `docs/dynamic-prerendered-shells.md`.
-        config.prerender.routes = ['/share/[id]'];
+        //
+        // `/join` is only ever reached from an invitation link, so the
+        // crawler can't find it either.
+        config.prerender.routes = [
+          '/group/[id]',
+          '/group/[id]/settings',
+          '/join',
+        ];
         config.hooks = {
           'prerender:generate'(route) {
-            // Move the share shell under `/_dynamic/`, so the rewrite
-            // target can't match its source and Cloudflare's loop check
-            // doesn't reject the rule.
-            if (route.route === '/share/[id]') {
-              route.fileName = '/_dynamic/share/[id].html';
+            // Move the shell under `/_dynamic/`, so the rewrite target
+            // can't match its source and Cloudflare's loop check doesn't
+            // reject the rule.
+            if (route.route === '/group/[id]') {
+              route.fileName = '/_dynamic/group/[id].html';
+            }
+
+            if (route.route === '/group/[id]/settings') {
+              route.fileName = '/_dynamic/group/[id]/settings.html';
             }
           },
         };
       },
       redirects: {
         rules: [
-          // Serve the share shell for every endpoint id. A 200 rewrite
-          // keeps the id in the URL for the client router. The target is
-          // extensionless, percent-encoded, and can't match its source;
-          // see `docs/dynamic-prerendered-shells.md`.
-          ['/share/:id', encodeURI('/_dynamic/share/[id]'), 200],
+          // Serve the group shell for every group id. A 200 rewrite keeps
+          // the id in the URL for the client router. The target is
+          // extensionless, percent-encoded, and can't match its source.
+          [
+            '/group/:id/settings',
+            encodeURI('/_dynamic/group/[id]/settings'),
+            200,
+          ],
+          ['/group/:id', encodeURI('/_dynamic/group/[id]'), 200],
         ],
       },
     }),

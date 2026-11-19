@@ -1,73 +1,106 @@
 import { defineContract } from '@lib/messaging/rpc';
 import type { SendOptions } from '@lib/messaging/message-port';
-import type { BeamMessage } from '../protocol';
-import type { PeerHandle, SelfKey, WorkerSession } from './session';
+import type { Engine } from '../engine/engine';
 
 /**
  * What the page may ask this worker to do.
  *
- * Built from a live {@link WorkerSession} so the contract and the
- * implementation are one value — the host imports {@link P2pApi} to type its
- * calls, and it cannot drift from the handlers that answer them.
- *
- * Every procedure takes at most one positional parameter, so anything with
- * more than one thing to say says it in an object.
+ * Built from a live {@link Engine} so the contract and the implementation
+ * are one value. The host imports {@link EngineApi} to type its calls.
  */
-export const createP2pApi = (session: WorkerSession) =>
+export const createEngineApi = (engine: Engine, exit: () => void) =>
   defineContract<SendOptions>()({
     requests: {
+      /** Found a group called `name`, resolving with its id. */
+      createGroup: (input: { name: string }): Promise<string> =>
+        engine.createGroup(input.name),
+
+      /** Share `body` to a group. */
+      addItem: (input: { groupId: string; body: string }): Promise<void> =>
+        engine.addItem(input.groupId, input.body),
+
+      /** Delete an item from a group, for every device. */
+      deleteItem: (input: { groupId: string; itemId: string }): Promise<void> =>
+        engine.deleteItem(input.groupId, input.itemId),
+
+      /** Call this device something else, in every group it's in. */
+      renameDevice: (input: { name: string }): Promise<void> =>
+        engine.renameDevice(input.name),
+
+      /** Call a group something else, for every device in it. */
+      renameGroup: (input: { groupId: string; name: string }): Promise<void> =>
+        engine.renameGroup(input.groupId, input.name),
+
+      /** Ask a group to remove a device. */
+      removeDevice: (input: {
+        groupId: string;
+        deviceId: string;
+      }): Promise<void> => engine.removeDevice(input.groupId, input.deviceId),
+
+      /** Be done with a group. */
+      leaveGroup: (input: { groupId: string }): Promise<void> =>
+        engine.leaveGroup(input.groupId),
+
       /**
-       * Settle this device's identity. `secretKey` is what the vault had, read
-       * on the page — absent means mint a fresh one. The bytes come back
-       * either way so the host can persist a key it didn't already have.
+       * Start a group over with only this device in it, resolving with
+       * the new group's id.
        */
-      loadIdentity: (input: { secretKey?: Uint8Array }): SelfKey =>
-        session.loadIdentity(input.secretKey),
+      replaceGroup: (input: { groupId: string }): Promise<string> =>
+        engine.replaceGroup(input.groupId),
 
-      /** Bind an endpoint under the settled identity and join the relay. */
-      join: (): Promise<void> => session.join(),
-
-      /** Dial a peer, resolving with the handle the worker filed it under. */
-      dial: (input: { endpointId: string }): Promise<PeerHandle> =>
-        session.dial(input.endpointId),
+      /** Share a file to a group. Resolves once it's all written here. */
+      addFile: (input: {
+        groupId: string;
+        file: Blob;
+        name: string;
+        type: string;
+      }): Promise<void> =>
+        engine.addFile(input.groupId, input.file, input.name, input.type),
 
       /**
-       * Send one message, rejecting if it didn't land.
-       *
-       * A rejection rather than a `false`, so a dead link, a closed endpoint
-       * and an id naming nothing all arrive the same way — the host folds the
-       * lot to one answer in one place, with one log, rather than checking a
-       * boolean *and* catching.
+       * Read a whole file out of a group. Rejects if this device doesn't
+       * hold all of it yet.
        */
-      send: (input: { peerId: string; message: BeamMessage }): Promise<void> =>
-        session.send(input.peerId, input.message),
+      readFile: (input: {
+        groupId: string;
+        itemId: string;
+        size: number;
+      }): Promise<Blob> =>
+        engine.readFile(input.groupId, input.itemId, input.size),
+
+      /** Make an invitation to a group, resolving with its code. */
+      invite: (input: { groupId: string }): string =>
+        engine.invite(input.groupId),
+
+      /**
+       * Use another device's invitation, resolving with the group's id.
+       * Rejects with the reason if the invitation didn't work.
+       */
+      join: (input: { code: string }): Promise<string> =>
+        engine.join(input.code),
     },
 
     events: {
       /**
-       * Hang up on one peer, leaving the session up. An event because the
-       * caller is a synchronous teardown path with nowhere to put an answer,
-       * and because there is nothing useful to say back: the connection is
-       * gone either way.
+       * Claim the device and open it. An event, since the outcome arrives
+       * as news: opening may wait on another tab indefinitely.
        */
-      release: (input: { peerId: string }): void =>
-        session.release(input.peerId),
+      open: (): void => engine.open(),
 
       /**
-       * Leave the relay network. Sent when the page stops needing a session —
-       * navigating away from beam — and the worker lives on with its wasm warm
-       * for whenever it comes back.
-       *
-       * An event, for the same reason as `release` plus one more: the host
-       * cannot wait for it. It sends this from a cell's synchronous drop hook,
-       * so a request's promise would have nobody left to resolve to.
+       * Point the feed at a group, or at nothing. Its items arrive as
+       * `feedChanged`, now and whenever they change.
        */
-      leave: (): void => void session.leave(),
+      watch: (input: { groupId: string | null }): void =>
+        engine.watch(input.groupId),
+
+      /**
+       * Close the device and end the worker. An event because the caller
+       * is a synchronous teardown path with nowhere to put an answer.
+       */
+      close: (): void => void engine.close().finally(exit),
     },
   });
 
-/**
- * The p2p worker's surface, derived from the implementation that serves it.
- * The host imports this to type its requests.
- */
-export type P2pApi = ReturnType<typeof createP2pApi>;
+/** The worker's surface, derived from the implementation that serves it. */
+export type EngineApi = ReturnType<typeof createEngineApi>;

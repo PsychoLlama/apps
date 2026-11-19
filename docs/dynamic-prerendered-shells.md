@@ -5,12 +5,12 @@ on Cloudflare's asset host. Applies to any route whose param is client-only
 (e.g. a live handle that exists only after hydration) but whose first paint is
 param-independent.
 
-Example: `@app/beam` serves `/share/:id` from `/_dynamic/share/[id].html`.
+Example: `@app/beam` serves `/group/:id` from `/_dynamic/group/[id].html`.
 
 ## The problem
 
 - CF static assets match literal paths only. There's no `[param]` filename
-  routing: a `share/[id].html` asset is served at `/share/[id]` and nowhere
+  routing: a `group/[id].html` asset is served at `/group/[id]` and nowhere
   else.
 - The param exists only client-side, so no per-value page can be prerendered.
 - Cold-loading `<route>/<value>` with no matching asset falls through to the

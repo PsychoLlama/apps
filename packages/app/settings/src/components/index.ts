@@ -10,3 +10,4 @@ export { AppearanceSettings } from './appearance-settings';
 export { MotionSettings } from './motion-settings';
 export { LogFilterSettings } from './log-filter-settings';
 export { LogStorageSettings } from './log-storage-settings';
+export { SettingsSection, type SettingsSectionProps } from './settings-section';

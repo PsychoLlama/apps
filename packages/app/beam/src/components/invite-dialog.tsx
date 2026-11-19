@@ -1,85 +1,83 @@
-import { Show } from 'solid-js';
+import { createEffect, Show } from 'solid-js';
 import { useAction, useValue } from '@lib/effects/solid';
-import { Dialog, Flex, Text, TextField } from '@lib/ui';
+import { Dialog, Flex, TextField } from '@lib/ui';
+import { $feed, $invite, $inviteClosed } from '../state';
 import { QrCode } from './qr-code';
-import {
-  $identity,
-  $inviteClosed,
-  $inviteOpen,
-  $qrCode,
-  beamLink,
-} from '../state';
 
 /**
- * This device's beam link, as a modal. Two ways to hand the same URL over: a
- * read-only field to copy, and a QR code beneath it for a peer to scan.
+ * An invitation to a group, as a modal: a code for the other device's
+ * camera, and the same link in a field to copy.
  *
- * Both hang off this device's identity rather than its relay connection. The
- * link is the address the key implies, so it's true the moment the key is
- * loaded and stays true whether or not the handshake ever lands — and a peer
- * who scans early simply dials a device that's still coming up. The code
- * follows a beat later, since it has an encoder of its own to instantiate.
+ * A dialog because it's an errand that ends on someone else's screen.
+ * The invitation outlives it: it's good for ten minutes, so closing this
+ * to go and find the other device doesn't spoil the link.
  *
- * A dialog rather than a page. An invite is a thirty-second errand that ends
- * on someone else's screen — routing to it cost a navigation each way and put
- * the address book away while you were reading a link out loud.
+ * It puts itself away once a device it didn't know is in the group: the
+ * errand is done, and the other screen is where to look next.
  */
 export const InviteDialog = () => {
-  const open = useValue($inviteOpen);
-  const self = useValue($identity);
-  const grid = useValue($qrCode);
-  const close = useAction($inviteClosed);
+  const invite = useValue($invite);
+  const closeInvite = useAction($inviteClosed);
+  const feed = useValue($feed);
+
+  /** The devices in the group when the invitation went up. */
+  let before: Set<string> | null = null;
+
+  createEffect(() => {
+    const shown = invite();
+    const current = feed();
+
+    if (!shown) {
+      before = null;
+      return;
+    }
+
+    if (!current.loaded || current.groupId !== shown.groupId) return;
+
+    const members = current.members.map((member) => member.id);
+    if (!before) before = new Set(members);
+    else if (members.some((id) => !before?.has(id))) closeInvite();
+  });
 
   return (
     <Dialog
-      testId="beam-invite-dialog"
-      open={open()}
-      onOpenChange={() => close()}
-      title="Beam link"
-      description="Open this link on another device, or scan the code."
+      testId="invite-dialog"
+      open={invite() !== null}
+      onOpenChange={() => closeInvite()}
+      title="Link a device"
+      description="Scan this with the other device, or open the link on it. It works once, for the next 10 minutes."
       maxWidth="24rem"
     >
-      <Show
-        when={self().endpointId}
-        fallback={
-          <Text as="p" size={2} color="lowContrast" selectable={false}>
-            Preparing this device’s link…
-          </Text>
-        }
-      >
-        {(endpointId) => (
+      <Show when={invite()}>
+        {(shown) => (
           <Flex as="div" direction="column" gap={4}>
-            {/* The platform focuses the first focusable child on open, which
-                for a read-only field means a caret parked past the end of a
-                64-character key — the tail of the URL on screen and nothing
-                selected. Selecting it backwards makes the copy one keystroke
-                and leaves the caret at the start, so the field shows the
-                beginning of the link rather than its last few bytes. */}
+            {/* The plate sizes itself to the code, so the row does the
+                centering. */}
+            <Show when={shown().grid}>
+              {(grid) => (
+                <Flex as="div" direction="row" justify="center">
+                  <QrCode grid={grid()} label="QR code for the invitation" />
+                </Flex>
+              )}
+            </Show>
+
+            {/* Selecting on focus makes the copy one keystroke, and leaves
+                the field showing the start of the link rather than the
+                tail of the code. */}
             <TextField
-              testId="beam-link"
+              testId="invite-link"
               readOnly
-              aria-label="Beam link"
-              value={beamLink(endpointId())}
+              aria-label="Invitation link"
+              value={shown().link}
               onFocus={(event) => {
                 event.currentTarget.select();
                 event.currentTarget.scrollLeft = 0;
               }}
-              name="endpoint-id"
+              name="invite-link"
               autocomplete={undefined}
               autocapitalize={undefined}
               enterkeyhint={undefined}
             />
-
-            {/* The plate sizes itself to the code, so the row does the
-                centering — the code is the thing you point a camera at, and
-                it reads as an aside when it's pinned to one edge. */}
-            <Show when={grid()}>
-              {(code) => (
-                <Flex as="div" direction="row" justify="center">
-                  <QrCode grid={code()} label="QR code for the beam link" />
-                </Flex>
-              )}
-            </Show>
           </Flex>
         )}
       </Show>

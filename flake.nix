@@ -69,7 +69,7 @@
 
         rec {
           default = pkgs.mkShell {
-            # `ring` (pulled in by iroh's TLS backend in `@crate/p2p`)
+            # `ring` (pulled in by iroh's TLS backend in `@crate/beam`)
             # compiles crypto C to wasm, which needs a clang targeting
             # wasm32. nix's *wrapped* clang injects host hardening flags
             # (`-fzero-call-used-regs=…`) the wasm target rejects, so point

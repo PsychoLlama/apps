@@ -1,19 +1,18 @@
-export { $connect, type Session } from './connect';
+export { $openDevice } from './device';
+export { $joinGroup, $openInvite } from './invite';
 export {
-  $forgetContact,
-  $noteAdvertisedName,
-  $recordPeer,
-  $renameContact,
-  $restoreContacts,
-} from './contacts';
-export { $dialPeer } from './dial';
-export { $nameDevice } from './identity';
-export { $disconnectPeer, $greetPeer, $linkPeer } from './link';
-export { $applyPeerMessage, $renameDevice } from './messages';
+  $createGroup,
+  $deleteItem,
+  $previewFile,
+  $saveFile,
+  $shareFiles,
+  $shareItem,
+  $viewGroup,
+} from './groups';
 export {
-  $finishNaming,
-  $finishPairing,
-  $restoreOnboarding,
-} from './onboarding';
-export { $restoreFromDisk } from './restore';
-export { $flushShares, $receiveShare, $shareText } from './shares';
+  $leaveGroup,
+  $removeDevice,
+  $renameDevice,
+  $renameGroup,
+  $replaceGroup,
+} from './members';
