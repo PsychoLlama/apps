@@ -4,14 +4,14 @@ import { useAction, useValue } from '@lib/effects/solid';
 import { Button, Callout, Flex, Link, Text } from '@lib/ui';
 import IconLink from 'virtual:icons/mdi/cellphone-link';
 import IconSettings from 'virtual:icons/mdi/cog-outline';
-import { BeamFrame } from '../../components/beam-frame';
-import { Composer } from '../../components/composer';
-import { Feed } from '../../components/feed';
-import { GroupOutside } from '../../components/group-outside';
-import { GroupSettings } from '../../components/group-settings';
-import { InviteDialog } from '../../components/invite-dialog';
-import { $openInvite, $viewGroup } from '../../effects';
-import { $groups, $groupSettingsToggled, groupLabel } from '../../state';
+import { BeamFrame } from '../../../components/beam-frame';
+import { Composer } from '../../../components/composer';
+import { Feed } from '../../../components/feed';
+import { GroupOutside } from '../../../components/group-outside';
+import { GroupSettings } from '../../../components/group-settings';
+import { InviteDialog } from '../../../components/invite-dialog';
+import { $openInvite, $viewGroup } from '../../../effects';
+import { $groups, $groupSettingsToggled, groupLabel } from '../../../state';
 
 /**
  * One group at `/group/:id`: a composer, and everything shared to the
