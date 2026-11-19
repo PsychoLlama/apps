@@ -32,17 +32,18 @@ export const $groupsChanged = defineCommand(
 );
 
 /**
- * A group name as it's stored: trimmed, or `null` if nothing is left or
- * it runs too long.
+ * A group name as it's stored: trimmed, or `null` if it runs too long.
+ * Nothing at all is a name too: the group goes without one.
  */
 export const normalizeGroupName = (name: string): string | null => {
   const trimmed = name.trim();
 
-  return trimmed.length > 0 && trimmed.length <= GROUP_NAME_MAX_LENGTH
-    ? trimmed
-    : null;
+  return trimmed.length <= GROUP_NAME_MAX_LENGTH ? trimmed : null;
 };
 
-/** What to call a group on screen. One that can't be read has no name. */
+/**
+ * What to call a group on screen. Nobody is asked to name one, so most
+ * have no name, and most are someone's own devices.
+ */
 export const groupLabel = (group: { readonly name: string }): string =>
-  group.name || 'Unnamed group';
+  group.name || 'My devices';

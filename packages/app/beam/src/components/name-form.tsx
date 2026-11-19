@@ -17,6 +17,9 @@ export const NameForm = (props: {
   /** The name as it stands. */
   value: string;
 
+  /** What an empty field shows. Giving one lets the name be cleared. */
+  placeholder?: string;
+
   /** Longest name allowed. */
   maxLength: number;
 
@@ -43,7 +46,8 @@ export const NameForm = (props: {
           name="name"
           aria-label={props.label}
           value={props.value}
-          required
+          placeholder={props.placeholder}
+          required={props.placeholder === undefined}
           maxlength={props.maxLength}
           autocomplete="off"
           autocapitalize="words"

@@ -398,6 +398,9 @@ importers:
 
   packages/app/beam:
     dependencies:
+      '@app/settings':
+        specifier: workspace:*
+        version: link:../settings
       '@crate/beam':
         specifier: workspace:*
         version: link:../../../crates/beam

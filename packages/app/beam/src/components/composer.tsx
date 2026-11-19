@@ -7,8 +7,8 @@ import { ITEM_MAX_LENGTH } from '../state';
 import * as styles from './composer.css';
 
 /**
- * Where a note, a link, or a file is shared, at the head of a group's
- * feed.
+ * Where a note, a link, or a file is shared, held to the bottom of a
+ * group's feed the way a chat's is.
  *
  * It works offline and alone. What's shared is written to this device
  * first and reaches the group's other devices whenever they're reachable,

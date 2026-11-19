@@ -50,7 +50,7 @@ describe('normalizeGroupName', () => {
   });
 
   it('refuses nothing, and too much', () => {
-    expect(normalizeGroupName('  ')).toBeNull();
+    expect(normalizeGroupName('  ')).toBe('');
     expect(
       normalizeGroupName('x'.repeat(GROUP_NAME_MAX_LENGTH + 1)),
     ).toBeNull();
@@ -60,6 +60,6 @@ describe('normalizeGroupName', () => {
 describe('groupLabel', () => {
   it('names a group that has no name', () => {
     expect(groupLabel({ name: 'Home' })).toBe('Home');
-    expect(groupLabel({ name: '' })).toBe('Unnamed group');
+    expect(groupLabel({ name: '' })).toBe('My devices');
   });
 });

@@ -46,7 +46,11 @@ export default defineConfig({
         //
         // `/join` is only ever reached from an invitation link, so the
         // crawler can't find it either.
-        config.prerender.routes = ['/group/[id]', '/join'];
+        config.prerender.routes = [
+          '/group/[id]',
+          '/group/[id]/settings',
+          '/join',
+        ];
         config.hooks = {
           'prerender:generate'(route) {
             // Move the shell under `/_dynamic/`, so the rewrite target
@@ -54,6 +58,10 @@ export default defineConfig({
             // reject the rule.
             if (route.route === '/group/[id]') {
               route.fileName = '/_dynamic/group/[id].html';
+            }
+
+            if (route.route === '/group/[id]/settings') {
+              route.fileName = '/_dynamic/group/[id]/settings.html';
             }
           },
         };
@@ -63,6 +71,11 @@ export default defineConfig({
           // Serve the group shell for every group id. A 200 rewrite keeps
           // the id in the URL for the client router. The target is
           // extensionless, percent-encoded, and can't match its source.
+          [
+            '/group/:id/settings',
+            encodeURI('/_dynamic/group/[id]/settings'),
+            200,
+          ],
           ['/group/:id', encodeURI('/_dynamic/group/[id]'), 200],
         ],
       },

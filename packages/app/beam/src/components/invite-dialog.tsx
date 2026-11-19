@@ -1,8 +1,8 @@
-import { Show } from 'solid-js';
+import { createEffect, Show } from 'solid-js';
 import { useAction, useValue } from '@lib/effects/solid';
 import { Dialog, Flex, TextField } from '@lib/ui';
 import { $closeInvite } from '../effects';
-import { $invite } from '../state';
+import { $feed, $invite } from '../state';
 import { QrCode } from './qr-code';
 
 /**
@@ -13,10 +13,33 @@ import { QrCode } from './qr-code';
  * because the invitation lives exactly as long as it's showing. Closing
  * the dialog takes it back, so a code that was photographed and never used
  * stops working.
+ *
+ * It puts itself away once a device it didn't know is in the group: the
+ * errand is done, and the other screen is where to look next.
  */
 export const InviteDialog = () => {
   const invite = useValue($invite);
   const closeInvite = useAction($closeInvite);
+  const feed = useValue($feed);
+
+  /** The devices in the group when the invitation went up. */
+  let before: Set<string> | null = null;
+
+  createEffect(() => {
+    const shown = invite();
+    const current = feed();
+
+    if (!shown) {
+      before = null;
+      return;
+    }
+
+    if (!current.loaded || current.groupId !== shown.groupId) return;
+
+    const members = current.members.map((member) => member.id);
+    if (!before) before = new Set(members);
+    else if (members.some((id) => !before?.has(id))) closeInvite();
+  });
 
   return (
     <Dialog

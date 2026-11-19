@@ -1,21 +1,19 @@
 import { createEffect, onCleanup, Show } from 'solid-js';
 import { useParams } from '@solidjs/router';
 import { useAction, useValue } from '@lib/effects/solid';
-import { Button, Callout, Flex, Link, Text } from '@lib/ui';
-import IconLink from 'virtual:icons/mdi/cellphone-link';
-import IconSettings from 'virtual:icons/mdi/cog-outline';
 import { BeamFrame } from '../../../components/beam-frame';
 import { Composer } from '../../../components/composer';
 import { Feed } from '../../../components/feed';
+import { GroupActions } from '../../../components/group-actions';
+import { GroupMissing } from '../../../components/group-missing';
 import { GroupOutside } from '../../../components/group-outside';
-import { GroupSettings } from '../../../components/group-settings';
 import { InviteDialog } from '../../../components/invite-dialog';
-import { $openInvite, $viewGroup } from '../../../effects';
-import { $groups, $groupSettingsToggled, groupLabel } from '../../../state';
+import { $viewGroup } from '../../../effects';
+import { $groups, groupLabel } from '../../../state';
 
 /**
- * One group at `/group/:id`: a composer, and everything shared to the
- * group under it.
+ * One group at `/group/:id`: everything shared to it, oldest at the top,
+ * and a composer held to the bottom.
  *
  * Served from one prerendered shell for every id, so the shell's `:id` is
  * a placeholder and nothing drawn from it is prerendered. The feed only
@@ -26,16 +24,11 @@ const BeamGroup = () => {
   const params = useParams<{ id: string }>();
   const groups = useValue($groups);
   const viewGroup = useAction($viewGroup);
-  const openInvite = useAction($openInvite);
-  const toggleSettings = useAction($groupSettingsToggled);
 
   // Effects don't run during SSG, which is what keeps the worker off the
   // server: turning the feed is the first thing that reaches for it.
   createEffect(() => viewGroup(params.id));
-  onCleanup(() => {
-    viewGroup(null);
-    toggleSettings(false);
-  });
+  onCleanup(() => viewGroup(null));
 
   /** This group, once this device's database has listed it. */
   const group = () => groups().list.find((it) => it.id === params.id);
@@ -50,27 +43,25 @@ const BeamGroup = () => {
   };
 
   return (
-    <BeamFrame trail={trail()}>
+    <BeamFrame
+      trail={trail()}
+      actions={
+        <Show when={group()?.member}>
+          <GroupActions groupId={params.id} />
+        </Show>
+      }
+      footer={
+        <Show when={group()?.member}>
+          <Composer groupId={params.id} />
+        </Show>
+      }
+    >
       <Show
         when={group()}
         fallback={
-          // Not one of this device's groups: a link to a group it never
-          // had, one it left, or one it was removed from and has forgotten.
           // Only once the database has said so. Before that, nothing.
           <Show when={groups().loaded}>
-            <Callout testId="group-missing" color="neutral">
-              <Flex as="div" direction="column" gap={2}>
-                <Text as="p" selectable={false}>
-                  This group isn't on this device. If it was removed from the
-                  group, what was shared to it has been deleted here.
-                </Text>
-                <Text as="p" selectable={false}>
-                  <Link testId="group-missing-home" href="/">
-                    Back to your groups
-                  </Link>
-                </Text>
-              </Flex>
-            </Callout>
+            <GroupMissing />
           </Show>
         }
       >
@@ -79,38 +70,7 @@ const BeamGroup = () => {
             when={known().member}
             fallback={<GroupOutside group={known()} />}
           >
-            <Flex as="div" direction="column" gap={4}>
-              <Composer groupId={params.id} />
-              <Feed groupId={params.id} />
-
-              {/* Both are rare, so they sit below what the page is for. */}
-              <Flex as="div" justify="start" gap={4}>
-                <Button
-                  testId="group-invite"
-                  variant="ghost"
-                  color="neutral"
-                  size={1}
-                  disabled={openInvite.pending}
-                  onClick={() => openInvite(params.id)}
-                >
-                  <IconLink width="16" height="16" aria-hidden="true" />
-                  Link a device
-                </Button>
-
-                <Button
-                  testId="group-settings-open"
-                  variant="ghost"
-                  color="neutral"
-                  size={1}
-                  onClick={() => toggleSettings(true)}
-                >
-                  <IconSettings width="16" height="16" aria-hidden="true" />
-                  Settings
-                </Button>
-              </Flex>
-            </Flex>
-
-            <GroupSettings group={known()} />
+            <Feed groupId={params.id} />
           </Show>
         )}
       </Show>

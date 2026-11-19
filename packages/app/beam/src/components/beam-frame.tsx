@@ -1,7 +1,7 @@
-import { Show, type JSX } from 'solid-js';
+import { children, Show, type JSX } from 'solid-js';
 import { useClientValue, useValue } from '@lib/effects/solid';
 import { Frame, FrameBody, SiteHeader, type SiteHeaderCrumb } from '@lib/shell';
-import { Container } from '@lib/ui';
+import { Flex } from '@lib/ui';
 import { $openDevice } from '../effects';
 import { $device } from '../state';
 import { DeviceStatus } from './device-status';
@@ -19,22 +19,47 @@ export const BeamFrame = (props: {
   /** Where this page sits below the app's root crumb. */
   trail?: SiteHeaderCrumb[];
 
+  /** The page's own controls, in the header after the device's status. */
+  actions?: JSX.Element;
+
+  /**
+   * Held to the bottom of the frame, under the scrolling body, once the
+   * device is open.
+   */
+  footer?: JSX.Element;
+
   /** The page, shown once the device is open. */
   children: JSX.Element;
 }) => {
   useClientValue($openDevice);
   const device = useValue($device);
+  const open = () => device().status === 'open';
+
+  // Read once: a JSX prop builds a new element on every access.
+  const footer = children(() => (open() ? props.footer : undefined));
 
   return (
     <Frame>
-      <SiteHeader trail={props.trail} actions={<DeviceStatus />} />
+      <SiteHeader
+        trail={props.trail}
+        actions={
+          <>
+            <DeviceStatus />
+            <Show when={open()}>{props.actions}</Show>
+          </>
+        }
+      />
 
       <FrameBody>
-        <Container as="div" size={1}>
-          <DeviceUnavailable />
-          <Show when={device().status === 'open'}>{props.children}</Show>
-        </Container>
+        <DeviceUnavailable />
+        <Show when={open()}>{props.children}</Show>
       </FrameBody>
+
+      <Show when={footer()}>
+        <Flex as="footer" direction="column" px={5} py={4}>
+          {footer()}
+        </Flex>
+      </Show>
     </Frame>
   );
 };

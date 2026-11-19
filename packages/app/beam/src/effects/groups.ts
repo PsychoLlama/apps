@@ -1,25 +1,18 @@
 import { collect, pipe } from '@lib/effects';
 import type { DeviceConnection } from '../platform/device';
 import { saveFile } from '../platform/save-file';
-import {
-  $groupViewed,
-  FILE_NAME_MAX_LENGTH,
-  normalizeBody,
-  normalizeGroupName,
-} from '../state';
+import { $groupViewed, FILE_NAME_MAX_LENGTH, normalizeBody } from '../state';
 import { $openDevice } from './device';
 
 /**
- * Found a group with this device as its only member, resolving with its id,
- * or `null` if the name wasn't one.
+ * Found a group with this device as its only member, resolving with its
+ * id. Nobody is asked for a name: a group starts without one, and can be
+ * given one whenever someone cares to.
  */
 export const $createGroup = pipe([
   $openDevice,
-  (connection: DeviceConnection) =>
-    async (name: string): Promise<string | null> => {
-      const normalized = normalizeGroupName(name);
-      return normalized ? connection.createGroup(normalized) : null;
-    },
+  (connection: DeviceConnection) => (): Promise<string> =>
+    connection.createGroup(''),
 ]);
 
 /**

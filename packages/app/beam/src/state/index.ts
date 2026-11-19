@@ -22,7 +22,6 @@ export {
   deviceLabel,
   normalizeDeviceName,
 } from './device-name';
-export { $groupSettings, $groupSettingsToggled } from './group-settings';
 export {
   $groups,
   $groupsChanged,
@@ -38,3 +37,4 @@ export {
   inviteLink,
   type QrGrid,
 } from './invite';
+export { dayOf, timeline } from './timeline';

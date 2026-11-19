@@ -12,7 +12,7 @@ export const $renameDevice = pipe([
   (connection: DeviceConnection) =>
     async (name: string): Promise<boolean> => {
       const normalized = normalizeDeviceName(name);
-      if (!normalized) return false;
+      if (normalized === null) return false;
 
       await connection.renameDevice(normalized);
       return true;

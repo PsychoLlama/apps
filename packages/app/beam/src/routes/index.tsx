@@ -1,15 +1,13 @@
-import { Flex } from '@lib/ui';
 import { BeamFrame } from '../components/beam-frame';
 import { GroupList } from '../components/group-list';
-import { NewGroupForm } from '../components/new-group-form';
 
-/** Beam home at `/`: the groups this device holds, and a way to start one. */
+/**
+ * Beam home at `/`: the groups this device holds. A device with none is
+ * given one and sent to it.
+ */
 const BeamHome = () => (
   <BeamFrame>
-    <Flex as="div" direction="column" gap={5}>
-      <GroupList />
-      <NewGroupForm />
-    </Flex>
+    <GroupList />
   </BeamFrame>
 );
 
