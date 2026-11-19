@@ -3,14 +3,13 @@ import { Show } from 'solid-js';
 import { useAction } from '@lib/effects/solid';
 import { Button, Flex, Link, Text, Tooltip } from '@lib/ui';
 import IconSync from 'virtual:icons/mdi/cloud-sync-outline';
-import { $deleteItem, $saveFile } from '../effects';
+import { $deleteItem } from '../effects';
 import { linkOf } from '../state';
 import { FeedFile } from './feed-file';
 import * as styles from './feed-item.css';
 
 /**
- * One thing shared to a group: what it is, and the two things to do with
- * it. Who shared it and when is said once, above the sitting it's part of. Taking it, by copying a note or saving a file,
+ * One thing shared to a group: what it is, and what to do with it. Who shared it and when is said once, above the sitting it's part of. Taking it, by copying a note or saving a file,
  * is why it was shared. Deleting removes it for every device in the group.
  *
  * The body is text from another device and is only ever rendered as text.
@@ -28,7 +27,6 @@ export const FeedItem = (props: {
   mine: boolean;
 }) => {
   const deleteItem = useAction($deleteItem);
-  const saveFile = useAction($saveFile);
 
   const copy = () => void navigator.clipboard.writeText(props.item.body);
 
@@ -68,37 +66,27 @@ export const FeedItem = (props: {
           </Show>
         }
       >
-        {(file) => <FeedFile file={file()} />}
+        {(file) => (
+          <FeedFile
+            groupId={props.groupId}
+            itemId={props.item.id}
+            file={file()}
+          />
+        )}
       </Show>
 
       <Text as="span" selectable={false} class={styles.actions}>
-        <Show
-          when={props.item.file}
-          fallback={
-            <Button
-              testId="feed-item-copy"
-              variant="ghost"
-              color="neutral"
-              size={1}
-              onClick={copy}
-            >
-              Copy
-            </Button>
-          }
-        >
-          {(file) => (
-            <Button
-              testId="feed-item-save"
-              variant="ghost"
-              color="neutral"
-              size={1}
-              // Nothing to save until all of it is here.
-              disabled={file().held < file().size || saveFile.pending}
-              onClick={() => saveFile(props.groupId, props.item.id, file())}
-            >
-              Save
-            </Button>
-          )}
+        {/* A file is saved from its own tile. */}
+        <Show when={!props.item.file}>
+          <Button
+            testId="feed-item-copy"
+            variant="ghost"
+            color="neutral"
+            size={1}
+            onClick={copy}
+          >
+            Copy
+          </Button>
         </Show>
 
         <Button

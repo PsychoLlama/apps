@@ -80,3 +80,24 @@ export const $saveFile = pipe([
       saveFile(bytes, file.name.slice(0, FILE_NAME_MAX_LENGTH) || 'file');
     },
 ]);
+
+/**
+ * Read an image back out of a group to show it, resolving with an object
+ * URL for it. Whoever asks owns the URL, and revokes it when done.
+ *
+ * Only for a file {@link isPreviewable} says is a picture: the bytes are
+ * handed to the browser under the type the file claims.
+ */
+export const $previewFile = pipe([
+  $openDevice,
+  (connection: DeviceConnection) =>
+    async (
+      groupId: string,
+      itemId: string,
+      file: { size: number; type: string },
+    ): Promise<string> => {
+      const bytes = await connection.readFile(groupId, itemId, file.size);
+
+      return URL.createObjectURL(new Blob([bytes], { type: file.type }));
+    },
+]);

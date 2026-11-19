@@ -31,6 +31,7 @@ export const DeviceStatus = () => {
           <Text
             {...trigger}
             as="span"
+            size={2}
             role="img"
             tabIndex={0}
             color="lowContrast"
@@ -41,11 +42,9 @@ export const DeviceStatus = () => {
           >
             <Show
               when={isOnline(device())}
-              fallback={
-                <IconOffline width="17" height="17" aria-hidden="true" />
-              }
+              fallback={<IconOffline aria-hidden="true" />}
             >
-              <IconOnline width="17" height="17" aria-hidden="true" />
+              <IconOnline aria-hidden="true" />
             </Show>
           </Text>
         )}

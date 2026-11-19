@@ -1,9 +1,8 @@
 import { For, Show } from 'solid-js';
 import { useAction, useValue } from '@lib/effects/solid';
-import { Flex, IconButton, Text } from '@lib/ui';
-import IconRemove from 'virtual:icons/mdi/close';
+import { AlertDialog, Button, Flex, Text } from '@lib/ui';
 import { $removeDevice } from '../effects';
-import { $feed, deviceLabel } from '../state';
+import { $feed, $removal, $removalAsked, deviceLabel } from '../state';
 
 /**
  * The devices in a group: what each is called, and a way to remove the
@@ -11,16 +10,20 @@ import { $feed, deviceLabel } from '../state';
  *
  * A name is another device's word and is only ever rendered as text.
  *
- * Removing asks the group, and the group has to agree. The device stays
+ * Removing is asked twice. It deletes the group from someone's device,
+ * and the button sits in a list where a slip is easy.
+ *
+ * It then asks the group, and the group has to agree. The device stays
  * listed until it does, which is how a removal that's still waiting on
- * someone shows. A removed device deletes what it held of the group when
- * it hears, if it ever does.
+ * someone shows.
  */
 export const MemberList = (props: {
   /** The group whose devices these are. */
   groupId: string;
 }) => {
   const feed = useValue($feed);
+  const removal = useValue($removal);
+  const askRemoval = useAction($removalAsked);
   const removeDevice = useAction($removeDevice);
 
   /** This device first, then the rest as the group lists them. */
@@ -29,16 +32,19 @@ export const MemberList = (props: {
       (left, right) => Number(right.me) - Number(left.me),
     );
 
-  return (
-    <Flex as="ul" direction="column" gap={2} testId="members">
-      <For each={members()}>
-        {(member) => (
-          <Flex as="li" align="center" justify="between" gap={2}>
-            <Text as="span" truncate selectable={false} testId="member-name">
-              {deviceLabel(member)}
-            </Text>
+  /** The device being asked about, while it's still in the group. */
+  const asked = () => feed().members.find((it) => it.id === removal());
 
-            <Flex as="div" align="center" gap={2}>
+  return (
+    <>
+      <Flex as="ul" direction="column" gap={3} testId="members">
+        <For each={members()}>
+          {(member) => (
+            <Flex as="li" align="center" justify="between" gap={5}>
+              <Text as="span" truncate selectable={false} testId="member-name">
+                {deviceLabel(member)}
+              </Text>
+
               <Show
                 when={!member.me}
                 fallback={
@@ -52,22 +58,35 @@ export const MemberList = (props: {
                   </Text>
                 }
               >
-                <IconButton
+                <Button
                   testId="member-remove"
-                  aria-label={`Remove ${deviceLabel(member)} from the group`}
                   variant="ghost"
                   color="danger"
                   size={1}
                   disabled={removeDevice.pending}
-                  onClick={() => removeDevice(props.groupId, member.id)}
+                  onClick={() => askRemoval(member.id)}
                 >
-                  <IconRemove aria-hidden="true" />
-                </IconButton>
+                  Remove
+                </Button>
               </Show>
             </Flex>
-          </Flex>
-        )}
-      </For>
-    </Flex>
+          )}
+        </For>
+      </Flex>
+
+      <AlertDialog
+        testId="member-remove-confirm"
+        open={asked() !== undefined}
+        onOpenChange={() => askRemoval(null)}
+        title={`Remove ${asked() ? deviceLabel(asked()!) : 'device'}?`}
+        description="It leaves the group and deletes its copy of everything shared here. This happens once most of the group's devices are online to agree."
+        actionText="Remove"
+        color="danger"
+        onAction={() => {
+          const device = asked();
+          if (device) removeDevice(props.groupId, device.id);
+        }}
+      />
+    </>
   );
 };

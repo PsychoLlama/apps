@@ -121,3 +121,28 @@ export const formatBytes = (bytes: number): string => {
   const digits = unit === 0 || value >= 100 ? 0 : 1;
   return `${value.toFixed(digits)} ${BYTE_UNITS[unit] ?? 'B'}`;
 };
+
+/**
+ * Image types shown inline. Formats a browser decodes as pixels and
+ * nothing else: SVG is a document, and stays a file.
+ */
+const PREVIEWED = new Set([
+  'image/png',
+  'image/jpeg',
+  'image/gif',
+  'image/webp',
+  'image/avif',
+]);
+
+/** The largest image read back in to show, in bytes. */
+const PREVIEW_MAX_BYTES = 20 * 1024 * 1024;
+
+/**
+ * Whether a file is shown as a picture where it sits in the feed. Its
+ * type is another device's word, so it's matched against a short list
+ * and never trusted further than choosing how to draw.
+ */
+export const isPreviewable = (file: {
+  readonly type: string;
+  readonly size: number;
+}): boolean => PREVIEWED.has(file.type) && file.size <= PREVIEW_MAX_BYTES;

@@ -13,6 +13,7 @@ export {
   $membersChanged,
   FILE_NAME_MAX_LENGTH,
   formatBytes,
+  isPreviewable,
   ITEM_MAX_LENGTH,
   linkOf,
   normalizeBody,
@@ -37,4 +38,5 @@ export {
   inviteLink,
   type QrGrid,
 } from './invite';
-export { dayOf, timeline } from './timeline';
+export { dayOf, timeline, type FeedDay, type FeedRun } from './timeline';
+export { $removal, $removalAsked } from './removal';

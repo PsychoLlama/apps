@@ -3,6 +3,7 @@ export { $joinGroup, $openInvite } from './invite';
 export {
   $createGroup,
   $deleteItem,
+  $previewFile,
   $saveFile,
   $shareFiles,
   $shareItem,

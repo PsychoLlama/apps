@@ -11,6 +11,7 @@ import {
   linkOf,
   normalizeBody,
   formatBytes,
+  isPreviewable,
 } from '../feed';
 
 const GROUP = 'aaaa';
@@ -22,6 +23,22 @@ const item = (id: string, body: string): Item => ({
   author: 'author',
   createdAt: 0,
   committed: true,
+});
+
+describe('isPreviewable', () => {
+  it('shows the image types a browser decodes as pixels', () => {
+    expect(isPreviewable({ type: 'image/png', size: 10 })).toBe(true);
+    expect(isPreviewable({ type: 'image/jpeg', size: 10 })).toBe(true);
+  });
+
+  it('keeps documents, unknown types, and huge images as files', () => {
+    expect(isPreviewable({ type: 'image/svg+xml', size: 10 })).toBe(false);
+    expect(isPreviewable({ type: 'application/pdf', size: 10 })).toBe(false);
+    expect(isPreviewable({ type: '', size: 10 })).toBe(false);
+    expect(isPreviewable({ type: 'image/png', size: 64 * 1024 * 1024 })).toBe(
+      false,
+    );
+  });
 });
 
 describe('$feed', () => {

@@ -1,7 +1,15 @@
-import { createEffect, For, on, Show } from 'solid-js';
+import { createEffect, createMemo, For, on, Show } from 'solid-js';
 import { useValue } from '@lib/effects/solid';
 import { Flex, Text } from '@lib/ui';
-import { $device, $feed, dayOf, deviceLabel, timeline } from '../state';
+import {
+  $device,
+  $feed,
+  dayOf,
+  deviceLabel,
+  timeline,
+  type FeedDay,
+  type FeedRun,
+} from '../state';
 import * as styles from './feed.css';
 import { FeedItem } from './feed-item';
 import { LinkPrompt } from './link-prompt';
@@ -24,6 +32,12 @@ const formatDay = (day: number): string => {
         : 'numeric',
   }).format(day);
 };
+
+/** What tells one sitting from another: the first thing shared in it. */
+const keyOf = (run: FeedRun): string => run.items[0]?.id ?? '';
+
+const runKeys = (day: FeedDay | undefined): string[] =>
+  day?.runs.map(keyOf) ?? [];
 
 /** A time of day, in the reader's locale. */
 const formatTime = (epochMilliseconds: number): string =>
@@ -55,7 +69,16 @@ export const Feed = (props: {
   /** Whether the feed holds this group's items, and not the last one's. */
   const ready = () => feed().loaded && feed().groupId === props.groupId;
 
-  const days = () => timeline(feed().items);
+  // The database hands over a whole new list on every change, and rows
+  // drawn from it directly would all be torn down and built again each
+  // time: a picture reloading whenever anything was shared. So the lists
+  // are of keys, which compare equal from one read to the next, and each
+  // row looks up what it shows.
+  const days = createMemo(() => timeline(feed().items));
+  const dayKeys = () => days().map((day) => day.day);
+  const byId = createMemo(
+    () => new Map(feed().items.map((item) => [item.id, item])),
+  );
 
   /**
    * What to call whoever wrote an item. A device that has since left the
@@ -101,61 +124,76 @@ export const Feed = (props: {
       >
         <Show when={feed().items.length > 0}>
           <Flex as="ol" direction="column" gap={5} testId="feed">
-            <For each={days()}>
-              {(day) => (
-                <Flex as="li" direction="column" gap={4}>
-                  <Text
-                    as="span"
-                    size={1}
-                    color="lowContrast"
-                    selectable={false}
-                    class={styles.day}
-                    testId="feed-day"
-                  >
-                    <time datetime={new Date(day.day).toISOString()}>
-                      {formatDay(day.day)}
-                    </time>
-                  </Text>
+            <For each={dayKeys()}>
+              {(dayKey) => {
+                const day = () => days().find((it) => it.day === dayKey);
 
-                  <Flex as="ol" direction="column" gap={4}>
-                    <For each={day.runs}>
-                      {(run) => (
-                        <Flex as="li" direction="column" gap={1}>
-                          <Text
-                            as="span"
-                            size={1}
-                            color="lowContrast"
-                            selectable={false}
-                            testId="feed-run"
-                          >
-                            {authorOf(run.author)}
-                            {' · '}
-                            <time
-                              datetime={new Date(run.startedAt).toISOString()}
-                            >
-                              {formatTime(run.startedAt)}
-                            </time>
-                          </Text>
+                return (
+                  <Flex as="li" direction="column" gap={4}>
+                    <Text
+                      as="span"
+                      size={1}
+                      color="lowContrast"
+                      selectable={false}
+                      class={styles.day}
+                      testId="feed-day"
+                    >
+                      <time datetime={new Date(dayKey).toISOString()}>
+                        {formatDay(dayKey)}
+                      </time>
+                    </Text>
 
-                          <Flex as="ol" direction="column" gap={1}>
-                            <For each={run.items}>
-                              {(item) => (
-                                <Flex as="li" direction="column">
-                                  <FeedItem
-                                    groupId={props.groupId}
-                                    item={item}
-                                    mine={item.author === device().id}
-                                  />
-                                </Flex>
-                              )}
-                            </For>
-                          </Flex>
-                        </Flex>
-                      )}
-                    </For>
+                    <Flex as="ol" direction="column" gap={4}>
+                      <For each={runKeys(day())}>
+                        {(runKey) => {
+                          const run = () =>
+                            day()?.runs.find((it) => keyOf(it) === runKey);
+
+                          return (
+                            <Flex as="li" direction="column" gap={1}>
+                              <Text
+                                as="span"
+                                size={1}
+                                color="lowContrast"
+                                selectable={false}
+                                testId="feed-run"
+                              >
+                                {authorOf(run()?.author ?? '')}
+                                {' · '}
+                                <time
+                                  datetime={new Date(
+                                    run()?.startedAt ?? 0,
+                                  ).toISOString()}
+                                >
+                                  {formatTime(run()?.startedAt ?? 0)}
+                                </time>
+                              </Text>
+
+                              <Flex as="ol" direction="column" gap={1}>
+                                <For each={run()?.items.map((it) => it.id)}>
+                                  {(id) => (
+                                    <Show when={byId().get(id)}>
+                                      {(item) => (
+                                        <Flex as="li" direction="column">
+                                          <FeedItem
+                                            groupId={props.groupId}
+                                            item={item()}
+                                            mine={item().author === device().id}
+                                          />
+                                        </Flex>
+                                      )}
+                                    </Show>
+                                  )}
+                                </For>
+                              </Flex>
+                            </Flex>
+                          );
+                        }}
+                      </For>
+                    </Flex>
                   </Flex>
-                </Flex>
-              )}
+                );
+              }}
             </For>
           </Flex>
         </Show>
