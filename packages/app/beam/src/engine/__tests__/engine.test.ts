@@ -1,9 +1,18 @@
 /** Unit tests for the device worker's engine, over a fake lock manager. */
 
-import type { Device } from '@crate/beam';
+import type { Device, Group, Item } from '@crate/beam';
 import { Engine, type EngineDeps, type EngineEvents } from '../engine';
 
 const ID = 'a1b2c3d4e5f6';
+const GROUP = 'aaaa';
+const OTHER = 'bbbb';
+
+const item = (id: string, body: string): Item => ({
+  id,
+  body,
+  author: ID,
+  createdAt: 0,
+});
 
 /** Let every pending microtask and promise chain run. */
 const settle = () => new Promise((resolve) => setTimeout(resolve));
@@ -57,6 +66,11 @@ const createDevice = () => ({
   close: vi.fn(() => Promise.resolve()),
   free: vi.fn(),
   [Symbol.dispose]: vi.fn(),
+  createGroup: vi.fn<Device['createGroup']>(() => Promise.resolve(GROUP)),
+  groups: vi.fn<Device['groups']>(() => Promise.resolve<Group[]>([])),
+  items: vi.fn<Device['items']>(() => Promise.resolve<Item[]>([])),
+  addItem: vi.fn<Device['addItem']>(() => Promise.resolve()),
+  deleteItem: vi.fn<Device['deleteItem']>(() => Promise.resolve()),
 });
 
 const createEvents = () => ({
@@ -64,6 +78,8 @@ const createEvents = () => ({
   heldElsewhere: vi.fn<EngineEvents['heldElsewhere']>(),
   openFailed: vi.fn<EngineEvents['openFailed']>(),
   relayChanged: vi.fn<EngineEvents['relayChanged']>(),
+  groupsChanged: vi.fn<EngineEvents['groupsChanged']>(),
+  feedChanged: vi.fn<EngineEvents['feedChanged']>(),
 });
 
 const setup = (locks = createLocks()) => {
@@ -207,5 +223,116 @@ describe('Engine', () => {
     expect(device.close).toHaveBeenCalledOnce();
     expect(device.free).toHaveBeenCalledOnce();
     expect(locks.isHeld()).toBe(false);
+  });
+
+  it('lists the groups by name once open', async () => {
+    const { engine, events, device } = setup();
+    device.groups.mockResolvedValue([
+      { id: 'b', name: 'Work' },
+      { id: 'a', name: 'Home' },
+    ]);
+
+    engine.open();
+    await settle();
+
+    expect(events.groupsChanged).toHaveBeenCalledWith({
+      groups: [
+        { id: 'a', name: 'Home' },
+        { id: 'b', name: 'Work' },
+      ],
+    });
+  });
+
+  it('pushes the watched group, and again when it changes', async () => {
+    const { engine, events, device, deps } = setup();
+
+    engine.open();
+    await settle();
+
+    device.items.mockResolvedValue([item('1', 'first')]);
+    engine.watch(GROUP);
+    await settle();
+
+    expect(events.feedChanged).toHaveBeenLastCalledWith({
+      groupId: GROUP,
+      items: [item('1', 'first')],
+    });
+
+    device.items.mockResolvedValue([item('1', 'first'), item('2', 'second')]);
+    const onChange = deps.openDevice.mock.calls[0][2];
+    onChange(GROUP);
+    await settle();
+
+    expect(events.feedChanged).toHaveBeenLastCalledWith({
+      groupId: GROUP,
+      items: [item('1', 'first'), item('2', 'second')],
+    });
+  });
+
+  it('says nothing about a group nobody is watching', async () => {
+    const { engine, events, deps } = setup();
+
+    engine.open();
+    await settle();
+    engine.watch(GROUP);
+    await settle();
+    events.feedChanged.mockClear();
+    events.groupsChanged.mockClear();
+
+    const onChange = deps.openDevice.mock.calls[0][2];
+    onChange(OTHER);
+    await settle();
+
+    expect(events.feedChanged).not.toHaveBeenCalled();
+
+    // The list is still read again: the change may be the group's name.
+    expect(events.groupsChanged).toHaveBeenCalledOnce();
+  });
+
+  it('pushes a group watched before the device opened', async () => {
+    const { engine, events, device } = setup();
+    device.items.mockResolvedValue([item('1', 'first')]);
+
+    engine.watch(GROUP);
+    engine.open();
+    await settle();
+
+    expect(events.feedChanged).toHaveBeenCalledWith({
+      groupId: GROUP,
+      items: [item('1', 'first')],
+    });
+  });
+
+  it('drops a read the page has moved on from', async () => {
+    const { engine, events, device } = setup();
+    const reading = Promise.withResolvers<Item[]>();
+
+    engine.open();
+    await settle();
+
+    device.items.mockReturnValueOnce(reading.promise);
+    engine.watch(GROUP);
+    engine.watch(OTHER);
+    reading.resolve([item('1', 'stale')]);
+    await settle();
+
+    expect(events.feedChanged).not.toHaveBeenCalledWith(
+      expect.objectContaining({ groupId: GROUP }),
+    );
+  });
+
+  it('hands writes to the device', async () => {
+    const { engine, device } = setup();
+
+    engine.open();
+    await settle();
+
+    await expect(engine.createGroup('Home')).resolves.toBe(GROUP);
+    await engine.addItem(GROUP, 'hello');
+    await engine.deleteItem(GROUP, '1');
+
+    expect(device.createGroup).toHaveBeenCalledWith('Home');
+    expect(device.addItem).toHaveBeenCalledWith(GROUP, 'hello');
+    expect(device.deleteItem).toHaveBeenCalledWith(GROUP, '1');
   });
 });

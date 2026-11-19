@@ -6,6 +6,36 @@
  * with the `#[wasm_bindgen]` surface under `src/`.
  */
 
+/** A group this device holds. */
+export interface Group {
+  /** The group's id, as a hex string. Names it on every device. */
+  id: string;
+
+  /**
+   * What its members call it. Empty for a group this device can't read, or
+   * one whose founding hasn't reached it yet.
+   */
+  name: string;
+}
+
+/** Something shared to a group. */
+export interface Item {
+  /**
+   * The item's id within its group, as a hex string. Ids sort in the order
+   * items were written.
+   */
+  id: string;
+
+  /** What was shared: a note or a link, as plain text. */
+  body: string;
+
+  /** The id of the device that wrote it, as that device says. */
+  author: string;
+
+  /** When it was written, by its author's clock. Epoch milliseconds. */
+  createdAt: number;
+}
+
 /**
  * This device, open: its database over the browser's store, and an endpoint
  * on the network bound under the database's key.
@@ -27,6 +57,33 @@ export interface Device extends Disposable {
    */
   close(): Promise<void>;
 
+  /**
+   * Found a sealed group called `name` with this device as its only member,
+   * resolving with the group's id.
+   */
+  createGroup(name: string): Promise<string>;
+
+  /** Every group this device holds, in id order. */
+  groups(): Promise<Group[]>;
+
+  /**
+   * Everything shared to `group`, oldest first. Reads what this device
+   * knows right now, its own unsynced writes included.
+   */
+  items(group: string): Promise<Item[]>;
+
+  /**
+   * Share `body` to `group`. It shows here at once, and reaches the group's
+   * other devices as they're reachable.
+   */
+  addItem(group: string, body: string): Promise<void>;
+
+  /**
+   * Delete `item` from `group`, for every device. Deleting one that's
+   * already gone does nothing.
+   */
+  deleteItem(group: string, item: string): Promise<void>;
+
   /** Release the wasm object. Reaching for it afterwards throws. */
   free(): void;
 }
@@ -39,7 +96,9 @@ export const Device: {
    *
    * Doesn't wait for the network: what the device holds is usable offline.
    * `onRelayChange` is called with the home relay's URL whenever one
-   * connects, and with `undefined` when none is.
+   * connects, and with `undefined` when none is. `onChange` is called with
+   * a group's id whenever something in that group may read differently:
+   * read it again.
    *
    * Rejects if the browser won't open the store, if another tab or worker
    * already has it open, or if the endpoint can't bind. {@link init} must
@@ -48,6 +107,7 @@ export const Device: {
   open(
     store: string,
     onRelayChange: (homeRelay: string | undefined) => void,
+    onChange: (group: string) => void,
   ): Promise<Device>;
 };
 

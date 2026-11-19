@@ -38,6 +38,31 @@ export default defineConfig({
       serviceWorker: {
         path: 'src/service-worker/index.ts',
       },
+      nitro: (config) => {
+        // One shell for every `/group/:id`, which the crawler can't reach
+        // from `/`. Groups exist only in the client's database, and the
+        // page's first paint is independent of which one it is.
+        // See `docs/dynamic-prerendered-shells.md`.
+        config.prerender.routes = ['/group/[id]'];
+        config.hooks = {
+          'prerender:generate'(route) {
+            // Move the shell under `/_dynamic/`, so the rewrite target
+            // can't match its source and Cloudflare's loop check doesn't
+            // reject the rule.
+            if (route.route === '/group/[id]') {
+              route.fileName = '/_dynamic/group/[id].html';
+            }
+          },
+        };
+      },
+      redirects: {
+        rules: [
+          // Serve the group shell for every group id. A 200 rewrite keeps
+          // the id in the URL for the client router. The target is
+          // extensionless, percent-encoded, and can't match its source.
+          ['/group/:id', encodeURI('/_dynamic/group/[id]'), 200],
+        ],
+      },
     }),
   ],
 });

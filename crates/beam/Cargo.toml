@@ -43,6 +43,11 @@ iroh = { version = "1", default-features = false, features = ["tls-ring"] }
 # Woodland takes its randomness from the application: a device secret,
 # seeds, nonces. On wasm that comes from the JS crypto API.
 getrandom = { version = "0.4", features = ["wasm_js"] }
+# What the host reads comes back as plain JS objects.
+# `serde-wasm-bindgen` serializes straight to a JS value, so nothing
+# round-trips through a JSON string.
+serde = { version = "1", features = ["derive"] }
+serde-wasm-bindgen = "0.6"
 # An exported `async fn` lowers to a JS Promise via this crate.
 wasm-bindgen-futures = "0.4"
 # Handlers arrive as `js_sys::Function`.
@@ -50,3 +55,6 @@ js-sys = "0.3"
 # Background tasks whose handles abort on drop; `n0-future` (iroh's own
 # task runtime) provides both on wasm.
 n0-future = "0.3"
+# The async lock that makes the database take one step at a time. Already
+# in the tree by way of iroh; only `sync` is asked of it.
+tokio = { version = "1", default-features = false, features = ["sync"] }

@@ -1,30 +1,16 @@
-import { useClientValue } from '@lib/effects/solid';
-import { Frame, FrameBody, SiteHeader } from '@lib/shell';
-import { Container } from '@lib/ui';
-import { DeviceStatus } from '../components/device-status';
-import { DeviceUnavailable } from '../components/device-unavailable';
-import { $openDevice } from '../effects';
+import { Flex } from '@lib/ui';
+import { BeamFrame } from '../components/beam-frame';
+import { GroupList } from '../components/group-list';
+import { NewGroupForm } from '../components/new-group-form';
 
-/**
- * Beam home at `/`.
- *
- * Holding the device is the only lifecycle wiring here. Neither the worker
- * nor IndexedDB can run during SSG, so it opens once the client mounts.
- */
-const BeamHome = () => {
-  useClientValue($openDevice);
-
-  return (
-    <Frame>
-      <SiteHeader actions={<DeviceStatus />} />
-
-      <FrameBody>
-        <Container as="div" size={1}>
-          <DeviceUnavailable />
-        </Container>
-      </FrameBody>
-    </Frame>
-  );
-};
+/** Beam home at `/`: the groups this device holds, and a way to start one. */
+const BeamHome = () => (
+  <BeamFrame>
+    <Flex as="div" direction="column" gap={5}>
+      <GroupList />
+      <NewGroupForm />
+    </Flex>
+  </BeamFrame>
+);
 
 export default BeamHome;

@@ -13,7 +13,7 @@ export const DeviceUnavailable = () => {
   return (
     <Switch>
       <Match when={device().status === 'elsewhere'}>
-        <Callout data-testid="device-elsewhere" color="neutral">
+        <Callout testId="device-elsewhere" color="neutral">
           <Text as="p" selectable>
             Beam is open in another tab. This one takes over when that tab
             closes.
@@ -22,7 +22,7 @@ export const DeviceUnavailable = () => {
       </Match>
 
       <Match when={device().status === 'failed'}>
-        <Callout data-testid="device-failed" color="danger">
+        <Callout testId="device-failed" color="danger">
           <Text as="p" selectable>
             Beam couldn't open its storage on this device. Reload to try again.
           </Text>

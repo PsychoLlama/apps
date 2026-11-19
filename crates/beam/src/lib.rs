@@ -16,6 +16,13 @@ use wasm_bindgen::prelude::*;
 // target-gated dependencies in Cargo.toml.
 #[cfg(target_arch = "wasm32")]
 mod device;
+#[cfg(target_arch = "wasm32")]
+mod schema;
+
+// Stands clear of the browser, and so is exercised by the native tests.
+// Off the wasm target nothing but those tests uses it.
+#[cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
+mod hex;
 
 #[cfg(target_arch = "wasm32")]
 pub use device::Device;

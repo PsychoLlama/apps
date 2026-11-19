@@ -13,6 +13,21 @@ const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 /** The page's hold on the device worker. */
 export interface DeviceConnection {
+  /** Found a group called `name`, resolving with its id. */
+  createGroup(name: string): Promise<string>;
+
+  /** Share `body` to a group. */
+  addItem(groupId: string, body: string): Promise<void>;
+
+  /** Delete an item from a group, for every device. */
+  deleteItem(groupId: string, itemId: string): Promise<void>;
+
+  /**
+   * Point the feed at a group, or at nothing. Its items arrive on the
+   * feed's `feedChanged`, now and whenever they change.
+   */
+  watch(groupId: string | null): void;
+
   /**
    * Close the device and let the worker end. The worker leaves the network
    * and releases the store on its own time; a successor queues behind it.
@@ -55,6 +70,19 @@ export const connectDevice = (feed: EngineEvents): DeviceConnection => {
   });
 
   return {
+    createGroup: (name) => rpc.request('createGroup', { name }),
+    addItem: (groupId, body) => rpc.request('addItem', { groupId, body }),
+    deleteItem: (groupId, itemId) =>
+      rpc.request('deleteItem', { groupId, itemId }),
+
+    watch(groupId) {
+      void rpc.notify('watch', { groupId }).catch((error: unknown) => {
+        logger.warn('Could not reach the device worker.', {
+          error: toError(error),
+        });
+      });
+    },
+
     release() {
       // The worker ends itself once the device has closed. Terminating it
       // from here would cut the close short, and peers would wait out a

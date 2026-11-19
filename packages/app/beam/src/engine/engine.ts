@@ -1,4 +1,5 @@
-import type { Device } from '@crate/beam';
+import type { Device, Group, Item } from '@crate/beam';
+import { assert } from '@lib/assert';
 import { createLogger, toError } from '@lib/observability';
 
 /**
@@ -37,6 +38,15 @@ export interface EngineEvents {
 
   /** The relay carrying this device changed, or went away. */
   relayChanged(change: { homeRelay: string | null }): void;
+
+  /** The groups this device holds, whole, by name. Sent on open too. */
+  groupsChanged(change: { groups: Group[] }): void;
+
+  /**
+   * Everything in the watched group, whole, oldest first. Sent when the
+   * watch starts and whenever the group changes under it.
+   */
+  feedChanged(change: { groupId: string; items: Item[] }): void;
 }
 
 /** What the engine needs from its surroundings, so a test can stand in. */
@@ -51,6 +61,7 @@ export interface EngineDeps {
   openDevice(
     store: string,
     onRelayChange: (homeRelay: string | undefined) => void,
+    onChange: (group: string) => void,
   ): Promise<Device>;
 }
 
@@ -68,6 +79,12 @@ export class Engine {
 
   /** Lets the lock go. Set while it's held. */
   #release: (() => void) | undefined;
+
+  /**
+   * The group the page is looking at, if any. Only its feed is pushed:
+   * the page has nowhere to put the others.
+   */
+  #watched: string | null = null;
 
   constructor(deps: EngineDeps, events: EngineEvents) {
     this.#deps = deps;
@@ -128,6 +145,75 @@ export class Engine {
   }
 
   /**
+   * Point the feed at `groupId`, or at nothing. Its items are pushed now,
+   * if the device is open, and again whenever they change.
+   *
+   * May be called before the device opens: the feed follows the open.
+   */
+  watch(groupId: string | null): void {
+    this.#watched = groupId;
+    if (groupId !== null) void this.#pushFeed(groupId);
+  }
+
+  /** Found a group called `name`, resolving with its id. */
+  createGroup(name: string): Promise<string> {
+    return this.#open().createGroup(name);
+  }
+
+  /** Share `body` to a group. */
+  addItem(groupId: string, body: string): Promise<void> {
+    return this.#open().addItem(groupId, body);
+  }
+
+  /** Delete an item from a group, for every device. */
+  deleteItem(groupId: string, itemId: string): Promise<void> {
+    return this.#open().deleteItem(groupId, itemId);
+  }
+
+  /** The open device. The page only offers these once it has opened. */
+  #open(): Device {
+    assert(this.#device, 'The device is not open.');
+    return this.#device;
+  }
+
+  /** Send the page the list of groups, by name. */
+  async #pushGroups(): Promise<void> {
+    try {
+      const groups = await this.#device?.groups();
+      if (!groups) return;
+
+      // By name, as people look for them. The id breaks ties, so two
+      // groups with one name don't trade places between reads.
+      groups.sort(
+        (left, right) =>
+          left.name.localeCompare(right.name) || (left.id < right.id ? -1 : 1),
+      );
+      this.#events.groupsChanged({ groups });
+    } catch (error) {
+      logger.error('Failed to read the groups.', { error: toError(error) });
+    }
+  }
+
+  /** Send the page a group's items, if it's still the one being watched. */
+  async #pushFeed(groupId: string): Promise<void> {
+    if (this.#watched !== groupId) return;
+
+    try {
+      const items = await this.#device?.items(groupId);
+
+      // The page may have moved on while the read was out.
+      if (!items || this.#watched !== groupId) return;
+
+      this.#events.feedChanged({ groupId, items });
+    } catch (error) {
+      logger.error('Failed to read a group.', {
+        groupId,
+        error: toError(error),
+      });
+    }
+  }
+
+  /**
    * Hold the lock until released, opening the device under it. Called by
    * the lock manager once the claim is granted.
    */
@@ -142,9 +228,19 @@ export class Engine {
     try {
       await this.#deps.init();
 
-      const device = await this.#deps.openDevice(STORE, (homeRelay) => {
-        this.#events.relayChanged({ homeRelay: homeRelay ?? null });
-      });
+      const device = await this.#deps.openDevice(
+        STORE,
+        (homeRelay) => {
+          this.#events.relayChanged({ homeRelay: homeRelay ?? null });
+        },
+
+        // A change says where to look, not what's there. Both views that
+        // could show it are read again and sent whole.
+        (groupId) => {
+          void this.#pushGroups();
+          void this.#pushFeed(groupId);
+        },
+      );
 
       // Closed while the store was opening. Nothing was told the device
       // exists, so it goes back the way `close` would have sent it.
@@ -158,6 +254,9 @@ export class Engine {
       this.#device = device;
       logger.debug('Device opened.', { deviceId: device.id });
       this.#events.opened({ deviceId: device.id });
+
+      void this.#pushGroups();
+      if (this.#watched !== null) void this.#pushFeed(this.#watched);
     } catch (error) {
       const failure = toError(error);
       logger.error('Failed to open the device.', { error: failure });

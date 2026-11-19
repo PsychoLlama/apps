@@ -28,7 +28,7 @@ export const DeviceStatus = () => {
             <Badge
               {...trigger}
               tabIndex={0}
-              data-testid="device-status"
+              testId="device-status"
               color={isOnline(device()) ? 'success' : 'neutral'}
             >
               {isOnline(device()) ? 'Online' : 'Offline'}

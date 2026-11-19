@@ -10,7 +10,8 @@ import init, { Device } from '@crate/beam';
 /** A store no other test has had. */
 const storeName = () => `beam-test-${crypto.randomUUID()}`;
 
-const open = (store: string) => Device.open(store, () => {});
+const open = (store: string, onChange: (group: string) => void = () => {}) =>
+  Device.open(store, () => {}, onChange);
 
 beforeAll(async () => {
   await init();
@@ -57,6 +58,111 @@ describe('Device', () => {
     const device = await open(store);
 
     await expect(open(store)).rejects.toThrow();
+
+    await device.close();
+    device.free();
+  });
+
+  it('founds a group and lists it by name', async () => {
+    const device = await open(storeName());
+
+    const id = await device.createGroup('My devices');
+
+    expect(id).toMatch(/^[0-9a-f]{64}$/);
+    expect(await device.groups()).toEqual([{ id, name: 'My devices' }]);
+    expect(await device.items(id)).toEqual([]);
+
+    await device.close();
+    device.free();
+  });
+
+  it('shares items oldest first, under this device as author', async () => {
+    const device = await open(storeName());
+    const group = await device.createGroup('Notes');
+
+    await device.addItem(group, 'first');
+    await device.addItem(group, 'https://example.com/second');
+
+    const items = await device.items(group);
+
+    expect(items.map((item) => item.body)).toEqual([
+      'first',
+      'https://example.com/second',
+    ]);
+
+    expect(items[0]).toMatchObject({ author: device.id });
+    expect(items[0]?.createdAt).toBeGreaterThan(Date.now() - 60_000);
+
+    await device.close();
+    device.free();
+  });
+
+  it('deletes an item, and shrugs at one already gone', async () => {
+    const device = await open(storeName());
+    const group = await device.createGroup('Notes');
+
+    await device.addItem(group, 'keep');
+    await device.addItem(group, 'drop');
+
+    const drop = (await device.items(group))[1];
+    assert(drop);
+    await device.deleteItem(group, drop.id);
+    await device.deleteItem(group, drop.id);
+
+    const items = await device.items(group);
+    expect(items.map((item) => item.body)).toEqual(['keep']);
+
+    await device.close();
+    device.free();
+  });
+
+  it('says which group changed', async () => {
+    const changes: string[] = [];
+    const device = await open(storeName(), (group) => changes.push(group));
+
+    const group = await device.createGroup('Notes');
+    expect(changes).toContain(group);
+
+    changes.length = 0;
+    await device.addItem(group, 'hello');
+    expect(changes).toEqual([group]);
+
+    await device.close();
+    device.free();
+  });
+
+  it('keeps groups and items across a close and reopen', async () => {
+    const store = storeName();
+
+    const first = await open(store);
+    const group = await first.createGroup('Notes');
+    await first.addItem(group, 'still here');
+    await first.close();
+    first.free();
+
+    const second = await open(store);
+
+    expect(await second.groups()).toEqual([{ id: group, name: 'Notes' }]);
+    expect((await second.items(group)).map((item) => item.body)).toEqual([
+      'still here',
+    ]);
+
+    await second.close();
+    second.free();
+  });
+
+  it('keeps separate groups separate', async () => {
+    const device = await open(storeName());
+    const mine = await device.createGroup('Mine');
+    const shared = await device.createGroup('Shared');
+
+    await device.addItem(mine, 'private');
+
+    expect(await device.items(shared)).toEqual([]);
+    expect((await device.groups()).map((group) => group.name).sort()).toEqual([
+      'Mine',
+      'Shared',
+    ]);
 
     await device.close();
     device.free();

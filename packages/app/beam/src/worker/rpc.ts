@@ -10,12 +10,33 @@ import type { Engine } from '../engine/engine';
  */
 export const createEngineApi = (engine: Engine, exit: () => void) =>
   defineContract<SendOptions>()({
+    requests: {
+      /** Found a group called `name`, resolving with its id. */
+      createGroup: (input: { name: string }): Promise<string> =>
+        engine.createGroup(input.name),
+
+      /** Share `body` to a group. */
+      addItem: (input: { groupId: string; body: string }): Promise<void> =>
+        engine.addItem(input.groupId, input.body),
+
+      /** Delete an item from a group, for every device. */
+      deleteItem: (input: { groupId: string; itemId: string }): Promise<void> =>
+        engine.deleteItem(input.groupId, input.itemId),
+    },
+
     events: {
       /**
        * Claim the device and open it. An event, since the outcome arrives
        * as news: opening may wait on another tab indefinitely.
        */
       open: (): void => engine.open(),
+
+      /**
+       * Point the feed at a group, or at nothing. Its items arrive as
+       * `feedChanged`, now and whenever they change.
+       */
+      watch: (input: { groupId: string | null }): void =>
+        engine.watch(input.groupId),
 
       /**
        * Close the device and end the worker. An event because the caller

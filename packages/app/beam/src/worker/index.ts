@@ -46,13 +46,16 @@ const engine = new Engine(
   {
     locks: navigator.locks,
     init: () => init(),
-    openDevice: (store, onRelayChange) => Device.open(store, onRelayChange),
+    openDevice: (store, onRelayChange, onChange) =>
+      Device.open(store, onRelayChange, onChange),
   },
   {
     opened: (device) => announce('opened', device),
     heldElsewhere: () => announce('heldElsewhere'),
     openFailed: (failure) => announce('openFailed', failure),
     relayChanged: (change) => announce('relayChanged', change),
+    groupsChanged: (change) => announce('groupsChanged', change),
+    feedChanged: (change) => announce('feedChanged', change),
   },
 );
 
