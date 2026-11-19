@@ -27,6 +27,7 @@
     "deploy:preview": "rm -f .wrangler/deploy/preview.ndjson && WRANGLER_OUTPUT_FILE_PATH=.wrangler/deploy/preview.ndjson wrangler versions upload --preview-alias \"pr-${PR_NUMBER:?}\""
   },
   "dependencies": {
+    "@crate/beam": "workspace:*",
     "@crate/qr-code": "workspace:*",
     "@lib/assert": "workspace:*",
     "@lib/design": "workspace:*",

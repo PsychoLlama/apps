@@ -1,0 +1,1 @@
+export { $openDevice } from './device';
