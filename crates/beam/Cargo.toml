@@ -31,7 +31,7 @@ console_error_panic_hook = { version = "0.1", optional = true }
 # The database: groups, tables, blobs, and sync between devices. Not
 # published as a crate, so pinned to a commit. `browser` is the IndexedDB
 # store; `blobs` keeps file bytes, not just references to them.
-woodland = { git = "https://github.com/Ambient-Computer/woodland", rev = "9b945b59b24082f990173915bf311b6ed0eaec6f", features = [
+woodland = { git = "https://github.com/Ambient-Computer/woodland", rev = "cfb2d6ddf426552a9eba78be3717a0aece13543c", features = [
   "browser",
   "blobs",
 ] }
