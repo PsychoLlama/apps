@@ -219,11 +219,6 @@ export interface Device extends Disposable {
    * Use another device's invitation, resolving with the group's id. Needs
    * the inviting device reachable right now. Rejects if the code isn't
    * one, was this device's own, has expired, or was already used.
-   *
-   * Rejects with the message `left-behind` if this device was still in a
-   * group the invitation's group replaced. It has left that group by
-   * then, and the invitation is unspent: open the device again, and use
-   * the invitation again.
    */
   join(code: string): Promise<string>;
 

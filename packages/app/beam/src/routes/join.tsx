@@ -1,5 +1,5 @@
 import { createEffect, on, Show } from 'solid-js';
-import { useNavigate } from '@solidjs/router';
+import { useLocation, useNavigate } from '@solidjs/router';
 import { useAction, useValue } from '@lib/effects/solid';
 import { Callout, Flex, Link, Text } from '@lib/ui';
 import { BeamFrame } from '../components/beam-frame';
@@ -18,6 +18,7 @@ import { $device, inviteCodeOf } from '../state';
  */
 const BeamJoin = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const device = useValue($device);
   const joinGroup = useAction($joinGroup);
 
@@ -27,7 +28,9 @@ const BeamJoin = () => {
     on(
       () => device().status === 'open',
       (open) => {
-        if (open) joinGroup(inviteCodeOf(window.location.hash) ?? '');
+        // The router's word for where this is, and not the window's: on
+        // a move within the app the address bar follows the page.
+        if (open) joinGroup(inviteCodeOf(location.hash) ?? '');
       },
     ),
   );
@@ -39,15 +42,6 @@ const BeamJoin = () => {
     if (result && 'groupId' in result) {
       navigate(`/group/${result.groupId}`, { replace: true });
     }
-  });
-
-  // The device had to leave the group this one replaced, and only a
-  // device opened afresh can go on from there. The invitation is unspent,
-  // so loading the link again is the whole of it. Once: the second time
-  // round there's nothing left to leave.
-  createEffect(() => {
-    const result = joinGroup.latest;
-    if (result && 'restart' in result) window.location.reload();
   });
 
   const failure = () => {

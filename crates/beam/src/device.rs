@@ -498,10 +498,6 @@ impl Device {
 
     /// Use another device's invitation, resolving with the group's id.
     ///
-    /// Rejects with `left-behind` if this device was still in a group the
-    /// invitation's group replaced. It has left that group by then, and
-    /// the invitation is unspent: open the device again and use it again.
-    ///
     /// Needs the inviting device reachable right now. This device holds
     /// the group at once; it can read and write it when the group gives it
     /// a role, which the group list's `member` reports.

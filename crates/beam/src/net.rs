@@ -25,7 +25,7 @@ use tokio::sync::{Notify, mpsc};
 use wasm_bindgen::prelude::*;
 use woodland::{GroupId, SealingKey, VerifyingKey};
 
-use crate::core::{Core, Db, PeerId, Token, warn};
+use crate::core::{Core, PeerId, Token, warn};
 
 /// The ALPN the database is carried on. Versioned so a future format can
 /// land without a device on the old one mistaking it for something it
@@ -50,27 +50,12 @@ const MOST_MESSAGE: usize = 16 * 1024 * 1024;
 /// Largest invitation taken. It carries the group's chain of checkpoints.
 const MOST_INVITATION: usize = 16 * 1024 * 1024;
 
-/// The most groups an invitation names as the ones its group carried on
-/// from. A group is started over rarely; a line this long is nonsense.
-const MOST_ANCESTORS: usize = 32;
-
-/// What [`join`] rejects with when this device had to leave a group the
-/// invitation's group replaced. It's out now, and the invitation is
-/// unspent: open the device afresh and use it again.
-pub(crate) const LEFT_BEHIND: &str = "left-behind";
-
-/// How long a joiner waits to be let out of a group the one it's joining
-/// carried on from, and how often it looks.
-const DEPARTING: Duration = Duration::from_secs(45);
-const DEPARTING_STEP: Duration = Duration::from_millis(250);
-
-/// What a device says first on the link protocol: which of the two
-/// things it's asking.
+/// What a device says first on the link protocol: what it's asking.
 ///
-/// Asking what a group carried on from is apart from joining it, and
-/// comes first, because the answer changes what the joiner has to do
-/// before it joins, and the inviter starts letting it in the moment it
-/// asks to be.
+/// A device used to ask first what a group carried on from, and leave
+/// that group before joining. It doesn't need to, and no longer asks. The
+/// question is still answered, with "nothing", for a device running the
+/// build that does.
 const ASK_LINEAGE: u8 = 0;
 const ASK_TO_JOIN: u8 = 1;
 
@@ -424,32 +409,13 @@ pub(crate) async fn join(core: &Core, inviter: PeerId, token: Token) -> Result<G
     let id = EndpointId::from_bytes(&inviter).map_err(to_js)?;
     let refused = || JsError::new("the invitation has expired or was already used");
 
-    // First, the groups this one carried on from. Nothing is spent yet.
-    let lineage = ask(core, id, &[&[ASK_LINEAGE], &token[..]]).await?;
-    let Some((&count, ancestors)) = lineage.split_first() else {
-        return Err(refused());
-    };
-
-    if ancestors.len() != usize::from(count) * 32 {
-        return Err(JsError::new("the invitation couldn't be read"));
-    }
-
-    let (ancestors, _) = ancestors.as_chunks::<32>();
-    let ancestors = ancestors.iter().copied().map(GroupId::from_bytes);
-    let ancestors: Vec<GroupId> = ancestors.collect();
-
-    if leave_behind(core, &ancestors).await? {
-        return Err(JsError::new(LEFT_BEHIND));
-    }
-
     let sealing = {
         let database = core.database.lock().await;
         let database = database.as_ref().ok_or_else(closed)?;
         database.sealing_key().to_bytes()
     };
 
-    // Then the invitation itself. Nothing back is the inviter saying no,
-    // without saying why.
+    // Nothing back is the inviter saying no, without saying why.
     let invitation = ask(core, id, &[&[ASK_TO_JOIN], &token[..], &sealing[..]]).await?;
     if invitation.is_empty() {
         return Err(refused());
@@ -505,67 +471,6 @@ async fn ask(core: &Core, peer: EndpointId, request: &[&[u8]]) -> Result<Vec<u8>
     answer.map_err(to_js)
 }
 
-/// Leave whichever of `ancestors` this device still holds, and wait to be
-/// let go. Resolves with whether there were any.
-///
-/// A device that holds a group can't usefully join the one that carried on
-/// from it: it joins, and reads nothing. Leaving the old group first, and
-/// then starting again from a fresh open, is what works. So the old group
-/// goes here, and the caller is told to start over rather than carry on.
-/// Nothing of the invitation has been spent by then.
-///
-/// The inviter is in both groups and is on the line, which is usually
-/// everyone the old group needs to agree to let this device go.
-async fn leave_behind(core: &Core, ancestors: &[GroupId]) -> Result<bool, JsError> {
-    let held = |database: &Db| {
-        let held: Vec<GroupId> = database.groups().collect();
-        ancestors
-            .iter()
-            .copied()
-            .filter(move |it| held.contains(it))
-    };
-
-    {
-        let mut database = core.database.lock().await;
-        let database = database.as_mut().ok_or_else(closed)?;
-        let leaving: Vec<GroupId> = held(database).collect();
-        if leaving.is_empty() {
-            return Ok(false);
-        }
-
-        for group in leaving {
-            // One that can't be left is waited out like one that's slow.
-            if let Err(error) = core.depart(database, group).await {
-                warn(&format!("beam: couldn't leave a group behind: {error}"));
-            }
-        }
-
-        core.membership.notify_one();
-    }
-
-    let mut waited = Duration::ZERO;
-    while waited < DEPARTING {
-        sleep(DEPARTING_STEP).await;
-        waited += DEPARTING_STEP;
-
-        let mut database = core.database.lock().await;
-        let database = database.as_mut().ok_or_else(closed)?;
-        if held(database).next().is_none() {
-            return Ok(true);
-        }
-
-        // Leaving is carried by a checkpoint, and this is what attempts
-        // one. Nothing else here is in a hurry.
-        if let Err(error) = core.tick(database).await {
-            warn(&format!("beam: a tick failed: {error}"));
-        }
-    }
-
-    Err(JsError::new(
-        "this device is still leaving the group this one replaced, so try again in a moment",
-    ))
-}
-
 /// Answer a device asking to be let in: check it was handed an invitation,
 /// give it what it needs to hold the group, and ask the group to give it a
 /// role.
@@ -584,28 +489,9 @@ async fn admit(core: &Core, connection: &Connection) -> Result<(), String> {
     };
 
     if kind == ASK_LINEAGE {
-        let invited = core.invited(token);
-        if let Some(group) = invited {
-            let database = core.database.lock().await;
-            let database = database.as_ref().ok_or("the device is closed")?;
-
-            // Every group this one carried on from, nearest first.
-            let mut ancestors = Vec::new();
-            let mut at = group;
-            while let Some(before) = database.succeeds(at)
-                && ancestors.len() < MOST_ANCESTORS
-            {
-                ancestors.extend_from_slice(before.as_bytes());
-                at = before;
-            }
-
-            #[expect(
-                clippy::cast_possible_truncation,
-                reason = "bounded by MOST_ANCESTORS, which fits a byte"
-            )]
-            let count = [(ancestors.len() / 32) as u8];
-            send.write_all(&count).await.map_err(text)?;
-            send.write_all(&ancestors).await.map_err(text)?;
+        // No groups to leave first, said the way it always was: a count.
+        if core.invited(token).is_some() {
+            send.write_all(&[0]).await.map_err(text)?;
         }
 
         send.finish().map_err(text)?;

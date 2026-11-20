@@ -19,22 +19,9 @@ export const $openInvite = collect(
   },
 );
 
-/**
- * What the device rejects a join with when it first had to leave a group
- * the invitation's group replaced. It's out, and the invitation is
- * unspent.
- */
-const LEFT_BEHIND = 'left-behind';
-
-/**
- * How using an invitation went. `restart` means the device had to leave
- * an older group first, and has: the invitation still works, from a
- * device opened afresh.
- */
+/** How using an invitation went. */
 export type JoinResult =
-  | { readonly groupId: string }
-  | { readonly reason: string }
-  | { readonly restart: true };
+  { readonly groupId: string } | { readonly reason: string };
 
 /**
  * Use another device's invitation. Resolves either way: an invitation that
@@ -47,8 +34,7 @@ export const $joinGroup = pipe([
       try {
         return { groupId: await connection.join(code) };
       } catch (error) {
-        const reason = toError(error).message;
-        return reason === LEFT_BEHIND ? { restart: true } : { reason };
+        return { reason: toError(error).message };
       }
     },
 ]);
