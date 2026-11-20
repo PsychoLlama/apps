@@ -14,9 +14,9 @@ use iroh::{SecretKey, Watcher};
 use n0_future::StreamExt;
 use n0_future::task::{AbortOnDropHandle, spawn};
 use wasm_bindgen::prelude::*;
-use woodland::{GroupId, ImportId, Transaction};
+use woodland::{GroupId, ImportId, StoreFault, Transaction};
 
-use crate::core::{Core, Db, PeerId, Token, has_role, open_database};
+use crate::core::{Core, Db, OpenError, PeerId, Token, has_role, open_database};
 use crate::hex;
 use crate::net;
 use crate::schema::{Group, Member, Schema, Standing, item_key};
@@ -52,15 +52,18 @@ impl Device {
     /// again. All are given here rather than registered afterwards so
     /// nothing happens unheard.
     ///
-    /// Rejects if the browser won't open the store, if another tab or
-    /// worker already has it open, or if the endpoint can't bind.
+    /// Rejects if the browser won't open the store, or if the endpoint
+    /// can't bind. Two refusals are named, so the host can tell them from
+    /// a store that's broken: the error's `name` is `StoreBusy` if another
+    /// tab or worker has the store open, and `StoreMismatched` if what's
+    /// kept under that name isn't a store this can open.
     pub async fn open(
         store: String,
         on_relay_change: js_sys::Function,
         on_change: js_sys::Function,
         on_fault: js_sys::Function,
-    ) -> Result<Device, JsError> {
-        let (mut database, steps) = open_database(&store).await.map_err(to_js)?;
+    ) -> Result<Device, JsValue> {
+        let (mut database, steps) = open_database(&store).await.map_err(refused)?;
 
         let endpoint = iroh::Endpoint::builder(presets::N0)
             .secret_key(SecretKey::from_bytes(&database.device_secret()))
@@ -616,6 +619,19 @@ fn random<const N: usize>() -> Result<[u8; N], JsError> {
 /// What a call on a closed device rejects with.
 fn closed() -> JsError {
     JsError::new("the device is closed")
+}
+
+/// A failed open as the host sees it: a JS `Error` carrying the reason,
+/// named for what the store said was wrong when it said.
+fn refused(error: OpenError) -> JsValue {
+    let refusal = js_sys::Error::new(&error.reason);
+    match error.fault {
+        Some(StoreFault::Busy) => refusal.set_name("StoreBusy"),
+        Some(StoreFault::Mismatched) => refusal.set_name("StoreMismatched"),
+        _ => {}
+    }
+
+    refusal.into()
 }
 
 /// An error as the host sees it: a JS `Error` carrying the message.

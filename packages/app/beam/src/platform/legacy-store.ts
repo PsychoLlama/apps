@@ -1,34 +1,26 @@
 /**
- * The version woodland opens its IndexedDB database at. Anything newer
- * under the same name was put there by something else.
+ * The object stores an earlier Beam kept, in an IndexedDB database of its
+ * own. Either one says whose database it is.
  */
-const CURRENT_VERSION = 1;
+const LEGACY_STORES = ['contacts', 'onboarding'];
 
 /**
- * Delete the database an earlier Beam left under `name`, if there is one.
- *
- * That Beam kept its own IndexedDB database under the name the device's
- * store has now, at a higher version. A browser won't open a database at a
- * version lower than the one it holds, so until the old one is gone the
- * store can't be opened at all. Nothing in it is read any more.
- *
- * A database at the current version is the device's own and is left alone.
- * Call this before opening the store, and under whatever keeps a second
- * tab off it.
+ * What an open rejects with when what's kept under the store's name isn't
+ * a store it can open. See `Device.open` in `@crate/beam`.
  */
-export const clearLegacyStore = async (
-  name: string,
-  factory: IDBFactory = indexedDB,
-): Promise<void> => {
-  const databases = await factory.databases();
-  const legacy = databases.some(
-    (database) =>
-      database.name === name && (database.version ?? 0) > CURRENT_VERSION,
-  );
+const MISMATCHED = 'StoreMismatched';
 
-  if (!legacy) return;
+/** The database called `name`, as it is, with no upgrade. */
+const openAsIs = (name: string, factory: IDBFactory): Promise<IDBDatabase> =>
+  new Promise((resolve, reject) => {
+    const request = factory.open(name);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () =>
+      reject(request.error ?? new Error('Could not open the old database.'));
+  });
 
-  await new Promise<void>((resolve, reject) => {
+const deleteDatabase = (name: string, factory: IDBFactory): Promise<void> =>
+  new Promise((resolve, reject) => {
     // If an old tab still has it open the request waits for that tab to
     // close, and so does this.
     const request = factory.deleteDatabase(name);
@@ -36,4 +28,54 @@ export const clearLegacyStore = async (
     request.onerror = () =>
       reject(request.error ?? new Error('Could not delete the old database.'));
   });
+
+/**
+ * Delete the database called `name` if an earlier Beam made it. Resolves
+ * with whether it did.
+ *
+ * Told by what's in it, not by its version: a database with none of that
+ * Beam's object stores is something else's, a later version of the store
+ * included, and is left exactly as it was.
+ */
+export const clearLegacyStore = async (
+  name: string,
+  factory: IDBFactory = indexedDB,
+): Promise<boolean> => {
+  const database = await openAsIs(name, factory);
+  const legacy = LEGACY_STORES.some((store) =>
+    database.objectStoreNames.contains(store),
+  );
+  database.close();
+
+  if (!legacy) return false;
+
+  await deleteDatabase(name, factory);
+  return true;
+};
+
+/**
+ * Open the device's store with `open`, getting an earlier Beam's database
+ * out of the way if that's what refuses it.
+ *
+ * That Beam kept an IndexedDB database under the name the store has now. A
+ * browser won't open one database as another, so the open is refused as
+ * mismatched until the old one is gone. Nothing in it is read any more.
+ *
+ * Only that is cleared. Any other refusal, and a mismatch with anything
+ * that isn't the earlier Beam's, is passed on untouched. Call this under
+ * whatever keeps a second tab off the store.
+ */
+export const openOverLegacy = async <Opened>(
+  name: string,
+  open: () => Promise<Opened>,
+  factory: IDBFactory = indexedDB,
+): Promise<Opened> => {
+  try {
+    return await open();
+  } catch (error) {
+    const mismatched = error instanceof Error && error.name === MISMATCHED;
+    if (!mismatched || !(await clearLegacyStore(name, factory))) throw error;
+  }
+
+  return open();
 };

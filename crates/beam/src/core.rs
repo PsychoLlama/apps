@@ -17,7 +17,7 @@ use tokio::sync::{Mutex, Notify};
 use wasm_bindgen::prelude::*;
 use woodland::{
     BlobPolicy, BrowserStore, Changed, Database, Error, GroupId, Outputs, Reconfigured, Role,
-    SealingKey, Standing,
+    SealingKey, Standing, StoreFault,
 };
 
 use crate::hex;
@@ -79,33 +79,61 @@ const UPKEEP: f64 = 600_000.0;
 /// Open the database kept in the store called `store`, ready to hold
 /// groups, with the steps that getting it ready took still to be
 /// [finished](Core::finish).
-pub(crate) async fn open_database(store: &str) -> Result<(Db, Vec<Outputs>), String> {
-    let store = BrowserStore::open(store).await.map_err(text)?;
+pub(crate) async fn open_database(store: &str) -> Result<(Db, Vec<Outputs>), OpenError> {
+    let store = BrowserStore::open(store).await.map_err(|error| OpenError {
+        fault: Some(error.fault()),
+        reason: error.to_string(),
+    })?;
 
     // Fresh bytes every time. They're used only if the store is new;
     // after that the store's own key wins.
     let mut seed = [0; 32];
-    getrandom::fill(&mut seed).map_err(text)?;
-    let mut database = Database::open(store, seed).await.map_err(text)?;
+    getrandom::fill(&mut seed).map_err(OpenError::other)?;
+    let mut database = Database::open(store, seed).await?;
 
     // Said on every start, since there's no default and no group can be
     // held until it is. This device keeps whatever its groups share.
     let policy = database.set_blob_policy(BlobPolicy::All).await;
-    let mut steps = vec![policy.map_err(text)?];
+    let mut steps = vec![policy?];
 
     // An import outlives a restart, and nothing here carries one on: the
     // page that was reading the file is gone. Whatever was unfinished, or
     // finished and never written, is let go.
-    for import in database.imports().await.map_err(text)? {
-        let abandoned = database.abandon_import(import.id).await;
-        steps.push(abandoned.map_err(text)?);
+    for import in database.imports().await? {
+        steps.push(database.abandon_import(import.id).await?);
     }
 
     Ok((database, steps))
 }
 
-fn text(error: impl std::fmt::Display) -> String {
-    error.to_string()
+/// Why the database couldn't be opened.
+pub(crate) struct OpenError {
+    /// What the store said was wrong, if it was the store that failed.
+    pub(crate) fault: Option<StoreFault>,
+    pub(crate) reason: String,
+}
+
+impl OpenError {
+    fn other(error: impl std::fmt::Display) -> Self {
+        Self {
+            fault: None,
+            reason: error.to_string(),
+        }
+    }
+}
+
+impl From<Error> for OpenError {
+    fn from(error: Error) -> Self {
+        let fault = match &error {
+            Error::Store(store) => Some(store.fault()),
+            _ => None,
+        };
+
+        Self {
+            fault,
+            reason: error.to_string(),
+        }
+    }
 }
 
 pub(crate) struct Core {
