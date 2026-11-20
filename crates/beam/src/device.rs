@@ -14,9 +14,9 @@ use iroh::{SecretKey, Watcher};
 use n0_future::StreamExt;
 use n0_future::task::{AbortOnDropHandle, spawn};
 use wasm_bindgen::prelude::*;
-use woodland::{GroupId, ImportId, Transaction};
+use woodland::{GroupId, ImportId, StoreFault, Transaction};
 
-use crate::core::{Core, Db, PeerId, Token, has_role, open_database};
+use crate::core::{Core, Db, OpenError, PeerId, Token, has_role, open_database};
 use crate::hex;
 use crate::net;
 use crate::schema::{Group, Member, Schema, Standing, item_key};
@@ -52,15 +52,18 @@ impl Device {
     /// again. All are given here rather than registered afterwards so
     /// nothing happens unheard.
     ///
-    /// Rejects if the browser won't open the store, if another tab or
-    /// worker already has it open, or if the endpoint can't bind.
+    /// Rejects if the browser won't open the store, or if the endpoint
+    /// can't bind. Two refusals are named, so the host can tell them from
+    /// a store that's broken: the error's `name` is `StoreBusy` if another
+    /// tab or worker has the store open, and `StoreMismatched` if what's
+    /// kept under that name isn't a store this can open.
     pub async fn open(
         store: String,
         on_relay_change: js_sys::Function,
         on_change: js_sys::Function,
         on_fault: js_sys::Function,
-    ) -> Result<Device, JsError> {
-        let (mut database, steps) = open_database(&store).await.map_err(to_js)?;
+    ) -> Result<Device, JsValue> {
+        let (mut database, steps) = open_database(&store).await.map_err(refused)?;
 
         let endpoint = iroh::Endpoint::builder(presets::N0)
             .secret_key(SecretKey::from_bytes(&database.device_secret()))
@@ -157,7 +160,7 @@ impl Device {
             // Holding a group isn't being in it. A device that was just
             // let in carries the group until a checkpoint gives it a role.
             let standing = Standing {
-                member: has_role(database, group, &me) && database.reads(group),
+                member: database.standing(group) == Some(woodland::Standing::Member),
                 device_name: names.remove(&me[..]).unwrap_or_default(),
             };
 
@@ -250,7 +253,7 @@ impl Device {
 
         let roles = database.configuration(group).map(|it| it.roles.len());
         let alone = roles.unwrap_or_default() <= 1;
-        if alone && has_role(database, group, &self.core.id) {
+        if alone && has_role(database, group) {
             let closed = Self::schema(database, group).await?.close();
             return self.write(database, group, closed).await;
         }
@@ -343,13 +346,14 @@ impl Device {
         let database = database.as_mut().ok_or_else(closed)?;
         let schema = Self::schema(database, group).await?;
 
-        let answer = database.read(&schema.item_query(&key)).await;
-        let delete = schema.delete(answer.map_err(to_js)?.found(), &key);
+        let deleted = database.delete_row(group, schema.items_table(), &key).await;
+        let Some(outputs) = self.core.check(deleted).map_err(to_js)? else {
+            return Ok(());
+        };
 
-        match delete {
-            Some(delete) => self.write(database, group, delete).await,
-            None => Ok(()),
-        }
+        let settled = self.core.finish_in(database, group, outputs).await;
+
+        settled.map_err(to_js)
     }
 
     /// Start bringing a file in, resolving with a handle to
@@ -494,10 +498,6 @@ impl Device {
 
     /// Use another device's invitation, resolving with the group's id.
     ///
-    /// Rejects with `left-behind` if this device was still in a group the
-    /// invitation's group replaced. It has left that group by then, and
-    /// the invitation is unspent: open the device again and use it again.
-    ///
     /// Needs the inviting device reachable right now. This device holds
     /// the group at once; it can read and write it when the group gives it
     /// a role, which the group list's `member` reports.
@@ -569,12 +569,13 @@ impl Device {
         roles.retain(|(peer, _)| peer.to_bytes() != device);
 
         let asked = database.reconfigure(group, roles).await.map_err(to_js)?;
-        let settled = self.core.finish_and_tick(database, asked).await;
+        let settled = self.core.finish_in(database, group, asked).await;
 
         settled.map_err(to_js)
     }
 
-    /// Write to `group`, and let time pass so a lone device commits it.
+    /// Write to `group`, and attempt a checkpoint so a lone device commits
+    /// it at once.
     async fn write(
         &self,
         database: &mut Db,
@@ -583,7 +584,7 @@ impl Device {
     ) -> Result<(), JsError> {
         let written = self.core.check(database.write(group, transaction).await);
         let outputs = written.map_err(to_js)?;
-        let settled = self.core.finish_and_tick(database, outputs).await;
+        let settled = self.core.finish_in(database, group, outputs).await;
 
         settled.map_err(to_js)
     }
@@ -615,6 +616,19 @@ fn random<const N: usize>() -> Result<[u8; N], JsError> {
 /// What a call on a closed device rejects with.
 fn closed() -> JsError {
     JsError::new("the device is closed")
+}
+
+/// A failed open as the host sees it: a JS `Error` carrying the reason,
+/// named for what the store said was wrong when it said.
+fn refused(error: OpenError) -> JsValue {
+    let refusal = js_sys::Error::new(&error.reason);
+    match error.fault {
+        Some(StoreFault::Busy) => refusal.set_name("StoreBusy"),
+        Some(StoreFault::Mismatched) => refusal.set_name("StoreMismatched"),
+        _ => {}
+    }
+
+    refusal.into()
 }
 
 /// An error as the host sees it: a JS `Error` carrying the message.

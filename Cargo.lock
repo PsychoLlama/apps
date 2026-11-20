@@ -143,7 +143,6 @@ name = "beam"
 version = "0.0.0"
 dependencies = [
  "console_error_panic_hook",
- "ed25519-dalek",
  "getrandom 0.4.3",
  "iroh",
  "js-sys",
@@ -3957,7 +3956,7 @@ dependencies = [
 [[package]]
 name = "woodland"
 version = "0.0.0"
-source = "git+https://github.com/Ambient-Computer/woodland?rev=9b945b59b24082f990173915bf311b6ed0eaec6f#9b945b59b24082f990173915bf311b6ed0eaec6f"
+source = "git+https://github.com/Ambient-Computer/woodland?rev=cfb2d6ddf426552a9eba78be3717a0aece13543c#cfb2d6ddf426552a9eba78be3717a0aece13543c"
 dependencies = [
  "blake3",
  "chacha20",

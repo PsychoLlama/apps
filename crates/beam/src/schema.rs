@@ -291,32 +291,17 @@ impl Schema {
     }
 
     fn item(&self, row: &Row, committed: bool) -> Item {
-        let body = match row.get(self.body) {
-            Value::Text(body) => body.clone(),
-            _ => String::new(),
-        };
-        let author = match row.get(self.author) {
-            Value::Bytes(author) => hex::encode(author),
-            _ => String::new(),
-        };
         #[expect(
             clippy::cast_precision_loss,
             reason = "milliseconds since 1970 fit a double for the next 285,000 years"
         )]
-        let created_at = match row.get(self.created) {
-            Value::Integer(created) => *created as f64,
-            _ => 0.0,
-        };
-
-        let blob = match row.get(self.file) {
-            Value::Blob(blob) => Some(*blob),
-            _ => None,
-        };
+        let created_at = row.integer(self.created).unwrap_or_default() as f64;
+        let blob = row.blob(self.file).copied();
 
         Item {
             id: hex::encode(row.key()),
-            body,
-            author,
+            body: row.text(self.body).unwrap_or_default().to_owned(),
+            author: row.bytes(self.author).map(hex::encode).unwrap_or_default(),
             created_at,
             committed,
             file: blob.map(|blob| self.file_of(row, &blob)),
@@ -329,10 +314,7 @@ impl Schema {
         reason = "a file's length fits a double far past any file"
     )]
     fn file_of(&self, row: &Row, blob: &BlobRef) -> File {
-        let text = |column| match row.get(column) {
-            Value::Text(text) => text.clone(),
-            _ => String::new(),
-        };
+        let text = |column| row.text(column).unwrap_or_default().to_owned();
 
         File {
             name: text(self.file_name),
@@ -347,10 +329,7 @@ impl Schema {
     pub(crate) fn blob(&self, found: &[(Vec<u8>, Vec<u8>)], key: &[u8]) -> Option<BlobRef> {
         let table = Table::read(found)?;
 
-        match table.row(key)?.get(self.file) {
-            Value::Blob(blob) => Some(*blob),
-            _ => None,
-        }
+        table.row(key)?.blob(self.file).copied()
     }
 
     /// Adds a file under `key`: a reference to bytes this device holds
@@ -392,13 +371,9 @@ impl Schema {
         Transaction::new().insert(self.items, key, cells)
     }
 
-    /// Deletes the item in the answer to [`Self::item_query`], or `None`
-    /// if it's already gone.
-    pub(crate) fn delete(&self, found: &[(Vec<u8>, Vec<u8>)], key: &[u8]) -> Option<Transaction> {
-        let table = Table::read(found)?;
-        let row = table.row(key)?;
-
-        Some(Transaction::new().delete_row(self.items, row))
+    /// The table the group's items are rows of.
+    pub(crate) fn items_table(&self) -> ModelId {
+        self.items
     }
 }
 

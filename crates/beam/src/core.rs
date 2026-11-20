@@ -10,20 +10,23 @@ use std::cell::{Cell, RefCell};
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use std::rc::Rc;
 
-use ed25519_dalek::VerifyingKey;
 use iroh::endpoint::Connection;
 use tokio::sync::mpsc::UnboundedSender;
 use tokio::sync::{Mutex, Notify};
 use wasm_bindgen::prelude::*;
 use woodland::{
     BlobPolicy, BrowserStore, Changed, Database, Error, GroupId, Outputs, Reconfigured, Role,
-    SealingKey,
+    SealingKey, Standing, StoreFault, VerifyingKey,
 };
 
 use crate::hex;
 
 /// The database this app runs on.
 pub(crate) type Db = Database<BrowserStore>;
+
+/// How many checkpoints of one group are attempted while finishing one
+/// step. One commits, the next finds nothing to do.
+const MOST_ATTEMPTS: u8 = 3;
 
 /// A peer, by the 32 bytes of its key. iroh and woodland each wrap the
 /// same bytes in a type of their own; this is what they have in common.
@@ -75,33 +78,61 @@ const UPKEEP: f64 = 600_000.0;
 /// Open the database kept in the store called `store`, ready to hold
 /// groups, with the steps that getting it ready took still to be
 /// [finished](Core::finish).
-pub(crate) async fn open_database(store: &str) -> Result<(Db, Vec<Outputs>), String> {
-    let store = BrowserStore::open(store).await.map_err(text)?;
+pub(crate) async fn open_database(store: &str) -> Result<(Db, Vec<Outputs>), OpenError> {
+    let store = BrowserStore::open(store).await.map_err(|error| OpenError {
+        fault: Some(error.fault()),
+        reason: error.to_string(),
+    })?;
 
     // Fresh bytes every time. They're used only if the store is new;
     // after that the store's own key wins.
     let mut seed = [0; 32];
-    getrandom::fill(&mut seed).map_err(text)?;
-    let mut database = Database::open(store, seed).await.map_err(text)?;
+    getrandom::fill(&mut seed).map_err(OpenError::other)?;
+    let mut database = Database::open(store, seed).await?;
 
     // Said on every start, since there's no default and no group can be
     // held until it is. This device keeps whatever its groups share.
     let policy = database.set_blob_policy(BlobPolicy::All).await;
-    let mut steps = vec![policy.map_err(text)?];
+    let mut steps = vec![policy?];
 
     // An import outlives a restart, and nothing here carries one on: the
     // page that was reading the file is gone. Whatever was unfinished, or
     // finished and never written, is let go.
-    for import in database.imports().await.map_err(text)? {
-        let abandoned = database.abandon_import(import.id).await;
-        steps.push(abandoned.map_err(text)?);
+    for import in database.imports().await? {
+        steps.push(database.abandon_import(import.id).await?);
     }
 
     Ok((database, steps))
 }
 
-fn text(error: impl std::fmt::Display) -> String {
-    error.to_string()
+/// Why the database couldn't be opened.
+pub(crate) struct OpenError {
+    /// What the store said was wrong, if it was the store that failed.
+    pub(crate) fault: Option<StoreFault>,
+    pub(crate) reason: String,
+}
+
+impl OpenError {
+    fn other(error: impl std::fmt::Display) -> Self {
+        Self {
+            fault: None,
+            reason: error.to_string(),
+        }
+    }
+}
+
+impl From<Error> for OpenError {
+    fn from(error: Error) -> Self {
+        let fault = match &error {
+            Error::Store(store) => Some(store.fault()),
+            _ => None,
+        };
+
+        Self {
+            fault,
+            reason: error.to_string(),
+        }
+    }
 }
 
 pub(crate) struct Core {
@@ -174,7 +205,7 @@ impl Core {
     /// dropped, and the protocol recovers when they meet again. The host is
     /// told last, once, which groups to read again.
     pub(crate) async fn finish(&self, database: &mut Db, outputs: Outputs) -> Result<(), Error> {
-        let settled = self.settle(database, outputs, false).await;
+        let settled = self.settle(database, outputs, None).await;
 
         self.check(settled)
     }
@@ -214,7 +245,7 @@ impl Core {
 
         let groups: Vec<GroupId> = database.groups().collect();
         for group in groups {
-            if !has_role(database, group, &self.id) || !database.reads(group) {
+            if database.standing(group) != Some(Standing::Member) {
                 continue;
             }
 
@@ -229,38 +260,64 @@ impl Core {
         }
     }
 
-    /// [`Self::finish`] a step, then let time pass and finish that too,
-    /// telling the host once for both.
+    /// [`Self::finish`] a step that asked something of `group`, attempting
+    /// a checkpoint of it whether or not the step changed anything here.
     ///
-    /// A write is provisional until a checkpoint commits it, and a device
-    /// attempts one when told time has passed. A device that is its
-    /// group's whole quorum commits on its own tick, so nothing a lone
-    /// device writes is ever shown provisional.
-    pub(crate) async fn finish_and_tick(
+    /// A request to change who's in a group changes nothing by being
+    /// made, so nothing in what the step returns says there's something
+    /// to commit.
+    pub(crate) async fn finish_in(
         &self,
         database: &mut Db,
+        group: GroupId,
         outputs: Outputs,
     ) -> Result<(), Error> {
-        let settled = self.settle(database, outputs, true).await;
+        let settled = self.settle(database, outputs, Some(group)).await;
 
         self.check(settled)
     }
 
-    async fn settle(&self, database: &mut Db, outputs: Outputs, tick: bool) -> Result<(), Error> {
+    /// Every step that follows from `outputs`, and a checkpoint attempt
+    /// for each group they changed, and for `also`.
+    ///
+    /// A write is provisional until a checkpoint commits it. An attempt
+    /// costs nothing where there's nothing to commit, where this device
+    /// may not propose, or where one is under way already. So one is made
+    /// after anything that might have left something to commit, and
+    /// commits happen as fast as devices can talk: a device that is its
+    /// group's whole quorum never shows its own write provisional.
+    ///
+    /// Time passing is a different thing, and the timer's: see
+    /// `net::tick`.
+    async fn settle(
+        &self,
+        database: &mut Db,
+        outputs: Outputs,
+        also: Option<GroupId>,
+    ) -> Result<(), Error> {
         let mut changed = BTreeSet::new();
         let mut members = false;
         let mut blobs = false;
-        let mut tick = tick;
+        let mut due: BTreeSet<GroupId> = also.into_iter().collect();
+        let mut attempts = BTreeMap::<GroupId, u8>::new();
         let mut steps = VecDeque::from([outputs]);
 
         loop {
             let Some(outputs) = steps.pop_front() else {
-                if !tick {
+                let Some(group) = due.pop_first() else {
                     break;
+                };
+
+                // An attempt that commits changes the group, which asks
+                // for another, which finds nothing to do. Bounded anyway:
+                // nothing here should be able to spin.
+                let attempt = attempts.entry(group).or_default();
+                let member = database.standing(group) == Some(Standing::Member);
+                if member && *attempt < MOST_ATTEMPTS {
+                    *attempt += 1;
+                    steps.push_back(database.checkpoint(group).await?);
                 }
 
-                tick = false;
-                steps.push_back(database.tick().await?);
                 continue;
             };
 
@@ -276,6 +333,7 @@ impl Core {
 
             for change in &outputs.changed {
                 changed.extend(group_of(change));
+                due.extend(group_of(change));
                 members |= matches!(change, Changed::Members { .. });
                 blobs |= matches!(change, Changed::Blob { .. });
 
@@ -403,7 +461,7 @@ impl Core {
     ///
     /// Not for the last member, who can't be removed.
     pub(crate) async fn depart(&self, database: &mut Db, group: GroupId) -> Result<(), Error> {
-        if !has_role(database, group, &self.id) {
+        if !has_role(database, group) {
             let outputs = database.forget(group).await?;
             return self.finish(database, outputs).await;
         }
@@ -418,7 +476,7 @@ impl Core {
 
         let asked = database.reconfigure(group, roles).await?;
 
-        self.finish_and_tick(database, asked).await
+        self.finish_in(database, group, asked).await
     }
 
     /// Forget the promises a checkpoint has kept.
@@ -433,16 +491,8 @@ impl Core {
     /// Everyone this device should be connected to: whoever holds a role
     /// in any of its groups, has been asked for one, or was promised one.
     pub(crate) fn wanted(&self, database: &Db) -> BTreeSet<PeerId> {
-        let mut wanted = BTreeSet::new();
-        for group in database.groups() {
-            let Some(configuration) = database.configuration(group) else {
-                continue;
-            };
-
-            let asked = configuration.asked.into_iter().flatten();
-            let roles = configuration.roles.into_iter().chain(asked);
-            wanted.extend(roles.map(|(peer, _)| peer.to_bytes()));
-        }
+        let members = database.members();
+        let mut wanted: BTreeSet<PeerId> = members.iter().map(VerifyingKey::to_bytes).collect();
 
         let promised = self.admissions.borrow();
         wanted.extend(promised.iter().map(|it| it.peer.to_bytes()));
@@ -455,7 +505,7 @@ impl Core {
     /// the database is opened.
     pub(crate) fn remember_roles(&self, database: &Db) {
         let held = database.groups();
-        let held = held.filter(|group| has_role(database, *group, &self.id));
+        let held = held.filter(|group| has_role(database, *group));
 
         *self.roles.borrow_mut() = held.collect();
     }
@@ -470,7 +520,7 @@ impl Core {
     fn lost_role(&self, database: &Db, group: GroupId) -> bool {
         let mut roles = self.roles.borrow_mut();
 
-        if has_role(database, group, &self.id) {
+        if has_role(database, group) {
             roles.insert(group);
             return false;
         }
@@ -577,14 +627,12 @@ impl Core {
     }
 }
 
-/// Whether `peer` holds a role in `group`, by the latest checkpoint here.
-pub(crate) fn has_role(database: &Db, group: GroupId, peer: &PeerId) -> bool {
-    let Ok(peer) = VerifyingKey::from_bytes(peer) else {
-        return false;
-    };
+/// Whether this device holds a role in `group`, by the latest checkpoint
+/// here. One it can't use yet, for want of the group's secret, counts.
+pub(crate) fn has_role(database: &Db, group: GroupId) -> bool {
+    let standing = database.standing(group);
 
-    let configuration = database.configuration(group);
-    configuration.is_some_and(|it| it.role(&peer).is_some())
+    matches!(standing, Some(Standing::Member | Standing::Waiting))
 }
 
 /// The group a change is to. A blob's bytes belong to no one group.

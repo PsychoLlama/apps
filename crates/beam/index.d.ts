@@ -219,11 +219,6 @@ export interface Device extends Disposable {
    * Use another device's invitation, resolving with the group's id. Needs
    * the inviting device reachable right now. Rejects if the code isn't
    * one, was this device's own, has expired, or was already used.
-   *
-   * Rejects with the message `left-behind` if this device was still in a
-   * group the invitation's group replaced. It has left that group by
-   * then, and the invitation is unspent: open the device again, and use
-   * the invitation again.
    */
   join(code: string): Promise<string>;
 
@@ -244,9 +239,11 @@ export const Device: {
    * read it again. `onFault` is called once, with why, if the store fails
    * while open: nothing works after that until the device is opened again.
    *
-   * Rejects if the browser won't open the store, if another tab or worker
-   * already has it open, or if the endpoint can't bind. {@link init} must
-   * resolve before calling this.
+   * Rejects if the browser won't open the store, or if the endpoint can't
+   * bind. Two refusals are named, to tell them from a store that's broken:
+   * the error's `name` is `StoreBusy` if another tab or worker has the
+   * store open, and `StoreMismatched` if what's kept under that name isn't
+   * a store this can open. {@link init} must resolve before calling this.
    */
   open(
     store: string,
