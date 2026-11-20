@@ -86,14 +86,10 @@ const REACHING_STEP: Duration = Duration::from_secs(1);
 /// How often to try peers that couldn't be reached.
 const REDIAL: Duration = Duration::from_secs(20);
 
-/// How often time passes, while there's something for it to do.
+/// How often time passes, while there's something for it to do. Long
+/// enough that an exchange through a relay has had every chance: a tick
+/// gives up on an attempt that isn't moving, and says things again.
 const TICK: Duration = Duration::from_secs(2);
-
-/// How often time passes right after something changed, and for how long
-/// after, in milliseconds. A device being let in, or a note just shared,
-/// is waiting on a checkpoint, and someone is watching it wait.
-const QUICK_TICK: Duration = Duration::from_millis(300);
-const QUICK_FOR: f64 = 5_000.0;
 
 /// How long after the last change to keep ticking, in milliseconds. A
 /// checkpoint takes a few exchanges; after this, nothing is coming.
@@ -183,13 +179,14 @@ async fn dial(core: Rc<Core>) {
 
 /// Let time pass, while there's something for it to do.
 ///
-/// A tick is when a device attempts a checkpoint, which is what makes
-/// writes final. Nothing about correctness depends on when it happens, so
-/// it happens on a coarse timer, and stops once the group has gone quiet.
+/// Checkpoints are attempted as things happen, by [`Core::finish`]. A tick
+/// is for when that wasn't enough: a message was lost, or an attempt
+/// stalled. It's driven by this timer and nothing else, since a device
+/// that ticks because it heard something makes its peer do the same, for
+/// ever. It stops once the group has gone quiet.
 async fn tick(core: Rc<Core>) {
     loop {
-        let quick = core.idle_for() < QUICK_FOR;
-        sleep(if quick { QUICK_TICK } else { TICK }).await;
+        sleep(TICK).await;
 
         let upkeep = core.upkeep_due();
         if !upkeep && core.idle_for() > QUIET_AFTER {
@@ -649,12 +646,13 @@ async fn admit(core: &Core, connection: &Connection) -> Result<(), String> {
         let mut database = core.database.lock().await;
         let database = database.as_mut().ok_or("the device is closed")?;
 
+        // A device that is its group's whole quorum carries the change now.
         if let Some(outputs) = core.admit(database, group).await.map_err(text)? {
-            core.finish(database, outputs).await.map_err(text)?;
+            core.finish_in(database, group, outputs)
+                .await
+                .map_err(text)?;
         }
 
-        // A device that is its group's whole quorum carries the change now.
-        core.tick(database).await.map_err(text)?;
         core.touch();
     }
 

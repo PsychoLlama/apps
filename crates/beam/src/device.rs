@@ -569,12 +569,13 @@ impl Device {
         roles.retain(|(peer, _)| peer.to_bytes() != device);
 
         let asked = database.reconfigure(group, roles).await.map_err(to_js)?;
-        let settled = self.core.finish_and_tick(database, asked).await;
+        let settled = self.core.finish_in(database, group, asked).await;
 
         settled.map_err(to_js)
     }
 
-    /// Write to `group`, and let time pass so a lone device commits it.
+    /// Write to `group`, and attempt a checkpoint so a lone device commits
+    /// it at once.
     async fn write(
         &self,
         database: &mut Db,
@@ -583,7 +584,7 @@ impl Device {
     ) -> Result<(), JsError> {
         let written = self.core.check(database.write(group, transaction).await);
         let outputs = written.map_err(to_js)?;
-        let settled = self.core.finish_and_tick(database, outputs).await;
+        let settled = self.core.finish_in(database, group, outputs).await;
 
         settled.map_err(to_js)
     }

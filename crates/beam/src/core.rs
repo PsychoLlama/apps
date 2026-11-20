@@ -17,13 +17,17 @@ use tokio::sync::{Mutex, Notify};
 use wasm_bindgen::prelude::*;
 use woodland::{
     BlobPolicy, BrowserStore, Changed, Database, Error, GroupId, Outputs, Reconfigured, Role,
-    SealingKey,
+    SealingKey, Standing,
 };
 
 use crate::hex;
 
 /// The database this app runs on.
 pub(crate) type Db = Database<BrowserStore>;
+
+/// How many checkpoints of one group are attempted while finishing one
+/// step. One commits, the next finds nothing to do.
+const MOST_ATTEMPTS: u8 = 3;
 
 /// A peer, by the 32 bytes of its key. iroh and woodland each wrap the
 /// same bytes in a type of their own; this is what they have in common.
@@ -174,7 +178,7 @@ impl Core {
     /// dropped, and the protocol recovers when they meet again. The host is
     /// told last, once, which groups to read again.
     pub(crate) async fn finish(&self, database: &mut Db, outputs: Outputs) -> Result<(), Error> {
-        let settled = self.settle(database, outputs, false).await;
+        let settled = self.settle(database, outputs, None).await;
 
         self.check(settled)
     }
@@ -229,38 +233,64 @@ impl Core {
         }
     }
 
-    /// [`Self::finish`] a step, then let time pass and finish that too,
-    /// telling the host once for both.
+    /// [`Self::finish`] a step that asked something of `group`, attempting
+    /// a checkpoint of it whether or not the step changed anything here.
     ///
-    /// A write is provisional until a checkpoint commits it, and a device
-    /// attempts one when told time has passed. A device that is its
-    /// group's whole quorum commits on its own tick, so nothing a lone
-    /// device writes is ever shown provisional.
-    pub(crate) async fn finish_and_tick(
+    /// A request to change who's in a group changes nothing by being
+    /// made, so nothing in what the step returns says there's something
+    /// to commit.
+    pub(crate) async fn finish_in(
         &self,
         database: &mut Db,
+        group: GroupId,
         outputs: Outputs,
     ) -> Result<(), Error> {
-        let settled = self.settle(database, outputs, true).await;
+        let settled = self.settle(database, outputs, Some(group)).await;
 
         self.check(settled)
     }
 
-    async fn settle(&self, database: &mut Db, outputs: Outputs, tick: bool) -> Result<(), Error> {
+    /// Every step that follows from `outputs`, and a checkpoint attempt
+    /// for each group they changed, and for `also`.
+    ///
+    /// A write is provisional until a checkpoint commits it. An attempt
+    /// costs nothing where there's nothing to commit, where this device
+    /// may not propose, or where one is under way already. So one is made
+    /// after anything that might have left something to commit, and
+    /// commits happen as fast as devices can talk: a device that is its
+    /// group's whole quorum never shows its own write provisional.
+    ///
+    /// Time passing is a different thing, and the timer's: see
+    /// `net::tick`.
+    async fn settle(
+        &self,
+        database: &mut Db,
+        outputs: Outputs,
+        also: Option<GroupId>,
+    ) -> Result<(), Error> {
         let mut changed = BTreeSet::new();
         let mut members = false;
         let mut blobs = false;
-        let mut tick = tick;
+        let mut due: BTreeSet<GroupId> = also.into_iter().collect();
+        let mut attempts = BTreeMap::<GroupId, u8>::new();
         let mut steps = VecDeque::from([outputs]);
 
         loop {
             let Some(outputs) = steps.pop_front() else {
-                if !tick {
+                let Some(group) = due.pop_first() else {
                     break;
+                };
+
+                // An attempt that commits changes the group, which asks
+                // for another, which finds nothing to do. Bounded anyway:
+                // nothing here should be able to spin.
+                let attempt = attempts.entry(group).or_default();
+                let member = database.standing(group) == Some(Standing::Member);
+                if member && *attempt < MOST_ATTEMPTS {
+                    *attempt += 1;
+                    steps.push_back(database.checkpoint(group).await?);
                 }
 
-                tick = false;
-                steps.push_back(database.tick().await?);
                 continue;
             };
 
@@ -276,6 +306,7 @@ impl Core {
 
             for change in &outputs.changed {
                 changed.extend(group_of(change));
+                due.extend(group_of(change));
                 members |= matches!(change, Changed::Members { .. });
                 blobs |= matches!(change, Changed::Blob { .. });
 
@@ -418,7 +449,7 @@ impl Core {
 
         let asked = database.reconfigure(group, roles).await?;
 
-        self.finish_and_tick(database, asked).await
+        self.finish_in(database, group, asked).await
     }
 
     /// Forget the promises a checkpoint has kept.
