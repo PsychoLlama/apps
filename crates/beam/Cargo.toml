@@ -40,10 +40,6 @@ woodland = { git = "https://github.com/Ambient-Computer/woodland", rev = "cfb2d6
 # iroh runs relay-only (no hole-punching), tunnelling QUIC over WebSocket
 # to the relay.
 iroh = { version = "1", default-features = false, features = ["tls-ring"] }
-# Woodland names peers by `ed25519_dalek::VerifyingKey`, and iroh by a key
-# type of its own over the same 32 bytes. Kept at woodland's version, so
-# the type built here is the type it takes.
-ed25519-dalek = "3"
 # Woodland takes its randomness from the application: a device secret,
 # seeds, nonces. On wasm that comes from the JS crypto API.
 getrandom = { version = "0.4", features = ["wasm_js"] }

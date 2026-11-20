@@ -10,14 +10,13 @@ use std::cell::{Cell, RefCell};
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use std::rc::Rc;
 
-use ed25519_dalek::VerifyingKey;
 use iroh::endpoint::Connection;
 use tokio::sync::mpsc::UnboundedSender;
 use tokio::sync::{Mutex, Notify};
 use wasm_bindgen::prelude::*;
 use woodland::{
     BlobPolicy, BrowserStore, Changed, Database, Error, GroupId, Outputs, Reconfigured, Role,
-    SealingKey, Standing, StoreFault,
+    SealingKey, Standing, StoreFault, VerifyingKey,
 };
 
 use crate::hex;
@@ -246,7 +245,7 @@ impl Core {
 
         let groups: Vec<GroupId> = database.groups().collect();
         for group in groups {
-            if !has_role(database, group, &self.id) || !database.reads(group) {
+            if database.standing(group) != Some(Standing::Member) {
                 continue;
             }
 
@@ -462,7 +461,7 @@ impl Core {
     ///
     /// Not for the last member, who can't be removed.
     pub(crate) async fn depart(&self, database: &mut Db, group: GroupId) -> Result<(), Error> {
-        if !has_role(database, group, &self.id) {
+        if !has_role(database, group) {
             let outputs = database.forget(group).await?;
             return self.finish(database, outputs).await;
         }
@@ -492,16 +491,8 @@ impl Core {
     /// Everyone this device should be connected to: whoever holds a role
     /// in any of its groups, has been asked for one, or was promised one.
     pub(crate) fn wanted(&self, database: &Db) -> BTreeSet<PeerId> {
-        let mut wanted = BTreeSet::new();
-        for group in database.groups() {
-            let Some(configuration) = database.configuration(group) else {
-                continue;
-            };
-
-            let asked = configuration.asked.into_iter().flatten();
-            let roles = configuration.roles.into_iter().chain(asked);
-            wanted.extend(roles.map(|(peer, _)| peer.to_bytes()));
-        }
+        let members = database.members();
+        let mut wanted: BTreeSet<PeerId> = members.iter().map(VerifyingKey::to_bytes).collect();
 
         let promised = self.admissions.borrow();
         wanted.extend(promised.iter().map(|it| it.peer.to_bytes()));
@@ -514,7 +505,7 @@ impl Core {
     /// the database is opened.
     pub(crate) fn remember_roles(&self, database: &Db) {
         let held = database.groups();
-        let held = held.filter(|group| has_role(database, *group, &self.id));
+        let held = held.filter(|group| has_role(database, *group));
 
         *self.roles.borrow_mut() = held.collect();
     }
@@ -529,7 +520,7 @@ impl Core {
     fn lost_role(&self, database: &Db, group: GroupId) -> bool {
         let mut roles = self.roles.borrow_mut();
 
-        if has_role(database, group, &self.id) {
+        if has_role(database, group) {
             roles.insert(group);
             return false;
         }
@@ -636,14 +627,12 @@ impl Core {
     }
 }
 
-/// Whether `peer` holds a role in `group`, by the latest checkpoint here.
-pub(crate) fn has_role(database: &Db, group: GroupId, peer: &PeerId) -> bool {
-    let Ok(peer) = VerifyingKey::from_bytes(peer) else {
-        return false;
-    };
+/// Whether this device holds a role in `group`, by the latest checkpoint
+/// here. One it can't use yet, for want of the group's secret, counts.
+pub(crate) fn has_role(database: &Db, group: GroupId) -> bool {
+    let standing = database.standing(group);
 
-    let configuration = database.configuration(group);
-    configuration.is_some_and(|it| it.role(&peer).is_some())
+    matches!(standing, Some(Standing::Member | Standing::Waiting))
 }
 
 /// The group a change is to. A blob's bytes belong to no one group.

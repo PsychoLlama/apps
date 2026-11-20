@@ -16,7 +16,6 @@
 use std::rc::Rc;
 use std::time::Duration;
 
-use ed25519_dalek::VerifyingKey;
 use iroh::EndpointId;
 use iroh::endpoint::{Connection, RecvStream, VarInt};
 use n0_future::future::or;
@@ -24,7 +23,7 @@ use n0_future::task::{AbortOnDropHandle, spawn};
 use n0_future::time::sleep;
 use tokio::sync::{Notify, mpsc};
 use wasm_bindgen::prelude::*;
-use woodland::{GroupId, SealingKey};
+use woodland::{GroupId, SealingKey, VerifyingKey};
 
 use crate::core::{Core, Db, PeerId, Token, warn};
 

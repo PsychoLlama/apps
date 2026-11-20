@@ -160,7 +160,7 @@ impl Device {
             // Holding a group isn't being in it. A device that was just
             // let in carries the group until a checkpoint gives it a role.
             let standing = Standing {
-                member: has_role(database, group, &me) && database.reads(group),
+                member: database.standing(group) == Some(woodland::Standing::Member),
                 device_name: names.remove(&me[..]).unwrap_or_default(),
             };
 
@@ -253,7 +253,7 @@ impl Device {
 
         let roles = database.configuration(group).map(|it| it.roles.len());
         let alone = roles.unwrap_or_default() <= 1;
-        if alone && has_role(database, group, &self.core.id) {
+        if alone && has_role(database, group) {
             let closed = Self::schema(database, group).await?.close();
             return self.write(database, group, closed).await;
         }
@@ -346,13 +346,14 @@ impl Device {
         let database = database.as_mut().ok_or_else(closed)?;
         let schema = Self::schema(database, group).await?;
 
-        let answer = database.read(&schema.item_query(&key)).await;
-        let delete = schema.delete(answer.map_err(to_js)?.found(), &key);
+        let deleted = database.delete_row(group, schema.items_table(), &key).await;
+        let Some(outputs) = self.core.check(deleted).map_err(to_js)? else {
+            return Ok(());
+        };
 
-        match delete {
-            Some(delete) => self.write(database, group, delete).await,
-            None => Ok(()),
-        }
+        let settled = self.core.finish_in(database, group, outputs).await;
+
+        settled.map_err(to_js)
     }
 
     /// Start bringing a file in, resolving with a handle to
