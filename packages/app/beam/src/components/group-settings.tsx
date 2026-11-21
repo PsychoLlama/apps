@@ -114,7 +114,7 @@ export const GroupSettings = (props: {
         <SettingsSection
           title="Lost a device?"
           headingId="replace-heading"
-          description="If a device is gone for good, move what's here to a new group with only this device in it. You can link the others again afterward."
+          description="If a device is gone for good, move what's here to a new group with only this device in it. You can connect the others again afterward."
         >
           <Flex as="div">
             <Button

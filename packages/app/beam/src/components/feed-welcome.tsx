@@ -1,7 +1,7 @@
 import { useAction } from '@lib/effects/solid';
 import { Button, Flex, Text } from '@lib/ui';
 import IconLink from 'virtual:icons/mdi/cellphone-link';
-import { $openInvite } from '../effects';
+import { $deleteItem, $openInvite } from '../effects';
 
 /**
  * The item every group is founded with: what the group is for, and the
@@ -13,14 +13,21 @@ import { $openInvite } from '../effects';
  * here, each time it's shown: it can change with the app without
  * anything stale left behind in a database.
  *
- * It says the same thing on every device and however many are linked.
- * A group isn't one person's devices unless that's who's in it.
+ * It says the same thing on every device and however many are
+ * connected. A group isn't one person's devices unless that's who's in it.
+ *
+ * Dismissing it deletes the item, as deleting it from its row does: it
+ * goes from every device in the group.
  */
 export const FeedWelcome = (props: {
   /** The group the item belongs to. */
   groupId: string;
+
+  /** The item itself, to delete when it's dismissed. */
+  itemId: string;
 }) => {
   const openInvite = useAction($openInvite);
+  const deleteItem = useAction($deleteItem);
 
   return (
     <Flex
@@ -32,19 +39,33 @@ export const FeedWelcome = (props: {
       testId="feed-welcome"
     >
       <Text as="p" color="lowContrast" selectable={false}>
-        Everything shared here goes to every device in the group.
+        Share messages and attachments between devices. Encrypted, peer-to-peer,
+        never stored in the cloud.
       </Text>
 
-      <Button
-        testId="feed-welcome-invite"
-        variant="solid"
-        size={2}
-        disabled={openInvite.pending}
-        onClick={() => openInvite(props.groupId)}
-      >
-        <IconLink width="18" height="18" aria-hidden="true" />
-        Link a device
-      </Button>
+      <Flex as="div" align="center" gap={3} wrap="wrap">
+        <Button
+          testId="feed-welcome-invite"
+          variant="solid"
+          size={2}
+          disabled={openInvite.pending}
+          onClick={() => openInvite(props.groupId)}
+        >
+          <IconLink width="18" height="18" aria-hidden="true" />
+          Connect a device
+        </Button>
+
+        <Button
+          testId="feed-welcome-dismiss"
+          variant="soft"
+          color="neutral"
+          size={2}
+          disabled={deleteItem.pending}
+          onClick={() => deleteItem(props.groupId, props.itemId)}
+        >
+          Dismiss
+        </Button>
+      </Flex>
     </Flex>
   );
 };

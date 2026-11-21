@@ -7,7 +7,7 @@ import { $openInvite } from '../effects';
 import * as styles from './header.css';
 
 /**
- * A group's controls in the header: link a device, and the group's
+ * A group's controls in the header: connect a device, and the group's
  * settings. Both are rare, so they're icons out of the way of the feed.
  *
  * Both are the same kind of button so they sit alike, though one of them
@@ -27,13 +27,13 @@ export const GroupActions = (props: {
         display="block"
         side="bottom"
         align="end"
-        content="Link a device"
+        content="Connect a device"
       >
         {(trigger) => (
           <IconButton
             {...trigger}
             testId="group-invite"
-            aria-label="Link a device"
+            aria-label="Connect a device"
             variant="ghost"
             color="neutral"
             class={styles.icon}

@@ -114,7 +114,9 @@ export const FeedItem = (props: {
         <Flex as="div" align="start" gap={3} class={styles.content}>
           <Show
             when={!props.item.system}
-            fallback={<FeedWelcome groupId={props.groupId} />}
+            fallback={
+              <FeedWelcome groupId={props.groupId} itemId={props.item.id} />
+            }
           >
             <Show
               when={props.item.file}
@@ -160,78 +162,82 @@ export const FeedItem = (props: {
           </Show>
         </Flex>
 
-        {/* A ghost button pulls itself outward by its own padding, to line
+        {/* An item of the app's own has its way out on its face, and
+            nothing else to offer. */}
+        <Show when={!props.item.system}>
+          {/* A ghost button pulls itself outward by its own padding, to line
             its icon up with the text around it. In a bar that runs the
             buttons into each other, so each is given that margin back. */}
-        <Text as="span" selectable={false} class={styles.actions}>
-          <Show when={copyable()}>
-            <Tooltip
-              testId="feed-item-copy-tooltip"
-              display="inline"
-              content="Copy"
-            >
-              {(trigger) => (
-                <IconButton
-                  {...trigger}
-                  testId="feed-item-copy"
-                  aria-label="Copy"
-                  variant="ghost"
-                  color="neutral"
-                  size={1}
-                  m={1}
-                  onClick={copy}
-                >
-                  <IconCopy width="18" height="18" aria-hidden="true" />
-                </IconButton>
-              )}
-            </Tooltip>
-          </Show>
-
-          <Show when={held()}>
-            <Tooltip
-              testId="feed-item-save-tooltip"
-              display="inline"
-              content="Download"
-            >
-              {(trigger) => (
-                <IconButton
-                  {...trigger}
-                  testId="feed-item-save"
-                  aria-label="Download"
-                  variant="ghost"
-                  color="neutral"
-                  size={1}
-                  m={1}
-                  disabled={saveFile.pending}
-                  onClick={save}
-                >
-                  <IconDownload width="18" height="18" aria-hidden="true" />
-                </IconButton>
-              )}
-            </Tooltip>
-          </Show>
-
-          <Tooltip
-            testId="feed-item-delete-tooltip"
-            display="inline"
-            content="Delete"
-          >
-            {(trigger) => (
-              <IconButton
-                {...trigger}
-                testId="feed-item-delete"
-                aria-label="Delete"
-                variant="ghost"
-                color="danger"
-                size={1}
-                m={1}
-                onClick={remove}
+          <Text as="span" selectable={false} class={styles.actions}>
+            <Show when={copyable()}>
+              <Tooltip
+                testId="feed-item-copy-tooltip"
+                display="inline"
+                content="Copy"
               >
-                <IconDelete width="18" height="18" aria-hidden="true" />
-              </IconButton>
-            )}
-          </Tooltip>
-        </Text>
+                {(trigger) => (
+                  <IconButton
+                    {...trigger}
+                    testId="feed-item-copy"
+                    aria-label="Copy"
+                    variant="ghost"
+                    color="neutral"
+                    size={1}
+                    m={1}
+                    onClick={copy}
+                  >
+                    <IconCopy width="18" height="18" aria-hidden="true" />
+                  </IconButton>
+                )}
+              </Tooltip>
+            </Show>
+
+            <Show when={held()}>
+              <Tooltip
+                testId="feed-item-save-tooltip"
+                display="inline"
+                content="Download"
+              >
+                {(trigger) => (
+                  <IconButton
+                    {...trigger}
+                    testId="feed-item-save"
+                    aria-label="Download"
+                    variant="ghost"
+                    color="neutral"
+                    size={1}
+                    m={1}
+                    disabled={saveFile.pending}
+                    onClick={save}
+                  >
+                    <IconDownload width="18" height="18" aria-hidden="true" />
+                  </IconButton>
+                )}
+              </Tooltip>
+            </Show>
+
+            <Tooltip
+              testId="feed-item-delete-tooltip"
+              display="inline"
+              content="Delete"
+            >
+              {(trigger) => (
+                <IconButton
+                  {...trigger}
+                  testId="feed-item-delete"
+                  aria-label="Delete"
+                  variant="ghost"
+                  color="danger"
+                  size={1}
+                  m={1}
+                  onClick={remove}
+                >
+                  <IconDelete width="18" height="18" aria-hidden="true" />
+                </IconButton>
+              )}
+            </Tooltip>
+          </Text>
+        </Show>
       </Flex>
     </ContextMenu>
   );

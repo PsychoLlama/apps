@@ -8,7 +8,7 @@ import { $groups, nextGroupName } from '../state';
 
 /**
  * Start another group, and land in it. Nothing to fill in: it exists on
- * this device alone until another is linked, and gets a name unlike the
+ * this device alone until another is connected, and gets a name unlike the
  * others' that can be changed when someone wants it changed.
  */
 export const NewGroupButton = () => {
