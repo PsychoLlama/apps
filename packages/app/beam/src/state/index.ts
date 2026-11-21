@@ -13,6 +13,7 @@ export {
   $groupViewed,
   $membersChanged,
   FILE_NAME_MAX_LENGTH,
+  firstPending,
   formatBytes,
   isPreviewable,
   isShown,

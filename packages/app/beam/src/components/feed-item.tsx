@@ -11,7 +11,6 @@ import {
   Text,
   Tooltip,
 } from '@lib/ui';
-import IconSync from 'virtual:icons/mdi/cloud-sync-outline';
 import IconCopy from 'virtual:icons/mdi/content-copy';
 import IconDownload from 'virtual:icons/mdi/download';
 import IconDelete from 'virtual:icons/mdi/trash-can-outline';
@@ -43,9 +42,6 @@ export const FeedItem = (props: {
 
   /** The item itself. */
   item: Item;
-
-  /** Whether this device wrote it. */
-  mine: boolean;
 }) => {
   const itemMenu = useValue($itemMenu);
   const toggleMenu = useAction($itemMenuToggled);
@@ -161,33 +157,6 @@ export const FeedItem = (props: {
                 />
               )}
             </Show>
-          </Show>
-
-          {/* Written here, and not yet agreed by the group: its other
-              devices haven't all been reachable since. Only said of this
-              device's own. On any other device it has plainly arrived. */}
-          <Show when={props.mine && !props.item.committed}>
-            <Tooltip
-              testId="feed-item-pending-tooltip"
-              display="inline"
-              side="right"
-              content="Waiting for the group's other devices"
-            >
-              {(trigger) => (
-                <Text
-                  {...trigger}
-                  as="span"
-                  role="img"
-                  tabIndex={0}
-                  color="lowContrast"
-                  selectable={false}
-                  aria-label="Waiting for the group's other devices"
-                  testId="feed-item-pending"
-                >
-                  <IconSync width="16" height="16" aria-hidden="true" />
-                </Text>
-              )}
-            </Tooltip>
           </Show>
         </Flex>
 

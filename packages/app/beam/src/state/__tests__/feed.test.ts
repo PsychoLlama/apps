@@ -12,6 +12,7 @@ import {
   normalizeBody,
   openableType,
   formatBytes,
+  firstPending,
   isPreviewable,
   isShown,
 } from '../feed';
@@ -164,6 +165,33 @@ describe('linkOf', () => {
     expect(linkOf('just a note')).toBeNull();
     expect(linkOf('javascript:alert(1)')).toBeNull();
     expect(linkOf('data:text/html,hi')).toBeNull();
+  });
+});
+
+describe('firstPending', () => {
+  const written = (id: string, author: string, committed: boolean): Item => ({
+    ...item(id, id),
+    author,
+    committed,
+  });
+
+  it('finds the oldest thing this device wrote that is not final', () => {
+    const items = [
+      written('a', 'me', true),
+      written('b', 'me', false),
+      written('c', 'me', false),
+    ];
+
+    expect(firstPending(items, 'me')).toBe('b');
+  });
+
+  it('passes over what another device has yet to make final', () => {
+    expect(firstPending([written('a', 'them', false)], 'me')).toBeNull();
+  });
+
+  it('finds nothing when everything is final, or the device is unknown', () => {
+    expect(firstPending([written('a', 'me', true)], 'me')).toBeNull();
+    expect(firstPending([written('a', 'me', false)], null)).toBeNull();
   });
 });
 

@@ -88,6 +88,19 @@ export const isShown = (item: { readonly system?: string }): boolean =>
   item.system === undefined || SYSTEM_KINDS.has(item.system);
 
 /**
+ * Where this device's unsynced items begin: the id of the oldest thing
+ * it wrote that the group hasn't made final, or `null` if there's none.
+ *
+ * Only its own. Another device's item that isn't final yet has still
+ * arrived, which is all anyone here was waiting for.
+ */
+export const firstPending = (
+  items: readonly Item[],
+  deviceId: string | null,
+): string | null =>
+  items.find((item) => item.author === deviceId && !item.committed)?.id ?? null;
+
+/**
  * Something to share as it's stored: trimmed, or `null` if nothing is left
  * or it runs too long.
  */
