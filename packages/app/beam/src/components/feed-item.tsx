@@ -33,8 +33,9 @@ import * as styles from './feed-item.css';
  * It becomes a link when the whole of it is a web address, and opens in a
  * new tab without handing the page a way back.
  *
- * An item the app wrote for itself is a row like any other, and can be
- * deleted like one. It has nothing to copy.
+ * An item the app wrote for itself gets neither the buttons nor the
+ * menu. It carries its own way out, and a right click on it is left to
+ * the browser.
  */
 export const FeedItem = (props: {
   /** The group the item belongs to. */
@@ -51,8 +52,8 @@ export const FeedItem = (props: {
   const copy = () => void navigator.clipboard.writeText(props.item.body);
   const remove = () => deleteItem(props.groupId, props.item.id);
 
-  /** Whether the item is words someone shared, which can be copied. */
-  const copyable = () => !props.item.file && !props.item.system;
+  /** Whether the item is words, which can be copied. */
+  const copyable = () => !props.item.file;
 
   /** The item's file, once all of it is here: there's nothing to save before. */
   const held = () => {
@@ -70,6 +71,7 @@ export const FeedItem = (props: {
       testId="feed-item-menu"
       display="block"
       areaClass={styles.area}
+      disabled={props.item.system !== undefined}
       open={itemMenu() === props.item.id}
       onOpenChange={(open) => toggleMenu(props.item.id, open)}
       content={
@@ -90,9 +92,7 @@ export const FeedItem = (props: {
             </ContextMenuItem>
           </Show>
 
-          <Show when={!props.item.system}>
-            <ContextMenuSeparator />
-          </Show>
+          <ContextMenuSeparator />
 
           <ContextMenuItem
             testId="feed-item-menu-delete"
