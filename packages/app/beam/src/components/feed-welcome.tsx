@@ -36,13 +36,12 @@ export const FeedWelcome = (props: {
 
       <Button
         testId="feed-welcome-invite"
-        variant="soft"
-        color="neutral"
-        size={1}
+        variant="solid"
+        size={2}
         disabled={openInvite.pending}
         onClick={() => openInvite(props.groupId)}
       >
-        <IconLink width="16" height="16" aria-hidden="true" />
+        <IconLink width="18" height="18" aria-hidden="true" />
         Link a device
       </Button>
     </Flex>
