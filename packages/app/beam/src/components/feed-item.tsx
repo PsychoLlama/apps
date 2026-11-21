@@ -74,7 +74,6 @@ export const FeedItem = (props: {
       testId="feed-item-menu"
       display="block"
       areaClass={styles.area}
-      color="neutral"
       open={itemMenu() === props.item.id}
       onOpenChange={(open) => toggleMenu(props.item.id, open)}
       content={
@@ -91,7 +90,7 @@ export const FeedItem = (props: {
               disabled={!held() || saveFile.pending}
               onSelect={save}
             >
-              Save
+              Download
             </ContextMenuItem>
           </Show>
 
@@ -104,7 +103,7 @@ export const FeedItem = (props: {
             color="danger"
             onSelect={remove}
           >
-            Delete for everyone
+            Delete
           </ContextMenuItem>
         </>
       }
@@ -192,6 +191,9 @@ export const FeedItem = (props: {
           </Show>
         </Flex>
 
+        {/* A ghost button pulls itself outward by its own padding, to line
+            its icon up with the text around it. In a bar that runs the
+            buttons into each other, so each is given that margin back. */}
         <Text as="span" selectable={false} class={styles.actions}>
           <Show when={copyable()}>
             <Tooltip
@@ -207,9 +209,10 @@ export const FeedItem = (props: {
                   variant="ghost"
                   color="neutral"
                   size={1}
+                  m={1}
                   onClick={copy}
                 >
-                  <IconCopy aria-hidden="true" />
+                  <IconCopy width="18" height="18" aria-hidden="true" />
                 </IconButton>
               )}
             </Tooltip>
@@ -219,20 +222,21 @@ export const FeedItem = (props: {
             <Tooltip
               testId="feed-item-save-tooltip"
               display="inline"
-              content="Save"
+              content="Download"
             >
               {(trigger) => (
                 <IconButton
                   {...trigger}
                   testId="feed-item-save"
-                  aria-label="Save"
+                  aria-label="Download"
                   variant="ghost"
                   color="neutral"
                   size={1}
+                  m={1}
                   disabled={saveFile.pending}
                   onClick={save}
                 >
-                  <IconDownload aria-hidden="true" />
+                  <IconDownload width="18" height="18" aria-hidden="true" />
                 </IconButton>
               )}
             </Tooltip>
@@ -241,19 +245,20 @@ export const FeedItem = (props: {
           <Tooltip
             testId="feed-item-delete-tooltip"
             display="inline"
-            content="Delete for everyone"
+            content="Delete"
           >
             {(trigger) => (
               <IconButton
                 {...trigger}
                 testId="feed-item-delete"
-                aria-label="Delete for everyone"
+                aria-label="Delete"
                 variant="ghost"
                 color="danger"
                 size={1}
+                m={1}
                 onClick={remove}
               >
-                <IconDelete aria-hidden="true" />
+                <IconDelete width="18" height="18" aria-hidden="true" />
               </IconButton>
             )}
           </Tooltip>

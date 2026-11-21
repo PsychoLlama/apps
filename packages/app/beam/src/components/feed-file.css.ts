@@ -48,11 +48,16 @@ export const stated = style({
   padding: space[3],
 });
 
-/** A picture fills the preview edge to edge, cropped to fit. */
+/**
+ * A picture fills the preview edge to edge, cropped to fit. Kept from
+ * its top: where something has to go, the top of a screenshot, a page,
+ * or a portrait is the part worth seeing.
+ */
 export const image = style({
   width: '100%',
   height: '100%',
   objectFit: 'cover',
+  objectPosition: 'top',
 });
 
 /** The file's name and size, and the way to save it. */

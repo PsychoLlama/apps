@@ -45,7 +45,7 @@ export const FeedFile = (props: {
 
   /** What pressing the preview does, said for whoever can't see it. */
   const pressLabel = () =>
-    `${openableType(props.file) === null ? 'Save' : 'Open'} ${name()}`;
+    `${openableType(props.file) === null ? 'Download' : 'Open'} ${name()}`;
 
   // Read the picture back once, when the last of it lands.
   let asked = false;
@@ -160,7 +160,7 @@ export const FeedFile = (props: {
         <Show when={here()}>
           <IconButton
             testId="feed-file-save"
-            aria-label="Save"
+            aria-label="Download"
             variant="ghost"
             color="neutral"
             disabled={saveFile.pending}

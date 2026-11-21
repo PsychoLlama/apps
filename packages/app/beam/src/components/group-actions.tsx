@@ -40,7 +40,7 @@ export const GroupActions = (props: {
             disabled={openInvite.pending}
             onClick={() => openInvite(props.groupId)}
           >
-            <IconLink aria-hidden="true" />
+            <IconLink width="24" height="24" aria-hidden="true" />
           </IconButton>
         )}
       </Tooltip>
@@ -62,7 +62,7 @@ export const GroupActions = (props: {
             class={styles.icon}
             onClick={() => navigate(`/group/${props.groupId}/settings`)}
           >
-            <IconSettings aria-hidden="true" />
+            <IconSettings width="24" height="24" aria-hidden="true" />
           </IconButton>
         )}
       </Tooltip>
