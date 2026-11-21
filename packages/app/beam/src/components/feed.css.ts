@@ -22,6 +22,14 @@ export const apart = style({
   },
 });
 
+/**
+ * A feed with nothing in it has nothing to sit on the composer, so what
+ * it says instead takes the middle of the room.
+ */
+export const blank = style({
+  margin: 'auto',
+});
+
 const rule = {
   content: '""',
   flex: '1 1 0',

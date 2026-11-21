@@ -25,9 +25,9 @@ import * as styles from './feed-item.css';
  * shared it and when is said once, above the sitting it's part of.
  *
  * Taking it, by copying a note or saving a file, is why it was shared.
- * Deleting removes it for every device in the group. Both are offered
- * twice: as buttons beside the row, where they can be found, and in the
- * menu a right click or a long press on the row opens.
+ * Deleting removes it for every device in the group. Both are in the
+ * menu a right click or a long press on the row opens, and where there's
+ * a pointer, also as buttons beside the row, where they can be found.
  *
  * The body is text from another device and is only ever rendered as text.
  * It becomes a link when the whole of it is a web address, and opens in a
