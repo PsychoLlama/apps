@@ -17,7 +17,8 @@ import * as styles from './composer.css';
  * One line rather than a box: what gets shared is an address, a code, a
  * link. This is somewhere to paste, not somewhere to compose.
  *
- * Files come in three ways: picked, pasted, or dropped on the field.
+ * Files come in here two ways: picked, or pasted. A drop is the whole
+ * page's to take: see `DropTarget`.
  *
  * A real `<form>`, so Enter in the field and the button arrive at the same
  * handler. Uncontrolled, and cleared on submit.
@@ -31,7 +32,7 @@ export const Composer = (props: {
 
   let picker: HTMLInputElement | undefined;
 
-  /** Share whatever files a pick, paste, or drop carried. */
+  /** Share whatever files a pick or a paste carried. */
   const share = (files: FileList | null | undefined): boolean => {
     if (!files || files.length === 0) return false;
 
@@ -53,15 +54,7 @@ export const Composer = (props: {
   };
 
   return (
-    <Flex
-      as="form"
-      direction="column"
-      onSubmit={handleSubmit}
-      onDragOver={(event) => event.preventDefault()}
-      onDrop={(event) => {
-        if (share(event.dataTransfer?.files)) event.preventDefault();
-      }}
-    >
+    <Flex as="form" direction="column" onSubmit={handleSubmit}>
       <TextField
         testId="composer"
         name="body"

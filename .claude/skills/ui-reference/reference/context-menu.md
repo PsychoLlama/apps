@@ -1,6 +1,6 @@
 # ContextMenu
 
-Non-modal menu of actions for an area, opened at the pointer by a right click or long press. Renders inline, not in a portal. Choosing an item closes it.
+Non-modal menu of actions for an area, opened at the pointer by a right click or long press. A long press opens it above the touch. Renders inline, not in a portal. Choosing an item closes it.
 
 ## ContextMenu
 

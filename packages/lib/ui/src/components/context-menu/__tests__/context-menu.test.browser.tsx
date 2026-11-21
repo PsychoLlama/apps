@@ -189,6 +189,36 @@ describe('ContextMenu', () => {
     });
   });
 
+  it('opens above a touch, centered on it and clear of the finger', async () => {
+    const { area } = setup();
+
+    touch(area, 'pointerdown', { x: 160, y: 240 });
+    await opened();
+    await settled();
+
+    const surface = screen.getByTestId('menu-surface').getBoundingClientRect();
+    const rect = area.getBoundingClientRect();
+
+    expect(surface.bottom - rect.top).toBeCloseTo(240 - 24, 0);
+    expect(surface.left + surface.width / 2 - rect.left).toBeCloseTo(160, 0);
+  });
+
+  it('opens beside the point again for a mouse after a touch', async () => {
+    const { area } = setup();
+
+    touch(area, 'pointerdown', { x: 160, y: 240 });
+    await opened();
+    await userEvent.keyboard('{Escape}');
+    await closed();
+
+    await rightClick(area, { x: 40, y: 60 });
+    await opened();
+    await settled();
+
+    expect(surfaceOffset(area).x).toBeCloseTo(42, 0);
+    expect(surfaceOffset(area).y).toBeCloseTo(52, 0);
+  });
+
   it('closes on a right click elsewhere in the area, reopening on the next', async () => {
     const { area, onOpenChange } = setup();
 

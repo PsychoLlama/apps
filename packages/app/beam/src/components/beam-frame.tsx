@@ -26,6 +26,12 @@ export const BeamFrame = (props: {
    */
   footer?: JSX.Element;
 
+  /**
+   * Laid over the whole frame, header and all, once the device is open.
+   * Rendered last, so it paints over the rest.
+   */
+  overlay?: JSX.Element;
+
   /** The page, shown once the device is open. */
   children: JSX.Element;
 }) => {
@@ -59,6 +65,8 @@ export const BeamFrame = (props: {
           {footer()}
         </Flex>
       </Show>
+
+      <Show when={open()}>{props.overlay}</Show>
     </Frame>
   );
 };

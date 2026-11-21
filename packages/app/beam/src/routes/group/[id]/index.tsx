@@ -3,6 +3,7 @@ import { useParams } from '@solidjs/router';
 import { useAction, useValue } from '@lib/effects/solid';
 import { BeamFrame } from '../../../components/beam-frame';
 import { Composer } from '../../../components/composer';
+import { DropTarget } from '../../../components/drop-target';
 import { Feed } from '../../../components/feed';
 import { GroupActions } from '../../../components/group-actions';
 import { GroupMissing } from '../../../components/group-missing';
@@ -13,7 +14,8 @@ import { $groups, groupLabel } from '../../../state';
 
 /**
  * One group at `/group/:id`: everything shared to it, oldest at the top,
- * and a composer held to the bottom.
+ * and a composer held to the bottom. Anything dropped on the page is
+ * shared to it.
  *
  * Served from one prerendered shell for every id, so the shell's `:id` is
  * a placeholder and nothing drawn from it is prerendered. The feed only
@@ -53,6 +55,11 @@ const BeamGroup = () => {
       footer={
         <Show when={group()?.member}>
           <Composer groupId={params.id} />
+        </Show>
+      }
+      overlay={
+        <Show when={group()?.member}>
+          <DropTarget groupId={params.id} />
         </Show>
       }
     >

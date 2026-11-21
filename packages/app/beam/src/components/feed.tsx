@@ -13,6 +13,7 @@ import {
   type FeedRun,
 } from '../state';
 import * as styles from './feed.css';
+import { FeedEmpty } from './feed-empty';
 import { FeedItem } from './feed-item';
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -134,24 +135,12 @@ export const Feed = (props: {
         as="div"
         direction="column"
         gap={5}
-        class={styles.feed}
+        class={items().length > 0 ? styles.feed : styles.blank}
         ref={(element: HTMLElement) => {
           list = element;
         }}
       >
-        <Show
-          when={items().length > 0}
-          fallback={
-            <Text
-              as="p"
-              selectable={false}
-              color="lowContrast"
-              testId="feed-empty"
-            >
-              Nothing here yet.
-            </Text>
-          }
-        >
+        <Show when={items().length > 0} fallback={<FeedEmpty />}>
           <Flex as="ol" direction="column" gap={5} testId="feed">
             <For each={dayKeys()}>
               {(dayKey) => (

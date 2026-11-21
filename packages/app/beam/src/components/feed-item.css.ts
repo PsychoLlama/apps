@@ -61,22 +61,23 @@ export const content = style({
 });
 
 /**
- * What can be done with an item.
+ * What can be done with an item, as buttons.
  *
  * Where there's a pointer, a small bar riding the row's top corner, out
  * of sight until the row is pointed at or holds focus. It floats, so it
  * takes no room from what was shared and nothing wraps to make way.
  *
- * On a touch screen there's nothing to point with, so the same buttons
- * sit at the end of the row and are always there.
+ * On a touch screen there's nothing to point with, and buttons that
+ * can't be hidden until wanted would sit on every row. There are none:
+ * a long press on the row opens its menu, which offers the same things.
  */
 export const actions = style({
-  display: 'flex',
-  alignItems: 'center',
-  gap: space[1],
-  flexShrink: 0,
+  display: 'none',
   '@media': {
     '(hover: hover)': {
+      display: 'flex',
+      alignItems: 'center',
+      gap: space[1],
       position: 'absolute',
       top: `calc(-1 * ${space[4]})`,
       right: space[3],

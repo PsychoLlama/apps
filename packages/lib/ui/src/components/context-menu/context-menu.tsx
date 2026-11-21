@@ -35,6 +35,10 @@
  * - No `loop`, `dir`, or configurable dismissal, as on `DropdownMenu`.
  * - The menu's `color` takes only `accent` or `neutral`. Items take every
  *   semantic palette, since the others only make sense on one action.
+ * - A menu opened by touch or pen sits above the point, centered on it
+ *   and clear of the finger. Upstream opens every menu down and to the
+ *   right of the point, which on a touch screen is under the hand that
+ *   opened it.
  * - `size` is a plain scale, not a responsive object.
  * - Deferred: `highContrast` styling.
  *
@@ -155,6 +159,12 @@ const LONG_PRESS_DELAY = 700;
 const SIDE_OFFSET = 2;
 
 /**
+ * Gap between a touch and the menu above it, in px. The point is the
+ * middle of a fingertip, and this clears the rest of it.
+ */
+const TOUCH_SIDE_OFFSET = 24;
+
+/**
  * Lift along the edge, per step of `size`, in px. Themes' trick to sit
  * the first item, rather than the surface's padding, under the pointer.
  */
@@ -181,6 +191,14 @@ const ContextMenu = (rawProps: ContextMenuProps) => {
   const [windowElement, setWindowElement] = createSignal<HTMLElement>();
   const [point, setPoint] = createSignal<FloatingPoint>({ x: 0, y: 0 });
 
+  // Whether the open menu was asked for by touch or pen, and so has a
+  // hand over the point it was asked for at.
+  const [byTouch, setByTouch] = createSignal(false);
+
+  // What kind of pointer last pressed in the area. A long press some
+  // platforms report as a plain `contextmenu`, which doesn't say.
+  let pressedByTouch = false;
+
   const inMenu = (node: EventTarget | null) =>
     node instanceof Node && windowElement()?.contains(node) === true;
 
@@ -200,6 +218,7 @@ const ContextMenu = (rawProps: ContextMenuProps) => {
 
     const rect = area.getBoundingClientRect();
     setPoint({ x: event.clientX - rect.left, y: event.clientY - rect.top });
+    setByTouch(pressedByTouch);
 
     // A menu still closing may hold focus; it's not where to return.
     const active = document.activeElement;
@@ -260,7 +279,8 @@ const ContextMenu = (rawProps: ContextMenuProps) => {
     if (local.disabled || fromMenu(event)) return;
 
     swallowNext = local.open && isSecondary(event);
-    if (!isTouchOrPen(event)) return;
+    pressedByTouch = isTouchOrPen(event);
+    if (!pressedByTouch) return;
 
     // A second touch point restarts the wait.
     clearLongPress();
@@ -322,10 +342,10 @@ const ContextMenu = (rawProps: ContextMenuProps) => {
         onClose={() => local.onOpenChange(false)}
         entry={() => 'surface'}
         windowRef={setWindowElement}
-        side="right"
-        align="start"
-        sideOffset={SIDE_OFFSET}
-        alignOffset={ALIGN_OFFSET_PER_SIZE * props.size}
+        side={byTouch() ? 'top' : 'right'}
+        align={byTouch() ? 'center' : 'start'}
+        sideOffset={byTouch() ? TOUCH_SIDE_OFFSET : SIDE_OFFSET}
+        alignOffset={byTouch() ? 0 : ALIGN_OFFSET_PER_SIZE * props.size}
         point={point()}
         testId={local.testId}
       >
