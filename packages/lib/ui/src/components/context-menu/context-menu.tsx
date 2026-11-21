@@ -28,7 +28,8 @@
  *   open state itself and only reports it. The point stays internal.
  * - The area is a `FloatingRoot` wrapper rather than a `<span>` merged
  *   into the child via `asChild`, and carries no `data-state` or
- *   `data-disabled`.
+ *   `data-disabled`. `areaClass` styles it, standing in for the classes
+ *   upstream's merged child would have carried.
  * - A right click inside the open menu is swallowed. Upstream's reaches
  *   the trigger through the React tree and moves the menu there.
  * - No `loop`, `dir`, or configurable dismissal, as on `DropdownMenu`.
@@ -129,6 +130,12 @@ export interface ContextMenuProps
   /** Class merged onto the menu surface. */
   class?: string;
 
+  /**
+   * Class merged onto the area wrapper. The wrapper hugs its content
+   * unless told otherwise, so this is how an area fills a row.
+   */
+  areaClass?: string;
+
   /** The area that opens the menu. */
   children: JSX.Element;
 }
@@ -167,6 +174,7 @@ const ContextMenu = (rawProps: ContextMenuProps) => {
     'disabled',
     'children',
     'testId',
+    'areaClass',
   ]);
 
   const [root, setRoot] = createSignal<HTMLElement>();
@@ -298,7 +306,7 @@ const ContextMenu = (rawProps: ContextMenuProps) => {
     <FloatingRoot
       ref={setRoot}
       display={local.display}
-      class={clx(!local.disabled && css.trigger)}
+      class={clx(!local.disabled && css.trigger, local.areaClass)}
       testId={`${local.testId}-area`}
       onContextMenu={onContextMenu}
       onPointerDown={onPointerDown}

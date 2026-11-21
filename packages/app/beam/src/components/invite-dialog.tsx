@@ -44,7 +44,7 @@ export const InviteDialog = () => {
       testId="invite-dialog"
       open={invite() !== null}
       onOpenChange={() => closeInvite()}
-      title="Link a device"
+      title="Connect a device"
       description="Scan this with the other device, or open the link on it. It works once, for the next 10 minutes."
       maxWidth="24rem"
     >

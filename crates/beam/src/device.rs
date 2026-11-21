@@ -126,7 +126,13 @@ impl Device {
         let (group, outputs) = founded.map_err(to_js)?;
         self.core.finish(database, outputs).await.map_err(to_js)?;
 
-        let founding = Schema::of(group, group).found(&name);
+        #[expect(
+            clippy::cast_possible_truncation,
+            reason = "milliseconds since 1970, a whole number well inside an i64"
+        )]
+        let now = js_sys::Date::now() as i64;
+        let key = item_key(now, random()?);
+        let founding = Schema::of(group, group).found(&name, key, self.core.id, now);
         self.write(database, group, founding).await?;
 
         Ok(hex::encode(group.as_bytes()))

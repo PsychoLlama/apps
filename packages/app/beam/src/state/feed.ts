@@ -76,6 +76,30 @@ export const $membersChanged = defineCommand(
   },
 );
 
+/** The kinds of item the app writes for itself that this build can show. */
+const SYSTEM_KINDS = new Set(['welcome']);
+
+/**
+ * Whether an item has a place in the feed. One the app wrote for itself
+ * has none if this build doesn't know its kind: a newer build on another
+ * device wrote it, and there's nothing here to say for it.
+ */
+export const isShown = (item: { readonly system?: string }): boolean =>
+  item.system === undefined || SYSTEM_KINDS.has(item.system);
+
+/**
+ * Where this device's unsynced items begin: the id of the oldest thing
+ * it wrote that the group hasn't made final, or `null` if there's none.
+ *
+ * Only its own. Another device's item that isn't final yet has still
+ * arrived, which is all anyone here was waiting for.
+ */
+export const firstPending = (
+  items: readonly Item[],
+  deviceId: string | null,
+): string | null =>
+  items.find((item) => item.author === deviceId && !item.committed)?.id ?? null;
+
 /**
  * Something to share as it's stored: trimmed, or `null` if nothing is left
  * or it runs too long.
@@ -133,6 +157,38 @@ const PREVIEWED = new Set([
   'image/webp',
   'image/avif',
 ]);
+
+/**
+ * Types a click opens in a tab of its own, and the type the browser is
+ * told each is. Everything else is saved instead.
+ *
+ * An allowlist, and a short one, because an opened file is shown from
+ * this app's origin. A type that can carry a script (HTML, SVG, XML)
+ * would run it with the run of everything this device holds. These are
+ * formats a browser draws or plays and does nothing else with.
+ */
+const OPENED = new Map([
+  ...[...PREVIEWED].map((type) => [type, type] as const),
+  ['application/pdf', 'application/pdf'],
+
+  // Said outright, so nothing is left for the browser to guess at.
+  ['text/plain', 'text/plain;charset=utf-8'],
+  ['video/mp4', 'video/mp4'],
+  ['video/webm', 'video/webm'],
+  ['audio/mpeg', 'audio/mpeg'],
+  ['audio/mp4', 'audio/mp4'],
+  ['audio/ogg', 'audio/ogg'],
+  ['audio/wav', 'audio/wav'],
+  ['audio/webm', 'audio/webm'],
+]);
+
+/**
+ * The type to open a file as, or `null` if it's one to save and never
+ * open. The file's own type is another device's word: it picks from the
+ * list and is never passed on, parameters and all, to the browser.
+ */
+export const openableType = (file: { readonly type: string }): string | null =>
+  OPENED.get(file.type.split(';')[0]?.trim().toLowerCase() ?? '') ?? null;
 
 /** The largest image read back in to show, in bytes. */
 const PREVIEW_MAX_BYTES = 20 * 1024 * 1024;

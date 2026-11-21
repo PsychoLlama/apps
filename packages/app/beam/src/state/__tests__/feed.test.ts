@@ -10,8 +10,11 @@ import {
   ITEM_MAX_LENGTH,
   linkOf,
   normalizeBody,
+  openableType,
   formatBytes,
+  firstPending,
   isPreviewable,
+  isShown,
 } from '../feed';
 
 const GROUP = 'aaaa';
@@ -162,6 +165,69 @@ describe('linkOf', () => {
     expect(linkOf('just a note')).toBeNull();
     expect(linkOf('javascript:alert(1)')).toBeNull();
     expect(linkOf('data:text/html,hi')).toBeNull();
+  });
+});
+
+describe('firstPending', () => {
+  const written = (id: string, author: string, committed: boolean): Item => ({
+    ...item(id, id),
+    author,
+    committed,
+  });
+
+  it('finds the oldest thing this device wrote that is not final', () => {
+    const items = [
+      written('a', 'me', true),
+      written('b', 'me', false),
+      written('c', 'me', false),
+    ];
+
+    expect(firstPending(items, 'me')).toBe('b');
+  });
+
+  it('passes over what another device has yet to make final', () => {
+    expect(firstPending([written('a', 'them', false)], 'me')).toBeNull();
+  });
+
+  it('finds nothing when everything is final, or the device is unknown', () => {
+    expect(firstPending([written('a', 'me', true)], 'me')).toBeNull();
+    expect(firstPending([written('a', 'me', false)], null)).toBeNull();
+  });
+});
+
+describe('isShown', () => {
+  it('shows what was shared, and the kinds of its own this build knows', () => {
+    expect(isShown({})).toBe(true);
+    expect(isShown({ system: 'welcome' })).toBe(true);
+  });
+
+  it('leaves out a kind from a build newer than this one', () => {
+    expect(isShown({ system: 'from-the-future' })).toBe(false);
+  });
+});
+
+describe('openableType', () => {
+  it('opens what a browser only draws or plays', () => {
+    expect(openableType({ type: 'image/png' })).toBe('image/png');
+    expect(openableType({ type: 'application/pdf' })).toBe('application/pdf');
+    expect(openableType({ type: 'video/mp4' })).toBe('video/mp4');
+  });
+
+  it('says for itself what encoding plain text is in', () => {
+    expect(openableType({ type: 'text/plain' })).toBe(
+      'text/plain;charset=utf-8',
+    );
+    expect(openableType({ type: 'Text/Plain; charset=utf-7' })).toBe(
+      'text/plain;charset=utf-8',
+    );
+  });
+
+  it('refuses anything that could run a script, and anything unknown', () => {
+    expect(openableType({ type: 'text/html' })).toBeNull();
+    expect(openableType({ type: 'image/svg+xml' })).toBeNull();
+    expect(openableType({ type: 'application/xhtml+xml' })).toBeNull();
+    expect(openableType({ type: 'application/zip' })).toBeNull();
+    expect(openableType({ type: '' })).toBeNull();
   });
 });
 

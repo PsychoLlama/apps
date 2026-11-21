@@ -41,6 +41,33 @@ export const normalizeGroupName = (name: string): string | null => {
   return trimmed.length <= GROUP_NAME_MAX_LENGTH ? trimmed : null;
 };
 
+/** What a group someone asked for is called until they rename it. */
+const NEW_GROUP_NAME = 'New group';
+
+/**
+ * A name for another group, unlike any this device already shows: `New
+ * group`, then `New group (1)`, and so on.
+ *
+ * A device's first group goes unnamed and reads as its {@link groupLabel}.
+ * Any after that was asked for, and two rows reading the same would be
+ * told apart by nothing.
+ *
+ * Only as good as what this device holds. Two devices can still give two
+ * groups one name, and either can be renamed.
+ */
+export const nextGroupName = (
+  groups: readonly { readonly name: string }[],
+): string => {
+  const taken = new Set(groups.map((group) => groupLabel(group).toLowerCase()));
+
+  for (let count = 0; ; count++) {
+    const name =
+      count === 0 ? NEW_GROUP_NAME : `${NEW_GROUP_NAME} (${String(count)})`;
+
+    if (!taken.has(name.toLowerCase())) return name;
+  }
+};
+
 /**
  * What to call a group on screen. Nobody is asked to name one, so most
  * have no name, and most are someone's own devices.

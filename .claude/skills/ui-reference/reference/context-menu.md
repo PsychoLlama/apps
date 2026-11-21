@@ -16,6 +16,7 @@ Base: `<div>` attributes on the surface (except `role`, `style`, `children`, `co
 - `variant` (=`'solid'`): Focused item paint. `'solid' | 'soft'`.
 - `color` (=`'accent'`): Highlight palette. `'accent' | 'neutral'`.
 - `class`: Class merged onto the surface.
+- `areaClass`: Class merged onto the area wrapper, which otherwise hugs its content.
 
 ## ContextMenuItem
 

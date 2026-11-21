@@ -4,7 +4,8 @@ export {
   $deviceHeldElsewhere,
   $deviceOpened,
   $relayChanged,
-  isOnline,
+  connectionOf,
+  type Connection,
 } from './device';
 export {
   $feed,
@@ -12,11 +13,14 @@ export {
   $groupViewed,
   $membersChanged,
   FILE_NAME_MAX_LENGTH,
+  firstPending,
   formatBytes,
   isPreviewable,
+  isShown,
   ITEM_MAX_LENGTH,
   linkOf,
   normalizeBody,
+  openableType,
 } from './feed';
 export {
   DEVICE_NAME_MAX_LENGTH,
@@ -28,6 +32,7 @@ export {
   $groupsChanged,
   GROUP_NAME_MAX_LENGTH,
   groupLabel,
+  nextGroupName,
   normalizeGroupName,
 } from './groups';
 export {
@@ -38,5 +43,6 @@ export {
   inviteLink,
   type QrGrid,
 } from './invite';
-export { dayOf, timeline, type FeedDay, type FeedRun } from './timeline';
+export { dayOf, timeline, type FeedRun } from './timeline';
 export { $removal, $removalAsked } from './removal';
+export { $itemMenu, $itemMenuToggled } from './item-menu';

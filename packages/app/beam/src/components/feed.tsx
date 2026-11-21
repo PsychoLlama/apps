@@ -1,18 +1,19 @@
 import { createEffect, createMemo, For, on, Show } from 'solid-js';
 import { useValue } from '@lib/effects/solid';
+import { name as appName } from '../constants';
 import { Flex, Text } from '@lib/ui';
 import {
   $device,
   $feed,
+  isShown,
   dayOf,
   deviceLabel,
+  firstPending,
   timeline,
-  type FeedDay,
   type FeedRun,
 } from '../state';
 import * as styles from './feed.css';
 import { FeedItem } from './feed-item';
-import { LinkPrompt } from './link-prompt';
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -33,12 +34,6 @@ const formatDay = (day: number): string => {
   }).format(day);
 };
 
-/** What tells one sitting from another: the first thing shared in it. */
-const keyOf = (run: FeedRun): string => run.items[0]?.id ?? '';
-
-const runKeys = (day: FeedDay | undefined): string[] =>
-  day?.runs.map(keyOf) ?? [];
-
 /** A time of day, in the reader's locale. */
 const formatTime = (epochMilliseconds: number): string =>
   new Intl.DateTimeFormat(undefined, { timeStyle: 'short' }).format(
@@ -53,8 +48,8 @@ const formatTime = (epochMilliseconds: number): string =>
  * Grouped by day, and within a day by sitting: what one device shared
  * without a long pause sits under one line saying who and when.
  *
- * While this device is alone in the group, the feed ends with a prompt
- * to link another.
+ * What this device wrote and the group hasn't taken yet sits below a
+ * line saying so.
  *
  * Renders nothing until the database has answered for this group. An empty
  * feed before then would read as "nothing has been shared".
@@ -74,11 +69,39 @@ export const Feed = (props: {
   // time: a picture reloading whenever anything was shared. So the lists
   // are of keys, which compare equal from one read to the next, and each
   // row looks up what it shows.
-  const days = createMemo(() => timeline(feed().items));
+  //
+  // A day's rows are one flat list, keyed by item. A sitting is not a
+  // row of its own: what marks one is its first item, and that changes
+  // when the item is deleted. A list keyed by sitting rebuilt every item
+  // after it, pictures and all.
+  const items = createMemo(() => feed().items.filter(isShown));
+  const days = createMemo(() => timeline(items()));
   const dayKeys = () => days().map((day) => day.day);
   const byId = createMemo(
-    () => new Map(feed().items.map((item) => [item.id, item])),
+    () => new Map(items().map((item) => [item.id, item])),
   );
+
+  /** The ids of everything shared on a day, oldest first. */
+  const idsOf = (dayKey: number): string[] =>
+    days()
+      .find((it) => it.day === dayKey)
+      ?.runs.flatMap((run) => run.items.map((it) => it.id)) ?? [];
+
+  /** Each sitting, by the item it starts with. */
+  const starts = createMemo(
+    () =>
+      new Map(
+        days().flatMap((day) =>
+          day.runs.flatMap((run): [string, FeedRun][] => {
+            const first = run.items[0];
+            return first ? [[first.id, run]] : [];
+          }),
+        ),
+      ),
+  );
+
+  /** The item this device's unsynced writes begin at, if it has any. */
+  const pending = createMemo(() => firstPending(items(), device().id));
 
   /**
    * What to call whoever wrote an item. A device that has since left the
@@ -91,19 +114,13 @@ export const Feed = (props: {
     return member ? deviceLabel(member) : 'Another device';
   };
 
-  /**
-   * Whether this device is the only one in the group. The list always
-   * has this device in it, so one is an answer and none is not yet.
-   */
-  const alone = () => feed().members.length === 1;
-
   let list: HTMLElement | undefined;
 
   // Keep the newest in view: on arriving, and whenever there's a new one.
   // After the rows exist, which is a turn later than the data.
   createEffect(
     on(
-      () => ready() && feed().items.at(-1)?.id,
+      () => ready() && items().at(-1)?.id,
       (newest) => {
         if (newest)
           queueMicrotask(() => list?.scrollIntoView({ block: 'end' }));
@@ -122,98 +139,106 @@ export const Feed = (props: {
           list = element;
         }}
       >
-        <Show when={feed().items.length > 0}>
-          <Flex as="ol" direction="column" gap={5} testId="feed">
-            <For each={dayKeys()}>
-              {(dayKey) => {
-                const day = () => days().find((it) => it.day === dayKey);
-
-                return (
-                  <Flex as="li" direction="column" gap={4}>
-                    <Text
-                      as="span"
-                      size={1}
-                      color="lowContrast"
-                      selectable={false}
-                      class={styles.day}
-                      testId="feed-day"
-                    >
-                      <time datetime={new Date(dayKey).toISOString()}>
-                        {formatDay(dayKey)}
-                      </time>
-                    </Text>
-
-                    <Flex as="ol" direction="column" gap={4}>
-                      <For each={runKeys(day())}>
-                        {(runKey) => {
-                          const run = () =>
-                            day()?.runs.find((it) => keyOf(it) === runKey);
-
-                          return (
-                            <Flex as="li" direction="column" gap={1}>
-                              <Text
-                                as="span"
-                                size={1}
-                                color="lowContrast"
-                                selectable={false}
-                                testId="feed-run"
-                              >
-                                {authorOf(run()?.author ?? '')}
-                                {' · '}
-                                <time
-                                  datetime={new Date(
-                                    run()?.startedAt ?? 0,
-                                  ).toISOString()}
-                                >
-                                  {formatTime(run()?.startedAt ?? 0)}
-                                </time>
-                              </Text>
-
-                              <Flex as="ol" direction="column" gap={1}>
-                                <For each={run()?.items.map((it) => it.id)}>
-                                  {(id) => (
-                                    <Show when={byId().get(id)}>
-                                      {(item) => (
-                                        <Flex as="li" direction="column">
-                                          <FeedItem
-                                            groupId={props.groupId}
-                                            item={item()}
-                                            mine={item().author === device().id}
-                                          />
-                                        </Flex>
-                                      )}
-                                    </Show>
-                                  )}
-                                </For>
-                              </Flex>
-                            </Flex>
-                          );
-                        }}
-                      </For>
-                    </Flex>
-                  </Flex>
-                );
-              }}
-            </For>
-          </Flex>
-        </Show>
-
         <Show
-          when={alone()}
+          when={items().length > 0}
           fallback={
-            <Show when={feed().items.length === 0}>
-              <Text
-                as="p"
-                selectable={false}
-                color="lowContrast"
-                testId="feed-empty"
-              >
-                Nothing here yet.
-              </Text>
-            </Show>
+            <Text
+              as="p"
+              selectable={false}
+              color="lowContrast"
+              testId="feed-empty"
+            >
+              Nothing here yet.
+            </Text>
           }
         >
-          <LinkPrompt groupId={props.groupId} />
+          <Flex as="ol" direction="column" gap={5} testId="feed">
+            <For each={dayKeys()}>
+              {(dayKey) => (
+                <Flex as="li" direction="column" gap={4}>
+                  <Text
+                    as="span"
+                    size={1}
+                    color="lowContrast"
+                    selectable={false}
+                    class={styles.day}
+                    testId="feed-day"
+                  >
+                    <time datetime={new Date(dayKey).toISOString()}>
+                      {formatDay(dayKey)}
+                    </time>
+                  </Text>
+
+                  <Flex as="ol" direction="column" gap={1}>
+                    <For each={idsOf(dayKey)}>
+                      {(id) => (
+                        <Show when={byId().get(id)}>
+                          {(item) => (
+                            <Flex
+                              as="li"
+                              direction="column"
+                              gap={1}
+                              class={
+                                starts().has(id) || pending() === id
+                                  ? styles.apart
+                                  : undefined
+                              }
+                            >
+                              {/* Everything from here down was written on
+                                  this device and hasn't reached the
+                                  group's other devices. Said once, where
+                                  it starts, and not on every item. */}
+                              <Show when={pending() === id}>
+                                <Text
+                                  as="span"
+                                  size={1}
+                                  color="lowContrast"
+                                  selectable={false}
+                                  class={styles.day}
+                                  testId="feed-pending"
+                                >
+                                  Not synced yet
+                                </Text>
+                              </Show>
+
+                              <Show when={starts().get(id)}>
+                                {(run) => (
+                                  <Text
+                                    as="span"
+                                    size={1}
+                                    color="lowContrast"
+                                    selectable={false}
+                                    testId="feed-run"
+                                  >
+                                    {/* The app's own items are said to be
+                                        from it, whichever device's clock
+                                        and key they were written under. */}
+                                    {run().system
+                                      ? appName
+                                      : authorOf(run().author)}
+                                    {' · '}
+                                    <time
+                                      datetime={new Date(
+                                        run().startedAt,
+                                      ).toISOString()}
+                                    >
+                                      {formatTime(run().startedAt)}
+                                    </time>
+                                  </Text>
+                                )}
+                              </Show>
+
+                              <FeedItem groupId={props.groupId} item={item()} />
+                            </Flex>
+                          )}
+                        </Show>
+                      )}
+                    </For>
+                  </Flex>
+                </Flex>
+              )}
+            </For>
+          </Flex>
         </Show>
       </Flex>
     </Show>

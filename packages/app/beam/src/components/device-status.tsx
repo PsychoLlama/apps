@@ -1,54 +1,52 @@
 import { Show } from 'solid-js';
 import { useValue } from '@lib/effects/solid';
-import { Text, Tooltip } from '@lib/ui';
-import IconOnline from 'virtual:icons/mdi/cloud-check-outline';
-import IconOffline from 'virtual:icons/mdi/cloud-off-outline';
-import { $device, isOnline } from '../state';
-import * as styles from './header.css';
+import { Badge, Text } from '@lib/ui';
+import { $device, connectionOf, type Connection } from '../state';
+import * as styles from './device-status.css';
+
+/** What each state is called. */
+const LABELS: Record<Connection, string> = {
+  connecting: 'Connecting',
+  online: 'Online',
+  offline: 'Offline',
+};
 
 /**
- * Whether this device can reach others right now, as an icon, with the
- * word on hover. Renders nothing until the device is open: before that
- * "offline" would be a guess.
+ * Whether this device can reach others right now: a word, and a dot
+ * after it in the state's color.
  *
- * An icon and not a badge. Being online is the ordinary state, and being
- * offline isn't an error: what's shared waits. Neither asks for attention.
+ * A badge and not an icon. Everything else in the header is a button,
+ * and an icon among them reads as one more. A badge is plainly a label.
+ * It stays neutral whatever the state: being offline isn't an error,
+ * what's shared waits, and only the dot changes.
+ *
+ * Renders nothing when the device isn't this tab's to speak for.
  */
 export const DeviceStatus = () => {
   const device = useValue($device);
-  const label = () => (isOnline(device()) ? 'Online' : 'Offline');
+  const connection = () => connectionOf(device());
 
   return (
-    <Show when={device().status === 'open'}>
-      <Tooltip
-        testId="device-status-tooltip"
-        display="block"
-        side="bottom"
-        align="end"
-        content={label()}
-      >
-        {(trigger) => (
+    <Show when={connection()}>
+      {(state) => (
+        <Badge
+          color="neutral"
+          variant="soft"
+          radius="full"
+          size={2}
+          role="status"
+          data-testid="device-status"
+          data-state={state()}
+        >
+          {LABELS[state()]}
           <Text
-            {...trigger}
             as="span"
-            size={2}
-            role="img"
-            tabIndex={0}
-            color="lowContrast"
             selectable={false}
-            aria-label={label()}
-            testId="device-status"
-            class={styles.icon}
-          >
-            <Show
-              when={isOnline(device())}
-              fallback={<IconOffline aria-hidden="true" />}
-            >
-              <IconOnline aria-hidden="true" />
-            </Show>
-          </Text>
-        )}
-      </Tooltip>
+            class={styles.dot[state()]}
+            aria-hidden="true"
+          />
+        </Badge>
+      )}
     </Show>
   );
 };

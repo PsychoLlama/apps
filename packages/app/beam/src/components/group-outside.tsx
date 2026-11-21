@@ -28,8 +28,7 @@ export const GroupOutside = (props: {
     <Callout testId="group-joining" color="neutral">
       <Flex as="div" direction="column" gap={3} align="start">
         <Text as="p" selectable={false}>
-          Joining. This device is let in once enough of the group's devices are
-          online to agree to it.
+          Joining. This finishes once the group's other devices are online.
         </Text>
 
         <Button

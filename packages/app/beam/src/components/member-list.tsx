@@ -79,7 +79,7 @@ export const MemberList = (props: {
         open={asked() !== undefined}
         onOpenChange={() => askRemoval(null)}
         title={`Remove ${asked() ? deviceLabel(asked()!) : 'device'}?`}
-        description="It leaves the group and deletes its copy of everything shared here. This happens once most of the group's devices are online to agree."
+        description="It loses access to this group and everything shared here. This can take a while if other devices are offline."
         actionText="Remove"
         color="danger"
         onAction={() => {

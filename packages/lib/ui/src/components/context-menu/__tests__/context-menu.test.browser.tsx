@@ -132,6 +132,25 @@ const surfaceOffset = (area: HTMLElement) => {
 };
 
 describe('ContextMenu', () => {
+  it('puts `areaClass` on the area, and `class` on the menu', () => {
+    render(() => (
+      <ContextMenu
+        display="block"
+        testId="menu"
+        open
+        onOpenChange={() => {}}
+        class="on-menu"
+        areaClass="on-area"
+        content={<ContextMenuItem testId="edit">Edit</ContextMenuItem>}
+      >
+        <section class={fixture.area} />
+      </ContextMenu>
+    ));
+
+    expect(screen.getByTestId('menu-area')).toHaveClass('on-area');
+    expect(screen.getByTestId('menu-area')).not.toHaveClass('on-menu');
+  });
+
   // --- Opening ---
 
   it('starts closed', () => {

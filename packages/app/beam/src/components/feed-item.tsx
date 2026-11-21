@@ -1,20 +1,41 @@
 import type { Item } from '@crate/beam';
 import { Show } from 'solid-js';
-import { useAction } from '@lib/effects/solid';
-import { Button, Flex, Link, Text, Tooltip } from '@lib/ui';
-import IconSync from 'virtual:icons/mdi/cloud-sync-outline';
-import { $deleteItem } from '../effects';
-import { linkOf } from '../state';
+import { useAction, useValue } from '@lib/effects/solid';
+import {
+  ContextMenu,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  Flex,
+  IconButton,
+  Link,
+  Text,
+  Tooltip,
+} from '@lib/ui';
+import IconCopy from 'virtual:icons/mdi/content-copy';
+import IconDownload from 'virtual:icons/mdi/download';
+import IconDelete from 'virtual:icons/mdi/trash-can-outline';
+import { $deleteItem, $saveFile } from '../effects';
+import { $itemMenu, $itemMenuToggled, linkOf } from '../state';
 import { FeedFile } from './feed-file';
+import { FeedWelcome } from './feed-welcome';
 import * as styles from './feed-item.css';
 
 /**
- * One thing shared to a group: what it is, and what to do with it. Who shared it and when is said once, above the sitting it's part of. Taking it, by copying a note or saving a file,
- * is why it was shared. Deleting removes it for every device in the group.
+ * One thing shared to a group: what it is, and what to do with it. Who
+ * shared it and when is said once, above the sitting it's part of.
+ *
+ * Taking it, by copying a note or saving a file, is why it was shared.
+ * Deleting removes it for every device in the group. Both are offered
+ * twice: as buttons beside the row, where they can be found, and in the
+ * menu a right click or a long press on the row opens.
  *
  * The body is text from another device and is only ever rendered as text.
  * It becomes a link when the whole of it is a web address, and opens in a
  * new tab without handing the page a way back.
+ *
+ * An item the app wrote for itself gets neither the buttons nor the
+ * menu. It carries its own way out, and a right click on it is left to
+ * the browser.
  */
 export const FeedItem = (props: {
   /** The group the item belongs to. */
@@ -22,111 +43,202 @@ export const FeedItem = (props: {
 
   /** The item itself. */
   item: Item;
-
-  /** Whether this device wrote it. */
-  mine: boolean;
 }) => {
+  const itemMenu = useValue($itemMenu);
+  const toggleMenu = useAction($itemMenuToggled);
   const deleteItem = useAction($deleteItem);
+  const saveFile = useAction($saveFile);
 
   const copy = () => void navigator.clipboard.writeText(props.item.body);
+  const remove = () => deleteItem(props.groupId, props.item.id);
+
+  /** Whether the item is words, which can be copied. */
+  const copyable = () => !props.item.file;
+
+  /** The item's file, once all of it is here: there's nothing to save before. */
+  const held = () => {
+    const file = props.item.file;
+    return file && file.held >= file.size ? file : undefined;
+  };
+
+  const save = () => {
+    const file = held();
+    if (file) saveFile(props.groupId, props.item.id, file);
+  };
 
   return (
-    <Flex
-      as="article"
-      align="start"
-      gap={5}
-      testId="feed-item"
-      class={styles.item}
+    <ContextMenu
+      testId="feed-item-menu"
+      display="block"
+      areaClass={styles.area}
+      disabled={props.item.system !== undefined}
+      open={itemMenu() === props.item.id}
+      onOpenChange={(open) => toggleMenu(props.item.id, open)}
+      content={
+        <>
+          <Show when={copyable()}>
+            <ContextMenuItem testId="feed-item-menu-copy" onSelect={copy}>
+              Copy
+            </ContextMenuItem>
+          </Show>
+
+          <Show when={props.item.file}>
+            <ContextMenuItem
+              testId="feed-item-menu-save"
+              disabled={!held() || saveFile.pending}
+              onSelect={save}
+            >
+              Download
+            </ContextMenuItem>
+          </Show>
+
+          <ContextMenuSeparator />
+
+          <ContextMenuItem
+            testId="feed-item-menu-delete"
+            color="danger"
+            onSelect={remove}
+          >
+            Delete
+          </ContextMenuItem>
+        </>
+      }
     >
-      <Show
-        when={props.item.file}
-        fallback={
+      <Flex
+        as="article"
+        align="start"
+        gap={3}
+        testId="feed-item"
+        class={styles.item}
+      >
+        <Flex as="div" align="start" gap={3} class={styles.content}>
           <Show
-            when={linkOf(props.item.body)}
+            when={!props.item.system}
             fallback={
-              <Text as="p" selectable class={styles.body}>
-                {props.item.body}
-              </Text>
+              <FeedWelcome groupId={props.groupId} itemId={props.item.id} />
             }
           >
-            {(href) => (
-              <Text as="p" selectable class={styles.body}>
-                <Link
-                  testId="feed-item-link"
-                  href={href()}
-                  native
-                  target="_blank"
-                  rel="noreferrer"
-                  selectable
+            <Show
+              when={props.item.file}
+              fallback={
+                <Show
+                  when={linkOf(props.item.body)}
+                  fallback={
+                    <Text as="p" selectable class={styles.body}>
+                      {props.item.body}
+                    </Text>
+                  }
                 >
-                  {props.item.body}
-                </Link>
-              </Text>
-            )}
-          </Show>
-        }
-      >
-        {(file) => (
-          <FeedFile
-            groupId={props.groupId}
-            itemId={props.item.id}
-            file={file()}
-          />
-        )}
-      </Show>
-
-      <Text as="span" selectable={false} class={styles.actions}>
-        {/* A file is saved from its own tile. */}
-        <Show when={!props.item.file}>
-          <Button
-            testId="feed-item-copy"
-            variant="ghost"
-            color="neutral"
-            size={1}
-            onClick={copy}
-          >
-            Copy
-          </Button>
-        </Show>
-
-        <Button
-          testId="feed-item-delete"
-          aria-label="Delete for everyone"
-          variant="ghost"
-          color="danger"
-          size={1}
-          onClick={() => deleteItem(props.groupId, props.item.id)}
-        >
-          Delete
-        </Button>
-      </Text>
-
-      {/* Written here, and not yet agreed by the group: its other devices
-          haven't all been reachable since. Only said of this device's
-          own. On any other device it has plainly arrived. */}
-      <Show when={props.mine && !props.item.committed}>
-        <Tooltip
-          testId="feed-item-pending-tooltip"
-          display="inline"
-          side="right"
-          content="Waiting for the group's other devices"
-        >
-          {(trigger) => (
-            <Text
-              {...trigger}
-              as="span"
-              role="img"
-              tabIndex={0}
-              color="lowContrast"
-              selectable={false}
-              aria-label="Waiting for the group's other devices"
-              testId="feed-item-pending"
+                  {(href) => (
+                    <Text as="p" selectable class={styles.body}>
+                      {/* A link keeps the browser's own menu: opening it
+                        somewhere else, or copying its address, are things
+                        only that menu can do. */}
+                      <Link
+                        testId="feed-item-link"
+                        href={href()}
+                        native
+                        target="_blank"
+                        rel="noreferrer"
+                        selectable
+                        onContextMenu={(event) => event.stopPropagation()}
+                        onPointerDown={(event) => event.stopPropagation()}
+                      >
+                        {props.item.body}
+                      </Link>
+                    </Text>
+                  )}
+                </Show>
+              }
             >
-              <IconSync width="16" height="16" aria-hidden="true" />
-            </Text>
-          )}
-        </Tooltip>
-      </Show>
-    </Flex>
+              {(file) => (
+                <FeedFile
+                  groupId={props.groupId}
+                  itemId={props.item.id}
+                  file={file()}
+                />
+              )}
+            </Show>
+          </Show>
+        </Flex>
+
+        {/* An item of the app's own has its way out on its face, and
+            nothing else to offer. */}
+        <Show when={!props.item.system}>
+          {/* A ghost button pulls itself outward by its own padding, to line
+            its icon up with the text around it. In a bar that runs the
+            buttons into each other, so each is given that margin back. */}
+          <Text as="span" selectable={false} class={styles.actions}>
+            <Show when={copyable()}>
+              <Tooltip
+                testId="feed-item-copy-tooltip"
+                display="inline"
+                content="Copy"
+              >
+                {(trigger) => (
+                  <IconButton
+                    {...trigger}
+                    testId="feed-item-copy"
+                    aria-label="Copy"
+                    variant="ghost"
+                    color="neutral"
+                    size={1}
+                    m={1}
+                    onClick={copy}
+                  >
+                    <IconCopy width="18" height="18" aria-hidden="true" />
+                  </IconButton>
+                )}
+              </Tooltip>
+            </Show>
+
+            <Show when={held()}>
+              <Tooltip
+                testId="feed-item-save-tooltip"
+                display="inline"
+                content="Download"
+              >
+                {(trigger) => (
+                  <IconButton
+                    {...trigger}
+                    testId="feed-item-save"
+                    aria-label="Download"
+                    variant="ghost"
+                    color="neutral"
+                    size={1}
+                    m={1}
+                    disabled={saveFile.pending}
+                    onClick={save}
+                  >
+                    <IconDownload width="18" height="18" aria-hidden="true" />
+                  </IconButton>
+                )}
+              </Tooltip>
+            </Show>
+
+            <Tooltip
+              testId="feed-item-delete-tooltip"
+              display="inline"
+              content="Delete"
+            >
+              {(trigger) => (
+                <IconButton
+                  {...trigger}
+                  testId="feed-item-delete"
+                  aria-label="Delete"
+                  variant="ghost"
+                  color="danger"
+                  size={1}
+                  m={1}
+                  onClick={remove}
+                >
+                  <IconDelete width="18" height="18" aria-hidden="true" />
+                </IconButton>
+              )}
+            </Tooltip>
+          </Text>
+        </Show>
+      </Flex>
+    </ContextMenu>
   );
 };

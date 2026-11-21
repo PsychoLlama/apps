@@ -4,8 +4,8 @@ import { useAction } from '@lib/effects/solid';
 import { Flex, IconButton, Progress, Text } from '@lib/ui';
 import IconDownload from 'virtual:icons/mdi/download';
 import IconFile from 'virtual:icons/mdi/file-outline';
-import { $previewFile, $saveFile } from '../effects';
-import { formatBytes, isPreviewable } from '../state';
+import { $openFile, $previewFile, $saveFile } from '../effects';
+import { formatBytes, isPreviewable, openableType } from '../state';
 import * as styles from './feed-file.css';
 
 /**
@@ -15,6 +15,9 @@ import * as styles from './feed-file.css';
  * While it's arriving the preview is how much has. Once it's all here a
  * picture is shown, anything else says what type it is, and the save
  * button appears: there's nothing to save before then.
+ *
+ * The preview is then a button. It opens the file in a tab of its own if
+ * it's a kind that's safe to show from this app, and saves it otherwise.
  *
  * The name and type are another device's words and are only ever
  * rendered as text.
@@ -31,8 +34,18 @@ export const FeedFile = (props: {
 }) => {
   const previewFile = useAction($previewFile);
   const saveFile = useAction($saveFile);
+  const openFile = useAction($openFile);
 
   const here = () => props.file.held >= props.file.size;
+  const name = () => props.file.name || 'Unnamed file';
+
+  const open = () => {
+    if (!openFile.pending) openFile(props.groupId, props.itemId, props.file);
+  };
+
+  /** What pressing the preview does, said for whoever can't see it. */
+  const pressLabel = () =>
+    `${openableType(props.file) === null ? 'Download' : 'Open'} ${name()}`;
 
   // Read the picture back once, when the last of it lands.
   let asked = false;
@@ -73,44 +86,65 @@ export const FeedFile = (props: {
           </Flex>
         }
       >
-        <Show
-          when={previewFile.latest}
-          fallback={
-            <Flex
-              as="div"
-              direction="column"
-              class={`${styles.preview} ${styles.stated}`}
-            >
-              <IconFile aria-hidden="true" />
-              <Text
-                as="span"
-                size={1}
-                color="lowContrast"
-                selectable={false}
-                testId="feed-file-type"
-              >
-                {props.file.type || 'Unknown type'}
-              </Text>
-            </Flex>
-          }
+        {/* Not a `<button>`: the preview is a block of its own shape,
+            and a button's metrics would have to be undone one by one. */}
+        <Flex
+          as="div"
+          direction="column"
+          role="button"
+          tabIndex={0}
+          class={styles.open}
+          aria-label={pressLabel()}
+          aria-disabled={openFile.pending}
+          title={pressLabel()}
+          testId="feed-file-open"
+          onClick={open}
+          onKeyDown={(event) => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+
+            event.preventDefault();
+            open();
+          }}
         >
-          {(url) => (
-            <Flex as="div" class={styles.preview}>
-              <img
-                class={styles.image}
-                src={url()}
-                alt={props.file.name}
-                data-testid="feed-file-image"
-              />
-            </Flex>
-          )}
-        </Show>
+          <Show
+            when={previewFile.latest}
+            fallback={
+              <Flex
+                as="div"
+                direction="column"
+                class={`${styles.preview} ${styles.stated}`}
+              >
+                <IconFile aria-hidden="true" />
+                <Text
+                  as="span"
+                  size={1}
+                  color="lowContrast"
+                  selectable={false}
+                  testId="feed-file-type"
+                >
+                  {props.file.type || 'Unknown type'}
+                </Text>
+              </Flex>
+            }
+          >
+            {(url) => (
+              <Flex as="div" class={styles.preview}>
+                <img
+                  class={styles.image}
+                  src={url()}
+                  alt=""
+                  data-testid="feed-file-image"
+                />
+              </Flex>
+            )}
+          </Show>
+        </Flex>
       </Show>
 
       <Flex as="figcaption" class={styles.caption}>
         <Text as="span" selectable={false} class={styles.label}>
           <Text as="span" size={2} truncate selectable testId="feed-file-name">
-            {props.file.name || 'Unnamed file'}
+            {name()}
           </Text>
           <Text
             as="span"
@@ -125,8 +159,8 @@ export const FeedFile = (props: {
 
         <Show when={here()}>
           <IconButton
-            testId="feed-item-save"
-            aria-label="Save"
+            testId="feed-file-save"
+            aria-label="Download"
             variant="ghost"
             color="neutral"
             disabled={saveFile.pending}

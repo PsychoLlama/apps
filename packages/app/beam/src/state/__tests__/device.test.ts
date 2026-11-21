@@ -7,7 +7,7 @@ import {
   $deviceHeldElsewhere,
   $deviceOpened,
   $relayChanged,
-  isOnline,
+  connectionOf,
 } from '../device';
 
 const ID = 'a1b2c3d4e5f6';
@@ -18,7 +18,12 @@ describe('$device', () => {
     await using effects = createTestController();
     const device = await effects.run($device);
 
-    expect(device).toEqual({ status: 'opening', id: null, relay: null });
+    expect(device).toEqual({
+      status: 'opening',
+      id: null,
+      relay: null,
+      reached: false,
+    });
   });
 });
 
@@ -63,21 +68,49 @@ describe('$deviceFailed', () => {
   });
 });
 
-describe('isOnline', () => {
-  it('is true only while open with a relay', async () => {
+describe('connectionOf', () => {
+  it('is connecting until a relay carries the open device', async () => {
     await using effects = createTestController();
     const device = await effects.run($device);
     const opened = await effects.run($deviceOpened);
     const relayChanged = await effects.run($relayChanged);
 
-    // A relay can land before the open is announced.
+    expect(connectionOf(device)).toBe('connecting');
+
+    // The watcher reports having no relay before it reports having one.
+    opened(ID);
+    relayChanged(null);
+    expect(connectionOf(device)).toBe('connecting');
+
     relayChanged(RELAY);
-    expect(isOnline(device)).toBe(false);
+    expect(connectionOf(device)).toBe('online');
+  });
+
+  it('is offline once a relay it had is gone, and online when one is back', async () => {
+    await using effects = createTestController();
+    const device = await effects.run($device);
+    const opened = await effects.run($deviceOpened);
+    const relayChanged = await effects.run($relayChanged);
 
     opened(ID);
-    expect(isOnline(device)).toBe(true);
-
+    relayChanged(RELAY);
     relayChanged(null);
-    expect(isOnline(device)).toBe(false);
+    expect(connectionOf(device)).toBe('offline');
+
+    relayChanged(RELAY);
+    expect(connectionOf(device)).toBe('online');
+  });
+
+  it('has nothing to say for a device this tab does not have', async () => {
+    await using effects = createTestController();
+    const device = await effects.run($device);
+    const heldElsewhere = await effects.run($deviceHeldElsewhere);
+    const failed = await effects.run($deviceFailed);
+
+    heldElsewhere();
+    expect(connectionOf(device)).toBeNull();
+
+    failed();
+    expect(connectionOf(device)).toBeNull();
   });
 });
