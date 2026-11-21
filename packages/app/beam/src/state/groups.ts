@@ -46,7 +46,7 @@ const NEW_GROUP_NAME = 'New group';
 
 /**
  * A name for another group, unlike any this device already shows: `New
- * group`, then `New group (2)`, and so on.
+ * group`, then `New group (1)`, and so on.
  *
  * A device's first group goes unnamed and reads as its {@link groupLabel}.
  * Any after that was asked for, and two rows reading the same would be
@@ -60,9 +60,9 @@ export const nextGroupName = (
 ): string => {
   const taken = new Set(groups.map((group) => groupLabel(group).toLowerCase()));
 
-  for (let count = 1; ; count++) {
+  for (let count = 0; ; count++) {
     const name =
-      count === 1 ? NEW_GROUP_NAME : `${NEW_GROUP_NAME} (${String(count)})`;
+      count === 0 ? NEW_GROUP_NAME : `${NEW_GROUP_NAME} (${String(count)})`;
 
     if (!taken.has(name.toLowerCase())) return name;
   }
