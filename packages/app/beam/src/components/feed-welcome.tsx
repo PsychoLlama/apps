@@ -28,6 +28,7 @@ export const FeedWelcome = (props: {
       direction="column"
       align="start"
       gap={3}
+      py={2}
       testId="feed-welcome"
     >
       <Text as="p" color="lowContrast" selectable={false}>
