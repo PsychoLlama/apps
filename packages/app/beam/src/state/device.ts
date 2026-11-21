@@ -27,20 +27,46 @@ export interface DeviceState {
    * with no relay is offline: it reads and writes, and syncs later.
    */
   relay: string | null;
+
+  /**
+   * Whether a relay has carried this device since it opened. What tells
+   * a device still finding its way online from one that was and isn't.
+   */
+  reached: boolean;
 }
+
+/**
+ * How reachable this device is, as someone would say it.
+ *
+ * - `connecting` — coming up, or up and still looking for a relay.
+ * - `online` — a relay is carrying it.
+ * - `offline` — it was online and isn't. What's shared waits.
+ */
+export type Connection = 'connecting' | 'online' | 'offline';
 
 /** This device's lifecycle and reachability. */
 export const $device = defineStore<DeviceState>(() => ({
   status: 'opening',
   id: null,
   relay: null,
+  reached: false,
 }));
 
-/** Whether the device is open and a relay is carrying it. */
-export const isOnline = (device: {
+/**
+ * How reachable the device is, or `null` when it isn't this tab's to
+ * speak for: another tab has it, or it couldn't be opened.
+ */
+export const connectionOf = (device: {
   readonly status: DeviceStatus;
   readonly relay: string | null;
-}): boolean => device.status === 'open' && device.relay !== null;
+  readonly reached: boolean;
+}): Connection | null => {
+  if (device.status === 'opening') return 'connecting';
+  if (device.status !== 'open') return null;
+  if (device.relay !== null) return 'online';
+
+  return device.reached ? 'offline' : 'connecting';
+};
 
 /** The device opened, under the identity its store holds. */
 export const $deviceOpened = defineCommand(
@@ -60,6 +86,7 @@ export const $deviceHeldElsewhere = defineCommand([$device], (device) => () => {
 export const $deviceFailed = defineCommand([$device], (device) => () => {
   device.status = 'failed';
   device.relay = null;
+  device.reached = false;
 });
 
 /** The relay carrying this device changed, or went away. */
@@ -67,5 +94,6 @@ export const $relayChanged = defineCommand(
   [$device],
   (device) => (relay: string | null) => {
     device.relay = relay;
+    if (relay !== null) device.reached = true;
   },
 );

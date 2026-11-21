@@ -4,7 +4,8 @@ export {
   $deviceHeldElsewhere,
   $deviceOpened,
   $relayChanged,
-  isOnline,
+  connectionOf,
+  type Connection,
 } from './device';
 export {
   $feed,
