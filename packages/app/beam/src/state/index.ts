@@ -46,12 +46,5 @@ export {
 export { dayOf, timeline, type FeedRun } from './timeline';
 export { $removal, $removalAsked } from './removal';
 export { $itemMenu, $itemMenuToggled } from './item-menu';
-export {
-  $dropHovered,
-  $dropping,
-  droppedOf,
-  isShareable,
-  type DragPayload,
-  type Dropped,
-} from './drop';
+export { $dropHovered, $dropping, droppedOf, isShareable } from './drop';
 export { $copied, $copyMarked, COPIED_FOR } from './copied';
