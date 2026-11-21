@@ -51,7 +51,7 @@ catalog:
   '@holz/stream-backend': 0.11.1
   '@iconify/json': ^2.2.470
   '@resvg/resvg-wasm': ^2.6.2
-  '@solidjs/meta': ^0.29.4
+  '@solidjs/meta': ^2.0.0
   '@solidjs/router': ^1.0.0
   '@solidjs/start': 2.2.3
   '@solidjs/testing-library': ^0.8.10
