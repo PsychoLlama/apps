@@ -184,11 +184,7 @@ export const Feed = (props: {
                                   {(id) => (
                                     <Show when={byId().get(id)}>
                                       {(item) => (
-                                        <Flex
-                                          as="li"
-                                          direction="column"
-                                          class={styles.row}
-                                        >
+                                        <Flex as="li" direction="column">
                                           <FeedItem
                                             groupId={props.groupId}
                                             item={item()}

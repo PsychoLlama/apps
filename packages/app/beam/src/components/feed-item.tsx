@@ -73,6 +73,7 @@ export const FeedItem = (props: {
     <ContextMenu
       testId="feed-item-menu"
       display="block"
+      areaClass={styles.area}
       color="neutral"
       open={itemMenu() === props.item.id}
       onOpenChange={(open) => toggleMenu(props.item.id, open)}

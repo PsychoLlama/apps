@@ -19,6 +19,19 @@ export const body = style({
 });
 
 /**
+ * The area an item's menu opens over. It would hug the item, and is
+ * stretched instead, so a short note's row is as wide, and as easy to
+ * point at, as a long one's. Doubled to outrank the width it's given.
+ */
+export const area = style({
+  selectors: {
+    '&&': {
+      width: 'auto',
+    },
+  },
+});
+
+/**
  * One item's row. Tinted while it's pointed at or holds focus, so it's
  * plain which item the actions beside it belong to. The tint runs past
  * the text on both sides, and the row is pulled out by as much, so what
