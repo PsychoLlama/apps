@@ -6,6 +6,7 @@ import {
   $groupsChanged,
   GROUP_NAME_MAX_LENGTH,
   groupLabel,
+  nextGroupName,
   normalizeGroupName,
 } from '../groups';
 
@@ -61,5 +62,25 @@ describe('groupLabel', () => {
   it('names a group that has no name', () => {
     expect(groupLabel({ name: 'Home' })).toBe('Home');
     expect(groupLabel({ name: '' })).toBe('My devices');
+  });
+});
+
+describe('nextGroupName', () => {
+  it('starts plain', () => {
+    expect(nextGroupName([])).toBe('New group');
+    expect(nextGroupName([{ name: '' }, { name: 'Family' }])).toBe('New group');
+  });
+
+  it('counts past the names already taken', () => {
+    expect(nextGroupName([{ name: 'New group' }])).toBe('New group (2)');
+    expect(
+      nextGroupName([{ name: 'New group' }, { name: 'New group (2)' }]),
+    ).toBe('New group (3)');
+  });
+
+  it('fills a gap, and reads names without minding their case', () => {
+    expect(
+      nextGroupName([{ name: 'new GROUP' }, { name: 'New group (3)' }]),
+    ).toBe('New group (2)');
   });
 });

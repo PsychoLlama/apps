@@ -32,6 +32,7 @@ export {
   $groupsChanged,
   GROUP_NAME_MAX_LENGTH,
   groupLabel,
+  nextGroupName,
   normalizeGroupName,
 } from './groups';
 export {

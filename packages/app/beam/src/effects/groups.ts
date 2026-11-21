@@ -11,14 +11,16 @@ import {
 import { $openDevice } from './device';
 
 /**
- * Found a group with this device as its only member, resolving with its
- * id. Nobody is asked for a name: a group starts without one, and can be
- * given one whenever someone cares to.
+ * Found a group called `name` with this device as its only member,
+ * resolving with its id. Nobody is asked for a name: a device's first
+ * group goes without one, any after it is given one to tell it apart,
+ * and either can be renamed whenever someone cares to.
  */
 export const $createGroup = pipe([
   $openDevice,
-  (connection: DeviceConnection) => (): Promise<string> =>
-    connection.createGroup(''),
+  (connection: DeviceConnection) =>
+    (name = ''): Promise<string> =>
+      connection.createGroup(name),
 ]);
 
 /**
