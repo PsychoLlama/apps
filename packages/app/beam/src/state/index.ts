@@ -43,6 +43,6 @@ export {
   inviteLink,
   type QrGrid,
 } from './invite';
-export { dayOf, timeline, type FeedDay, type FeedRun } from './timeline';
+export { dayOf, timeline, type FeedRun } from './timeline';
 export { $removal, $removalAsked } from './removal';
 export { $itemMenu, $itemMenuToggled } from './item-menu';
