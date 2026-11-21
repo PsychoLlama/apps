@@ -125,7 +125,7 @@ export const FeedFile = (props: {
 
         <Show when={here()}>
           <IconButton
-            testId="feed-item-save"
+            testId="feed-file-save"
             aria-label="Save"
             variant="ghost"
             color="neutral"

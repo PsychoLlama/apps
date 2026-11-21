@@ -40,3 +40,4 @@ export {
 } from './invite';
 export { dayOf, timeline, type FeedDay, type FeedRun } from './timeline';
 export { $removal, $removalAsked } from './removal';
+export { $itemMenu, $itemMenuToggled } from './item-menu';
