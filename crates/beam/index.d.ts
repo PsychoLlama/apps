@@ -71,6 +71,14 @@ export interface Item {
 
   /** The file, for an item that is one. */
   file?: SharedFile;
+
+  /**
+   * What kind of item this is, for one the app wrote for itself and
+   * nobody shared. Its {@link Item.body} is empty: how a kind reads is
+   * up to whoever shows it. `'welcome'` is the item a group is founded
+   * with. Expect kinds this build has never heard of.
+   */
+  system?: string;
 }
 
 /** A file shared to a group. */

@@ -13,6 +13,7 @@ import {
   openableType,
   formatBytes,
   isPreviewable,
+  isShown,
 } from '../feed';
 
 const GROUP = 'aaaa';
@@ -163,6 +164,17 @@ describe('linkOf', () => {
     expect(linkOf('just a note')).toBeNull();
     expect(linkOf('javascript:alert(1)')).toBeNull();
     expect(linkOf('data:text/html,hi')).toBeNull();
+  });
+});
+
+describe('isShown', () => {
+  it('shows what was shared, and the kinds of its own this build knows', () => {
+    expect(isShown({})).toBe(true);
+    expect(isShown({ system: 'welcome' })).toBe(true);
+  });
+
+  it('leaves out a kind from a build newer than this one', () => {
+    expect(isShown({ system: 'from-the-future' })).toBe(false);
   });
 });
 

@@ -20,6 +20,20 @@ const shape = (items: Item[]) =>
   );
 
 describe('timeline', () => {
+  it('gives an item the app wrote a sitting of its own', () => {
+    const items = [
+      { ...item('welcome', 'laptop', NOON), system: 'welcome' },
+      item('a', 'laptop', NOON + MINUTE),
+      item('b', 'laptop', NOON + 2 * MINUTE),
+    ];
+
+    expect(shape(items)).toEqual([[['welcome'], ['a', 'b']]]);
+    expect(timeline(items)[0]?.runs.map((run) => run.system)).toEqual([
+      true,
+      false,
+    ]);
+  });
+
   it('is empty for an empty feed', () => {
     expect(timeline([])).toEqual([]);
   });

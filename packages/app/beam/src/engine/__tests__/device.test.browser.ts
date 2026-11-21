@@ -18,6 +18,13 @@ const open = (store: string, onChange: (group: string) => void = () => {}) =>
     () => {},
   );
 
+/**
+ * What's been shared to a group, without the item it was founded with:
+ * most tests are about what a device was asked to share.
+ */
+const sharedIn = async (device: Device, group: string) =>
+  (await device.items(group)).filter((item) => !item.system);
+
 beforeAll(async () => {
   await init();
 });
@@ -77,7 +84,31 @@ describe('Device', () => {
     expect(await device.groups()).toEqual([
       { id, name: 'My devices', member: true, deviceName: '' },
     ]);
-    expect(await device.items(id)).toEqual([]);
+    expect(await sharedIn(device, id)).toEqual([]);
+
+    await device.close();
+    device.free();
+  });
+
+  it('founds a group with a welcome that deletes like any item', async () => {
+    const device = await open(storeName());
+    const group = await device.createGroup('Notes');
+
+    const [welcome, ...rest] = await device.items(group);
+
+    expect(rest).toEqual([]);
+    expect(welcome).toMatchObject({
+      system: 'welcome',
+      body: '',
+      author: device.id,
+      committed: true,
+    });
+
+    await device.addItem(group, 'after');
+    await device.deleteItem(group, welcome?.id ?? '');
+
+    expect(await device.items(group)).toMatchObject([{ body: 'after' }]);
+    expect((await device.items(group))[0]).not.toHaveProperty('system');
 
     await device.close();
     device.free();
@@ -90,7 +121,7 @@ describe('Device', () => {
     await device.addItem(group, 'first');
     await device.addItem(group, 'https://example.com/second');
 
-    const items = await device.items(group);
+    const items = await sharedIn(device, group);
 
     expect(items.map((item) => item.body)).toEqual([
       'first',
@@ -111,12 +142,12 @@ describe('Device', () => {
     await device.addItem(group, 'keep');
     await device.addItem(group, 'drop');
 
-    const drop = (await device.items(group))[1];
+    const drop = (await sharedIn(device, group))[1];
     assert(drop);
     await device.deleteItem(group, drop.id);
     await device.deleteItem(group, drop.id);
 
-    const items = await device.items(group);
+    const items = await sharedIn(device, group);
     expect(items.map((item) => item.body)).toEqual(['keep']);
 
     await device.close();
@@ -158,7 +189,7 @@ describe('Device', () => {
         deviceName: '',
       },
     ]);
-    expect((await second.items(group)).map((item) => item.body)).toEqual([
+    expect((await sharedIn(second, group)).map((item) => item.body)).toEqual([
       'still here',
     ]);
 
@@ -173,7 +204,7 @@ describe('Device', () => {
 
     await device.addItem(mine, 'private');
 
-    expect(await device.items(shared)).toEqual([]);
+    expect(await sharedIn(device, shared)).toEqual([]);
     expect((await device.groups()).map((group) => group.name).sort()).toEqual([
       'Mine',
       'Shared',
@@ -226,7 +257,7 @@ describe('Device', () => {
     await device.writeFile(handle, bytes.slice(1000));
     await device.finishFile(group, handle, 'data.bin', 'application/x-test');
 
-    const [item] = await device.items(group);
+    const [item] = await sharedIn(device, group);
     expect(item).toMatchObject({
       body: '',
       committed: true,
@@ -275,7 +306,7 @@ describe('Device', () => {
     await expect(device.finishFile(group, handle, 'gone', '')).rejects.toThrow(
       'no such file',
     );
-    expect(await device.items(group)).toEqual([]);
+    expect(await sharedIn(device, group)).toEqual([]);
 
     await device.close();
     device.free();
@@ -286,7 +317,7 @@ describe('Device', () => {
     const group = await device.createGroup('Files');
     await device.addItem(group, 'a note');
 
-    const [item] = await device.items(group);
+    const [item] = await sharedIn(device, group);
     expect(item?.file).toBeUndefined();
     expect(await device.readFile(group, item?.id ?? '', 0)).toBeUndefined();
 
@@ -375,7 +406,7 @@ describe('Device', () => {
     expect(await device.groups()).toMatchObject([
       { id: successor, name: 'Notes', member: true, deviceName: 'Laptop' },
     ]);
-    expect(await device.items(successor)).toMatchObject([
+    expect(await sharedIn(device, successor)).toMatchObject([
       { body: 'carried over', committed: true },
     ]);
     expect(await device.members(successor)).toMatchObject([
@@ -383,7 +414,7 @@ describe('Device', () => {
     ]);
 
     await device.addItem(successor, 'written since');
-    expect(await device.items(successor)).toHaveLength(2);
+    expect(await sharedIn(device, successor)).toHaveLength(2);
 
     await device.close();
     device.free();
@@ -413,7 +444,7 @@ describe('Device', () => {
     await device.writeFile(handle, new Uint8Array([1, 2, 3]));
     await device.finishFile(group, handle, 'kept.bin', '');
 
-    const [, deleted] = await device.items(group);
+    const [, deleted] = await sharedIn(device, group);
     await device.deleteItem(group, deleted?.id ?? '');
 
     // Twice: once to shed the history, once over what's left.
@@ -423,7 +454,7 @@ describe('Device', () => {
       device = await open(store);
     }
 
-    const items = await device.items(group);
+    const items = await sharedIn(device, group);
     expect(items.map((item) => item.body)).toEqual(['kept', '']);
     expect(items[1]?.file).toMatchObject({ name: 'kept.bin', held: 3 });
     expect(await device.readFile(group, items[1]?.id ?? '', 0)).toEqual(

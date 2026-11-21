@@ -1,9 +1,11 @@
 import { createEffect, createMemo, For, on, Show } from 'solid-js';
 import { useValue } from '@lib/effects/solid';
+import { name as appName } from '../constants';
 import { Flex, Text } from '@lib/ui';
 import {
   $device,
   $feed,
+  isShown,
   dayOf,
   deviceLabel,
   timeline,
@@ -12,7 +14,6 @@ import {
 } from '../state';
 import * as styles from './feed.css';
 import { FeedItem } from './feed-item';
-import { LinkPrompt } from './link-prompt';
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -53,9 +54,6 @@ const formatTime = (epochMilliseconds: number): string =>
  * Grouped by day, and within a day by sitting: what one device shared
  * without a long pause sits under one line saying who and when.
  *
- * While this device is alone in the group, the feed ends with a prompt
- * to link another.
- *
  * Renders nothing until the database has answered for this group. An empty
  * feed before then would read as "nothing has been shared".
  */
@@ -74,10 +72,11 @@ export const Feed = (props: {
   // time: a picture reloading whenever anything was shared. So the lists
   // are of keys, which compare equal from one read to the next, and each
   // row looks up what it shows.
-  const days = createMemo(() => timeline(feed().items));
+  const items = createMemo(() => feed().items.filter(isShown));
+  const days = createMemo(() => timeline(items()));
   const dayKeys = () => days().map((day) => day.day);
   const byId = createMemo(
-    () => new Map(feed().items.map((item) => [item.id, item])),
+    () => new Map(items().map((item) => [item.id, item])),
   );
 
   /**
@@ -91,19 +90,13 @@ export const Feed = (props: {
     return member ? deviceLabel(member) : 'Another device';
   };
 
-  /**
-   * Whether this device is the only one in the group. The list always
-   * has this device in it, so one is an answer and none is not yet.
-   */
-  const alone = () => feed().members.length === 1;
-
   let list: HTMLElement | undefined;
 
   // Keep the newest in view: on arriving, and whenever there's a new one.
   // After the rows exist, which is a turn later than the data.
   createEffect(
     on(
-      () => ready() && feed().items.at(-1)?.id,
+      () => ready() && items().at(-1)?.id,
       (newest) => {
         if (newest)
           queueMicrotask(() => list?.scrollIntoView({ block: 'end' }));
@@ -122,7 +115,19 @@ export const Feed = (props: {
           list = element;
         }}
       >
-        <Show when={feed().items.length > 0}>
+        <Show
+          when={items().length > 0}
+          fallback={
+            <Text
+              as="p"
+              selectable={false}
+              color="lowContrast"
+              testId="feed-empty"
+            >
+              Nothing here yet.
+            </Text>
+          }
+        >
           <Flex as="ol" direction="column" gap={5} testId="feed">
             <For each={dayKeys()}>
               {(dayKey) => {
@@ -158,7 +163,12 @@ export const Feed = (props: {
                                 selectable={false}
                                 testId="feed-run"
                               >
-                                {authorOf(run()?.author ?? '')}
+                                {/* The app's own items are said to be
+                                    from it, whichever device's clock
+                                    and key they were written under. */}
+                                {run()?.system
+                                  ? appName
+                                  : authorOf(run()?.author ?? '')}
                                 {' · '}
                                 <time
                                   datetime={new Date(
@@ -196,24 +206,6 @@ export const Feed = (props: {
               }}
             </For>
           </Flex>
-        </Show>
-
-        <Show
-          when={alone()}
-          fallback={
-            <Show when={feed().items.length === 0}>
-              <Text
-                as="p"
-                selectable={false}
-                color="lowContrast"
-                testId="feed-empty"
-              >
-                Nothing here yet.
-              </Text>
-            </Show>
-          }
-        >
-          <LinkPrompt groupId={props.groupId} />
         </Show>
       </Flex>
     </Show>

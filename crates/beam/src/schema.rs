@@ -58,6 +58,10 @@ pub(crate) struct Schema {
     file: ColumnId,
     file_name: ColumnId,
     file_type: ColumnId,
+    /// Set on an item the app wrote for itself, to what kind it is. A
+    /// table founded before there were any has no such column, and reads
+    /// as if every row left it empty.
+    system: ColumnId,
 }
 
 /// A group as the host lists it.
@@ -92,6 +96,10 @@ pub(crate) struct Member {
     pub(crate) online: bool,
 }
 
+/// The kind of the item a group is founded with: somewhere to say what
+/// the group is for. The host decides what that looks like.
+const WELCOME: &str = "welcome";
+
 /// Something shared to a group.
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -108,6 +116,11 @@ pub(crate) struct Item {
     committed: bool,
     /// The file, for an item that is one. Its body is empty.
     file: Option<File>,
+    /// What kind of item the app wrote for itself, for one that it did.
+    /// Its body is empty: a kind is shown however the host shows it now,
+    /// and words kept here would be stuck as they were written.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    system: Option<String>,
     /// Where the file's bytes are. Not the host's business: it carries the
     /// key they're encrypted under.
     #[serde(skip)]
@@ -164,6 +177,7 @@ impl Schema {
             file: ColumnId::blob(items, nonce(b"file")),
             file_name: ColumnId::text(items, nonce(b"file_name")),
             file_type: ColumnId::text(items, nonce(b"file_type")),
+            system: ColumnId::text(items, nonce(b"system")),
         }
     }
 
@@ -196,8 +210,15 @@ impl Schema {
         Transaction::new().set(model, ORIGIN, origin.as_bytes().to_vec())
     }
 
-    /// What a founder writes first: the tables, and the group's name.
-    pub(crate) fn found(&self, name: &str) -> Transaction {
+    /// What a founder writes first: the tables, the group's name, and
+    /// under `key` an item of the app's own to open the feed with.
+    pub(crate) fn found(
+        &self,
+        name: &str,
+        key: [u8; 16],
+        author: [u8; 32],
+        now: i64,
+    ) -> Transaction {
         let columns = [
             (self.body, "body"),
             (self.author, "author"),
@@ -205,11 +226,19 @@ impl Schema {
             (self.file, "file"),
             (self.file_name, "file_name"),
             (self.file_type, "file_type"),
+            (self.system, "system"),
+        ];
+        let welcome = [
+            (self.body, Value::from(String::new())),
+            (self.author, Value::from(author.to_vec())),
+            (self.created, Value::from(now)),
+            (self.system, Value::from(WELCOME.to_owned())),
         ];
 
         Transaction::new()
             .create_table(self.items, columns)
             .rename_table(self.items, "items")
+            .insert(self.items, key, welcome)
             .set(self.meta, NAME, name)
     }
 
@@ -305,6 +334,7 @@ impl Schema {
             created_at,
             committed,
             file: blob.map(|blob| self.file_of(row, &blob)),
+            system: row.text(self.system).map(str::to_owned),
             blob,
         }
     }

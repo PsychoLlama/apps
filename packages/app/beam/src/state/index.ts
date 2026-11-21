@@ -14,6 +14,7 @@ export {
   FILE_NAME_MAX_LENGTH,
   formatBytes,
   isPreviewable,
+  isShown,
   ITEM_MAX_LENGTH,
   linkOf,
   normalizeBody,

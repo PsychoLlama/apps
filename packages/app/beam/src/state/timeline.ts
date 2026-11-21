@@ -11,6 +11,12 @@ export interface FeedRun {
   /** The device that shared them. */
   readonly author: string;
 
+  /**
+   * Whether this is an item the app wrote for itself. One of those is
+   * always a sitting of its own: nobody shared it.
+   */
+  readonly system: boolean;
+
   /** When the first of them was shared, in epoch milliseconds. */
   readonly startedAt: number;
 
@@ -33,15 +39,20 @@ export const dayOf = (epochMilliseconds: number): number =>
 
 /**
  * A feed as it's read: by day, and within a day by sitting. A sitting
- * ends when another device shares something, or when nothing is shared
- * for {@link RUN_GAP}.
+ * ends when another device shares something, when nothing is shared for
+ * {@link RUN_GAP}, or either side of an item the app wrote for itself.
  *
  * Takes the items oldest first and keeps that order throughout.
  */
 export const timeline = (items: readonly Item[]): FeedDay[] => {
   const days: {
     day: number;
-    runs: { author: string; startedAt: number; items: Item[] }[];
+    runs: {
+      author: string;
+      system: boolean;
+      startedAt: number;
+      items: Item[];
+    }[];
   }[] = [];
   let last: Item | undefined;
 
@@ -59,6 +70,8 @@ export const timeline = (items: readonly Item[]): FeedDay[] => {
     const follows =
       run &&
       last &&
+      !last.system &&
+      !item.system &&
       last.author === item.author &&
       item.createdAt - last.createdAt < RUN_GAP;
 
@@ -66,6 +79,7 @@ export const timeline = (items: readonly Item[]): FeedDay[] => {
     else {
       today.runs.push({
         author: item.author,
+        system: Boolean(item.system),
         startedAt: item.createdAt,
         items: [item],
       });

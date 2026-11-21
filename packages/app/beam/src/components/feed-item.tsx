@@ -18,6 +18,7 @@ import IconDelete from 'virtual:icons/mdi/trash-can-outline';
 import { $deleteItem, $saveFile } from '../effects';
 import { $itemMenu, $itemMenuToggled, linkOf } from '../state';
 import { FeedFile } from './feed-file';
+import { FeedWelcome } from './feed-welcome';
 import * as styles from './feed-item.css';
 
 /**
@@ -32,6 +33,9 @@ import * as styles from './feed-item.css';
  * The body is text from another device and is only ever rendered as text.
  * It becomes a link when the whole of it is a web address, and opens in a
  * new tab without handing the page a way back.
+ *
+ * An item the app wrote for itself is a row like any other, and can be
+ * deleted like one. It has nothing to copy.
  */
 export const FeedItem = (props: {
   /** The group the item belongs to. */
@@ -50,6 +54,9 @@ export const FeedItem = (props: {
 
   const copy = () => void navigator.clipboard.writeText(props.item.body);
   const remove = () => deleteItem(props.groupId, props.item.id);
+
+  /** Whether the item is words someone shared, which can be copied. */
+  const copyable = () => !props.item.file && !props.item.system;
 
   /** The item's file, once all of it is here: there's nothing to save before. */
   const held = () => {
@@ -71,7 +78,7 @@ export const FeedItem = (props: {
       onOpenChange={(open) => toggleMenu(props.item.id, open)}
       content={
         <>
-          <Show when={!props.item.file}>
+          <Show when={copyable()}>
             <ContextMenuItem testId="feed-item-menu-copy" onSelect={copy}>
               Copy
             </ContextMenuItem>
@@ -87,7 +94,9 @@ export const FeedItem = (props: {
             </ContextMenuItem>
           </Show>
 
-          <ContextMenuSeparator />
+          <Show when={!props.item.system}>
+            <ContextMenuSeparator />
+          </Show>
 
           <ContextMenuItem
             testId="feed-item-menu-delete"
@@ -108,45 +117,50 @@ export const FeedItem = (props: {
       >
         <Flex as="div" align="start" gap={3} class={styles.content}>
           <Show
-            when={props.item.file}
-            fallback={
-              <Show
-                when={linkOf(props.item.body)}
-                fallback={
-                  <Text as="p" selectable class={styles.body}>
-                    {props.item.body}
-                  </Text>
-                }
-              >
-                {(href) => (
-                  <Text as="p" selectable class={styles.body}>
-                    {/* A link keeps the browser's own menu: opening it
+            when={!props.item.system}
+            fallback={<FeedWelcome groupId={props.groupId} />}
+          >
+            <Show
+              when={props.item.file}
+              fallback={
+                <Show
+                  when={linkOf(props.item.body)}
+                  fallback={
+                    <Text as="p" selectable class={styles.body}>
+                      {props.item.body}
+                    </Text>
+                  }
+                >
+                  {(href) => (
+                    <Text as="p" selectable class={styles.body}>
+                      {/* A link keeps the browser's own menu: opening it
                         somewhere else, or copying its address, are things
                         only that menu can do. */}
-                    <Link
-                      testId="feed-item-link"
-                      href={href()}
-                      native
-                      target="_blank"
-                      rel="noreferrer"
-                      selectable
-                      onContextMenu={(event) => event.stopPropagation()}
-                      onPointerDown={(event) => event.stopPropagation()}
-                    >
-                      {props.item.body}
-                    </Link>
-                  </Text>
-                )}
-              </Show>
-            }
-          >
-            {(file) => (
-              <FeedFile
-                groupId={props.groupId}
-                itemId={props.item.id}
-                file={file()}
-              />
-            )}
+                      <Link
+                        testId="feed-item-link"
+                        href={href()}
+                        native
+                        target="_blank"
+                        rel="noreferrer"
+                        selectable
+                        onContextMenu={(event) => event.stopPropagation()}
+                        onPointerDown={(event) => event.stopPropagation()}
+                      >
+                        {props.item.body}
+                      </Link>
+                    </Text>
+                  )}
+                </Show>
+              }
+            >
+              {(file) => (
+                <FeedFile
+                  groupId={props.groupId}
+                  itemId={props.item.id}
+                  file={file()}
+                />
+              )}
+            </Show>
           </Show>
 
           {/* Written here, and not yet agreed by the group: its other
@@ -178,7 +192,7 @@ export const FeedItem = (props: {
         </Flex>
 
         <Text as="span" selectable={false} class={styles.actions}>
-          <Show when={!props.item.file}>
+          <Show when={copyable()}>
             <Tooltip
               testId="feed-item-copy-tooltip"
               display="inline"

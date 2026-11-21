@@ -76,6 +76,17 @@ export const $membersChanged = defineCommand(
   },
 );
 
+/** The kinds of item the app writes for itself that this build can show. */
+const SYSTEM_KINDS = new Set(['welcome']);
+
+/**
+ * Whether an item has a place in the feed. One the app wrote for itself
+ * has none if this build doesn't know its kind: a newer build on another
+ * device wrote it, and there's nothing here to say for it.
+ */
+export const isShown = (item: { readonly system?: string }): boolean =>
+  item.system === undefined || SYSTEM_KINDS.has(item.system);
+
 /**
  * Something to share as it's stored: trimmed, or `null` if nothing is left
  * or it runs too long.
