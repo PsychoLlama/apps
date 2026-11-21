@@ -1,5 +1,5 @@
 import type { Item } from '@crate/beam';
-import { Show } from 'solid-js';
+import { onCleanup, Show } from 'solid-js';
 import { useAction, useValue } from '@lib/effects/solid';
 import {
   ContextMenu,
@@ -11,11 +11,19 @@ import {
   Text,
   Tooltip,
 } from '@lib/ui';
+import IconCopied from 'virtual:icons/mdi/check';
 import IconCopy from 'virtual:icons/mdi/content-copy';
 import IconDownload from 'virtual:icons/mdi/download';
 import IconDelete from 'virtual:icons/mdi/trash-can-outline';
 import { $deleteItem, $saveFile } from '../effects';
-import { $itemMenu, $itemMenuToggled, linkOf } from '../state';
+import {
+  $copied,
+  $copyMarked,
+  $itemMenu,
+  $itemMenuToggled,
+  COPIED_FOR,
+  linkOf,
+} from '../state';
 import { FeedFile } from './feed-file';
 import { FeedWelcome } from './feed-welcome';
 import * as styles from './feed-item.css';
@@ -28,6 +36,7 @@ import * as styles from './feed-item.css';
  * Deleting removes it for every device in the group. Both are in the
  * menu a right click or a long press on the row opens, and where there's
  * a pointer, also as buttons beside the row, where they can be found.
+ * The copy button turns to a check for a moment once the copy has landed.
  *
  * The body is text from another device and is only ever rendered as text.
  * It becomes a link when the whole of it is a web address, and opens in a
@@ -49,7 +58,27 @@ export const FeedItem = (props: {
   const deleteItem = useAction($deleteItem);
   const saveFile = useAction($saveFile);
 
-  const copy = () => void navigator.clipboard.writeText(props.item.body);
+  const copiedItem = useValue($copied);
+  const markCopied = useAction($copyMarked);
+
+  /** Whether this item was copied a moment ago, and is still saying so. */
+  const copied = () => copiedItem() === props.item.id;
+
+  let copiedTimer: ReturnType<typeof setTimeout> | undefined;
+  onCleanup(() => clearTimeout(copiedTimer));
+
+  // Said only once the clipboard has it: a browser can refuse the write,
+  // and a check mark over nothing copied is worse than no mark.
+  const copy = () => {
+    const id = props.item.id;
+
+    void navigator.clipboard.writeText(props.item.body).then(() => {
+      markCopied(id, true);
+
+      clearTimeout(copiedTimer);
+      copiedTimer = setTimeout(() => markCopied(id, false), COPIED_FOR);
+    });
+  };
   const remove = () => deleteItem(props.groupId, props.item.id);
 
   /** Whether the item is words, which can be copied. */
@@ -173,20 +202,27 @@ export const FeedItem = (props: {
               <Tooltip
                 testId="feed-item-copy-tooltip"
                 display="inline"
-                content="Copy"
+                content={copied() ? 'Copied' : 'Copy'}
               >
                 {(trigger) => (
                   <IconButton
                     {...trigger}
                     testId="feed-item-copy"
-                    aria-label="Copy"
+                    aria-label={copied() ? 'Copied' : 'Copy'}
                     variant="ghost"
-                    color="neutral"
+                    color={copied() ? 'success' : 'neutral'}
                     size={1}
                     m={1}
                     onClick={copy}
                   >
-                    <IconCopy width="18" height="18" aria-hidden="true" />
+                    <Show
+                      when={copied()}
+                      fallback={
+                        <IconCopy width="18" height="18" aria-hidden="true" />
+                      }
+                    >
+                      <IconCopied width="18" height="18" aria-hidden="true" />
+                    </Show>
                   </IconButton>
                 )}
               </Tooltip>

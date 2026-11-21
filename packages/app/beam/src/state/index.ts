@@ -54,3 +54,4 @@ export {
   type DragPayload,
   type Dropped,
 } from './drop';
+export { $copied, $copyMarked, COPIED_FOR } from './copied';
