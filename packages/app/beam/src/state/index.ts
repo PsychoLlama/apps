@@ -17,6 +17,7 @@ export {
   ITEM_MAX_LENGTH,
   linkOf,
   normalizeBody,
+  openableType,
 } from './feed';
 export {
   DEVICE_NAME_MAX_LENGTH,

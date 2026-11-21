@@ -1,5 +1,5 @@
 import { style } from '@vanilla-extract/css';
-import { neutral, radius, space } from '@lib/design';
+import { accent, neutral, radius, space } from '@lib/design';
 
 /**
  * A shared file's tile. One size whatever the file, so a feed of them
@@ -24,6 +24,23 @@ export const preview = style({
   gap: space[2],
   height: '9rem',
   backgroundColor: neutral.solid[3],
+});
+
+/**
+ * The preview as something to press. It's the tile's whole top, so focus
+ * is drawn inside it: the tile clips anything drawn around.
+ */
+export const open = style({
+  cursor: 'pointer',
+  ':focus-visible': {
+    outline: `2px solid ${accent.solid[8]}`,
+    outlineOffset: '-2px',
+  },
+  selectors: {
+    '&[aria-disabled="true"]': {
+      cursor: 'progress',
+    },
+  },
 });
 
 /** A preview that's words and not a picture keeps off the tile's edges. */

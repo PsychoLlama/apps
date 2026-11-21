@@ -1,7 +1,13 @@
 import { collect, pipe } from '@lib/effects';
 import type { DeviceConnection } from '../platform/device';
+import { openFileTab } from '../platform/open-file';
 import { saveFile } from '../platform/save-file';
-import { $groupViewed, FILE_NAME_MAX_LENGTH, normalizeBody } from '../state';
+import {
+  $groupViewed,
+  FILE_NAME_MAX_LENGTH,
+  normalizeBody,
+  openableType,
+} from '../state';
 import { $openDevice } from './device';
 
 /**
@@ -78,6 +84,38 @@ export const $saveFile = pipe([
     ): Promise<void> => {
       const bytes = await connection.readFile(groupId, itemId, file.size);
       saveFile(bytes, file.name.slice(0, FILE_NAME_MAX_LENGTH) || 'file');
+    },
+]);
+
+/**
+ * Open a file from a group in a tab of its own, or save it if it isn't
+ * one of the few types {@link openableType} says are safe to show.
+ *
+ * The tab is opened first and filled once the file is read: a browser
+ * only opens one while the click that asked is fresh. If it won't open
+ * one at all, the file is saved.
+ */
+export const $openFile = pipe([
+  $openDevice,
+  (connection: DeviceConnection) =>
+    async (
+      groupId: string,
+      itemId: string,
+      file: { name: string; size: number; type: string },
+    ): Promise<void> => {
+      const type = openableType(file);
+      const tab = type === null ? null : openFileTab();
+
+      try {
+        const bytes = await connection.readFile(groupId, itemId, file.size);
+
+        if (tab && type !== null) tab.show(new Blob([bytes], { type }));
+        else
+          saveFile(bytes, file.name.slice(0, FILE_NAME_MAX_LENGTH) || 'file');
+      } catch (error) {
+        tab?.close();
+        throw error;
+      }
     },
 ]);
 

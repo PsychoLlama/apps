@@ -10,6 +10,7 @@ import {
   ITEM_MAX_LENGTH,
   linkOf,
   normalizeBody,
+  openableType,
   formatBytes,
   isPreviewable,
 } from '../feed';
@@ -162,6 +163,31 @@ describe('linkOf', () => {
     expect(linkOf('just a note')).toBeNull();
     expect(linkOf('javascript:alert(1)')).toBeNull();
     expect(linkOf('data:text/html,hi')).toBeNull();
+  });
+});
+
+describe('openableType', () => {
+  it('opens what a browser only draws or plays', () => {
+    expect(openableType({ type: 'image/png' })).toBe('image/png');
+    expect(openableType({ type: 'application/pdf' })).toBe('application/pdf');
+    expect(openableType({ type: 'video/mp4' })).toBe('video/mp4');
+  });
+
+  it('says for itself what encoding plain text is in', () => {
+    expect(openableType({ type: 'text/plain' })).toBe(
+      'text/plain;charset=utf-8',
+    );
+    expect(openableType({ type: 'Text/Plain; charset=utf-7' })).toBe(
+      'text/plain;charset=utf-8',
+    );
+  });
+
+  it('refuses anything that could run a script, and anything unknown', () => {
+    expect(openableType({ type: 'text/html' })).toBeNull();
+    expect(openableType({ type: 'image/svg+xml' })).toBeNull();
+    expect(openableType({ type: 'application/xhtml+xml' })).toBeNull();
+    expect(openableType({ type: 'application/zip' })).toBeNull();
+    expect(openableType({ type: '' })).toBeNull();
   });
 });
 
