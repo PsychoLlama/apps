@@ -85,7 +85,7 @@ export const GroupSettings = (props: {
       <SettingsSection
         title="Devices"
         headingId="devices-heading"
-        description="Removing a device needs most of the group online."
+        description="Removing a device can take a while if others are offline."
       >
         <MemberList groupId={props.group.id} />
       </SettingsSection>
@@ -112,9 +112,9 @@ export const GroupSettings = (props: {
           removing a device the ordinary way works. */}
       <Show when={someAway()}>
         <SettingsSection
-          title="Start over"
+          title="Lost a device?"
           headingId="replace-heading"
-          description="For a group stuck waiting on a lost device. Makes a new group from what has synced, with only this device in it."
+          description="If a device is gone for good, move what's here to a new group with only this device in it. You can link the others again afterward."
         >
           <Flex as="div">
             <Button
@@ -124,7 +124,7 @@ export const GroupSettings = (props: {
               disabled={replaceGroup.pending}
               onClick={() => replaceGroup(props.group.id)}
             >
-              Start over without the others
+              Move to a new group
             </Button>
           </Flex>
         </SettingsSection>
